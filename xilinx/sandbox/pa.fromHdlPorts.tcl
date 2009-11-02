@@ -1,7 +1,7 @@
 
 # PlanAhead Launch Script for Pre-Synthesis Floorplanning, created by Project Navigator
 
-hdi::project new -name sandbox -dir "C:/projects/cdp/xilinx/sandbox/patmp"
+hdi::project new -name sandbox -dir "/home/price/projects/cdp/xilinx/sandbox/patmp"
 hdi::project setArch -name sandbox -arch spartan3e
 hdi::design setOptions -project sandbox -top netlist_1_EMPTY
 hdi::param set -name project.paUcfFile -svalue "nexys2_toplevel.ucf"

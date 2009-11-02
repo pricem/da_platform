@@ -1,77 +1,18 @@
-Release 11.1 ngdbuild L.33 (nt)
+Release 11.1 ngdbuild L.33 (lin)
 Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
 
-Command Line: C:\Xilinx\11.1\ISE\bin\nt\unwrapped\ngdbuild.exe -ise sandbox.ise
+Command Line: /opt/Xilinx/11.1/ISE/bin/lin/unwrapped/ngdbuild -ise sandbox.ise
 -intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc
 nexys2_toplevel.ngd
 
-Reading NGO file "C:/projects/cdp/xilinx/sandbox/nexys2_toplevel.ngc" ...
+Reading NGO file "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.ngc"
+...
 Reading in constraint information from 'nexys2_toplevel.ucf'...
 Gathering constraint information from source properties...
 Done.
 
 Resolving constraint associations...
 Checking Constraint Associations...
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[0]" LOC = R14;>
-   [nexys2_toplevel.ucf(3)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[0]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[1]" LOC = R13;>
-   [nexys2_toplevel.ucf(4)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[1]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[2]" LOC = P13;>
-   [nexys2_toplevel.ucf(5)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[2]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[3]" LOC = T12;>
-   [nexys2_toplevel.ucf(6)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[3]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[4]" LOC = N11;>
-   [nexys2_toplevel.ucf(7)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[4]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[5]" LOC = R11;>
-   [nexys2_toplevel.ucf(8)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[5]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[6]" LOC = P10;>
-   [nexys2_toplevel.ucf(9)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[6]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[7]" LOC = R10;>
-   [nexys2_toplevel.ucf(10)]: This constraint cannot be distributed from the
-   design objects matching 'NET "usb_data[7]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "buttons[0]" LOC = B18;>
-   [nexys2_toplevel.ucf(34)]: This constraint cannot be distributed from the
-   design objects matching 'NET "buttons[0]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "buttons[1]" LOC = D18;>
-   [nexys2_toplevel.ucf(35)]: This constraint cannot be distributed from the
-   design objects matching 'NET "buttons[1]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "buttons[2]" LOC = E18;>
-   [nexys2_toplevel.ucf(36)]: This constraint cannot be distributed from the
-   design objects matching 'NET "buttons[2]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "buttons[3]" LOC = H13;>
-   [nexys2_toplevel.ucf(37)]: This constraint cannot be distributed from the
-   design objects matching 'NET "buttons[3]"' because those design objects do
-   not contain or drive any instances of the correct type.
-
 WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[0]" LOC = L1;>
    [nexys2_toplevel.ucf(38)]: This constraint cannot be distributed from the
    design objects matching 'NET "mem_data[0]"' because those design objects do
@@ -497,8 +438,6 @@ Checking Partitions ...
 
 Checking expanded design ...
 WARNING:NgdBuild:470 - bidirect pad net 'ps2_data' has no legal driver
-WARNING:NgdBuild:470 - bidirect pad net 'usb_pktend' has no legal driver
-WARNING:NgdBuild:470 - bidirect pad net 'usb_ifclk' has no legal driver
 
 Partition Implementation Status
 -------------------------------
@@ -509,12 +448,12 @@ Partition Implementation Status
 
 NGDBUILD Design Results Summary:
   Number of errors:     0
-  Number of warnings:  99
+  Number of warnings:  85
 
-Total memory usage is 79548 kilobytes
+Total memory usage is 78036 kilobytes
 
 Writing NGD file "nexys2_toplevel.ngd" ...
-Total REAL time to NGDBUILD completion:  3 sec
-Total CPU time to NGDBUILD completion:   3 sec
+Total REAL time to NGDBUILD completion:  2 sec
+Total CPU time to NGDBUILD completion:   2 sec
 
 Writing NGDBUILD log file "nexys2_toplevel.bld"...

@@ -1,4 +1,4 @@
-Release 11.1 Map L.33 (nt)
+Release 11.1 Map L.33 (lin)
 Xilinx Map Application Log File for Design 'nexys2_toplevel'
 
 Design Information
@@ -10,61 +10,64 @@ Target Device  : xc3s500e
 Target Package : fg320
 Target Speed   : -5
 Mapper Version : spartan3e -- $Revision: 1.51 $
-Mapped Date    : Sun Nov 01 16:13:39 2009
+Mapped Date    : Sun Nov  1 21:49:00 2009
 
 WARNING:LIT:243 - Logical network pmod_d<3> has no load.
-WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 106
+WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 88
    more times for the following (max. 5 shown):
    mem_data<12>,
    pmod_a<1>,
-   usb_data<5>,
+   fx2<34>,
    fx2<29>,
-   fx2<34>
+   pmod_a<2>
    To see the details of these warning messages, please use the -detail switch.
 Mapping design into LUTs...
 Running directed packing...
+WARNING:Pack:266 - The function generator usb/LED_and00001 failed to merge with
+   F5 multiplexer usb/LED_mux0012<7>13_f5.  There is more than one F5MUX.  The
+   design will exhibit suboptimal timing.
 Running delay-based LUT packing...
 Running related packing...
 Updating timing models...
-WARNING:PhysDesignRules:367 - The signal <usb_flaga_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_flagb_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_ifclk_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk0_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
 
 Design Summary
 --------------
 
 Design Summary:
 Number of errors:      0
-Number of warnings:   13
+Number of warnings:    8
 Logic Utilization:
+  Number of Slice Flip Flops:            72 out of   9,312    1%
+  Number of 4 input LUTs:                83 out of   9,312    1%
 Logic Distribution:
-    Number of Slices containing only related logic:       0 out of       0   0%
-    Number of Slices containing unrelated logic:          0 out of       0   0%
+  Number of occupied Slices:             76 out of   4,656    1%
+    Number of Slices containing only related logic:      76 out of      76 100%
+    Number of Slices containing unrelated logic:          0 out of      76   0%
       *See NOTES below for an explanation of the effects of unrelated logic.
-  Number of bonded IOBs:                 90 out of     232   38%
+  Total Number of 4 input LUTs:         136 out of   9,312    1%
+    Number used as logic:                83
+    Number used as a route-thru:         53
 
-Average Fanout of Non-Clock Nets:                0.42
+  The Slice Logic Distribution report is not meaningful if the design is
+  over-mapped for a non-slice resource or if Placement fails.
 
-Peak Memory Usage:  164 MB
+  Number of bonded IOBs:                103 out of     232   44%
+    IOB Flip Flops:                      16
+  Number of BUFGMUXs:                     3 out of      24   12%
+
+Average Fanout of Non-Clock Nets:                2.42
+
+Peak Memory Usage:  176 MB
 Total REAL time to MAP completion:  2 secs 
 Total CPU time to MAP completion:   2 secs 
 

@@ -1,51 +1,39 @@
-INFO: [HD-Application 1] Opened log file C:\projects\cdp\xilinx\sandbox\planAhead.log
-INFO: [HD-Application 2] Opened journal file C:\projects\cdp\xilinx\sandbox\planAhead.jou
+INFO: [HD-Application 1] Opened log file /home/price/projects/cdp/xilinx/sandbox/planAhead.log
+INFO: [HD-Application 2] Opened journal file /home/price/projects/cdp/xilinx/sandbox/planAhead.jou
 #-----------------------------------------------------------
 # PlanAhead v11.1
-# Build 44534 by hdbuild on Thu Mar  5 11:02:58 PST 2009
-# Start of session at: 11/1/09 9:07:06 PM
-# Process ID: 360
+# Build 44534 by hdbuild on Thu Mar  5 11:05:08 PST 2009
+# Start of session at: 11/1/09 9:46:59 PM
+# Process ID: 20313
 #-----------------------------------------------------------
-INFO: [HD-RTPRIM 0] Parsing template file 'C:\Xilinx\11.1\ISE\data\projnav\templates\verilog.xml'
-INFO: [HD-RTPRIM 1] Finished parsing template file 'C:\Xilinx\11.1\ISE\data\projnav\templates\verilog.xml'
-INFO: [HD-RTPRIM 0] Parsing template file 'C:\Xilinx\11.1\ISE\data\projnav\templates\vhdl.xml'
-INFO: [HD-RTPRIM 1] Finished parsing template file 'C:\Xilinx\11.1\ISE\data\projnav\templates\vhdl.xml'
-INFO: [HD-RTPRIM 0] Parsing template file 'C:\Xilinx\11.1\ISE\data\projnav\templates\ucf.xml'
-INFO: [HD-RTPRIM 1] Finished parsing template file 'C:\Xilinx\11.1\ISE\data\projnav\templates\ucf.xml'
-Command> source C:/projects/cdp/xilinx/sandbox/pa.fromHdl.tcl
-# hdi::project new -name sandbox -dir C:/projects/cdp/xilinx/sandbox/patmp
+INFO: [HD-RTPRIM 0] Parsing template file '/opt/Xilinx/11.1/ISE/data/projnav/templates/verilog.xml'
+INFO: [HD-RTPRIM 1] Finished parsing template file '/opt/Xilinx/11.1/ISE/data/projnav/templates/verilog.xml'
+INFO: [HD-RTPRIM 0] Parsing template file '/opt/Xilinx/11.1/ISE/data/projnav/templates/vhdl.xml'
+INFO: [HD-RTPRIM 1] Finished parsing template file '/opt/Xilinx/11.1/ISE/data/projnav/templates/vhdl.xml'
+INFO: [HD-RTPRIM 0] Parsing template file '/opt/Xilinx/11.1/ISE/data/projnav/templates/ucf.xml'
+INFO: [HD-RTPRIM 1] Finished parsing template file '/opt/Xilinx/11.1/ISE/data/projnav/templates/ucf.xml'
+Command> source /home/price/projects/cdp/xilinx/sandbox/pa.fromNetlist.tcl
+# hdi::project new -name sandbox -dir /home/price/projects/cdp/xilinx/sandbox/patmp -netlist nexys2_toplevel.ngc -search_path  {/home/price/projects/cdp/xilinx/sandbox} 
+INFO: [HD-EDIFIN 0] Parsing Edif File './.HDI-PlanAhead-20313-price-thingamajig/ngc2edif/nexys2_toplevel.edif'
+INFO: [HD-EDIFIN 1] Finished Parsing Edif File './.HDI-PlanAhead-20313-price-thingamajig/ngc2edif/nexys2_toplevel.edif'
+WARN: [HD-NETLIST 3] Netlist is not ideal for floorplanning, since the cellview 'nexys2_toplevel' defined in file 'nexys2_toplevel.ngc' contains large number of primitives.
 # hdi::project setArch -name sandbox -arch spartan3e
-# hdi::design setOptions -project sandbox -top nexys2_toplevel
+# hdi::param set -name project.pinAheadLayout -bvalue yes
 # hdi::param set -name project.paUcfFile -svalue nexys2_toplevel.ucf
 # hdi::floorplan new -name floorplan_1 -part xc3s500efg320-5 -project sandbox
-INFO: [HD-ArchReader 14] Reading macro library C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\hd_int_macros.edn
-INFO: [HD-EDIFIN 0] Parsing Edif File 'C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\hd_int_macros.edn'
-INFO: [HD-EDIFIN 1] Finished Parsing Edif File 'C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\hd_int_macros.edn'
-INFO: [HD-ArchReader 7] Loading clock regions from C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\3s500e\ClockRegion.xml
-INFO: [HD-ArchReader 8] Loading clock buffers from C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\3s500e\ClockBuffers.xml
-INFO: [HD-ArchReader 3] Loading package from C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\3s500e\fg320\Package.xml
-INFO: [HD-ArchReader 4] Loading io standards from C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\IOStandards.xml
-INFO: [HD-ArchReader 5] Loading pkg sso from C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\3s500e\fg320\SSORules.xml
-INFO: [HD-GDRC 0] Loading list of drcs for the architecture : C:\Xilinx\11.1\PlanAhead\parts\xilinx\spartan3e\drc.xml
-# hdi::port import -project sandbox -verilog sandbox1.v work -verilog toplevel.v work
-INFO: [HD-RTLIN 0] Removing all analyzed parse trees
-INFO: [HD-RTLIN 0] Removing all libraries
-INFO: [HD-RTLIN 2] Analyzing VHDL file \"C:\Xilinx\11.1\PlanAhead\parts\xilinx\rtl\lib\synplify\synattr.vhd\" into library synplify
-INFO: [HD-RTLIN 2] Analyzing package attributes
-INFO: [HD-RTLIN 2] Analyzing Verilog file \"sandbox1.v\" into library work
-INFO: [HD-RTLIN 2] Analyzing module sandbox1
-INFO: [HD-RTLIN 2] Analyzing Verilog file \"toplevel.v\" into library work
-INFO: [HD-RTLIN 2] Analyzing module nexys2_toplevel
-INFO: [HD-RTLIN 2] Compiling module nexys2_toplevel
-INFO: [HD-RTLIN 0] Removing all analyzed parse trees
-INFO: [HD-RTLIN 0] Memory usage after 'Elaborate()': 16466
-INFO: [HD-RTLIN 0] Translating model
-# hdi::port export -project sandbox -file sandbox_pa_ports.v -format verilog
+INFO: [HD-ArchReader 14] Reading macro library /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/hd_int_macros.edn
+INFO: [HD-EDIFIN 0] Parsing Edif File '/opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/hd_int_macros.edn'
+INFO: [HD-EDIFIN 1] Finished Parsing Edif File '/opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/hd_int_macros.edn'
+INFO: [HD-ArchReader 7] Loading clock regions from /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/3s500e/ClockRegion.xml
+INFO: [HD-ArchReader 8] Loading clock buffers from /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/3s500e/ClockBuffers.xml
+INFO: [HD-ArchReader 3] Loading package from /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/3s500e/fg320/Package.xml
+INFO: [HD-ArchReader 4] Loading io standards from /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/IOStandards.xml
+INFO: [HD-ArchReader 5] Loading pkg sso from /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/3s500e/fg320/SSORules.xml
+INFO: [HD-GDRC 0] Loading list of drcs for the architecture : /opt/Xilinx/11.1/PlanAhead/parts/xilinx/spartan3e/drc.xml
 # hdi::pconst import -project sandbox -floorplan floorplan_1 -file nexys2_toplevel.ucf
 INFO: [HD-UCFReader 0] Parsing UCF File : nexys2_toplevel.ucf
 INFO: [HD-UCFReader 1] Finished Parsing UCF File : nexys2_toplevel.ucf
-Command> hdi::project saveAs -name sandbox -newName sandbox_export -dir {C:\projects\cdp\xilinx\sandbox\patmp\sandbox_export}
 #-----------------------------------------------------------
-# End of session at: 11/1/09 9:09:22 PM
-# Process ID: 360
+# End of session at: 11/1/09 9:47:32 PM
+# Process ID: 20313
 #-----------------------------------------------------------

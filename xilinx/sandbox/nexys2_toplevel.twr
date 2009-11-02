@@ -1,10 +1,10 @@
 --------------------------------------------------------------------------------
-Release 11.1 Trace  (nt)
+Release 11.1 Trace  (lin)
 Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
 
-C:\Xilinx\11.1\ISE\bin\nt\unwrapped\trce.exe -ise
-C:/projects/cdp/xilinx/sandbox/sandbox.ise -intstyle ise -v 3 -s 5 -fastpaths
--xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr
+/opt/Xilinx/11.1/ISE/bin/lin/unwrapped/trce -ise
+/home/price/projects/cdp/xilinx/sandbox/sandbox.ise -intstyle ise -v 3 -s 5
+-fastpaths -xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr
 nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf
 
 Design file:              nexys2_toplevel.ncd
@@ -32,29 +32,68 @@ Data Sheet report:
 -----------------
 All values displayed in nanoseconds (ns)
 
-Pad to Pad
----------------+---------------+---------+
-Source Pad     |Destination Pad|  Delay  |
----------------+---------------+---------+
-switches<0>    |pmod_d<7>      |    4.792|
-switches<1>    |pmod_d<6>      |    4.261|
-switches<2>    |pmod_d<5>      |    4.261|
-switches<3>    |pmod_d<4>      |    4.742|
-switches<4>    |led_upper<0>   |    5.925|
-switches<5>    |led_upper<1>   |    4.847|
-switches<6>    |led_upper<2>   |    7.929|
-switches<7>    |led_upper<3>   |    6.473|
----------------+---------------+---------+
+Setup/Hold to clock clk0
+------------+------------+------------+------------------+--------+
+            |  Setup to  |  Hold to   |                  | Clock  |
+Source      | clk (edge) | clk (edge) |Internal Clock(s) | Phase  |
+------------+------------+------------+------------------+--------+
+buttons<0>  |    4.018(R)|   -2.005(R)|clk0_BUFGP        |   0.000|
+buttons<1>  |    5.318(R)|   -3.271(R)|clk0_BUFGP        |   0.000|
+buttons<2>  |    2.881(R)|   -1.094(R)|clk0_BUFGP        |   0.000|
+buttons<3>  |    3.593(R)|   -1.660(R)|clk0_BUFGP        |   0.000|
+switches<0> |    7.876(R)|   -1.733(R)|clk0_BUFGP        |   0.000|
+switches<1> |    7.599(R)|   -1.302(R)|clk0_BUFGP        |   0.000|
+switches<2> |    7.286(R)|   -0.753(R)|clk0_BUFGP        |   0.000|
+switches<3> |    7.318(R)|   -0.270(R)|clk0_BUFGP        |   0.000|
+switches<4> |    5.736(R)|   -0.394(R)|clk0_BUFGP        |   0.000|
+switches<5> |    6.148(R)|   -0.724(R)|clk0_BUFGP        |   0.000|
+switches<6> |    6.251(R)|   -0.806(R)|clk0_BUFGP        |   0.000|
+switches<7> |    6.229(R)|   -0.788(R)|clk0_BUFGP        |   0.000|
+usb_flaga   |    4.826(R)|   -2.651(R)|clk0_BUFGP        |   0.000|
+usb_flagb   |    5.646(R)|   -3.306(R)|clk0_BUFGP        |   0.000|
+usb_flagc   |    4.668(R)|   -2.525(R)|clk0_BUFGP        |   0.000|
+------------+------------+------------+------------------+--------+
+
+Clock clk0 to Pad
+------------+------------+------------------+--------+
+            | clk (edge) |                  | Clock  |
+Destination |   to PAD   |Internal Clock(s) | Phase  |
+------------+------------+------------------+--------+
+led_upper<0>|    5.620(R)|clk0_BUFGP        |   0.000|
+led_upper<1>|    5.620(R)|clk0_BUFGP        |   0.000|
+led_upper<2>|    5.620(R)|clk0_BUFGP        |   0.000|
+led_upper<3>|    5.620(R)|clk0_BUFGP        |   0.000|
+pmod_d<4>   |    5.614(R)|clk0_BUFGP        |   0.000|
+pmod_d<5>   |    5.614(R)|clk0_BUFGP        |   0.000|
+pmod_d<6>   |    5.613(R)|clk0_BUFGP        |   0.000|
+pmod_d<7>   |    5.613(R)|clk0_BUFGP        |   0.000|
+------------+------------+------------------+--------+
+
+Clock to Setup on destination clock clk0
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+usb_ifclk      |    8.216|         |         |         |
+---------------+---------+---------+---------+---------+
+
+Clock to Setup on destination clock usb_ifclk
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+usb_ifclk      |    3.965|         |         |         |
+---------------+---------+---------+---------+---------+
 
 
-Analysis completed Sun Nov 01 16:13:55 2009 
+Analysis completed Sun Nov  1 21:49:15 2009 
 --------------------------------------------------------------------------------
 
 Trace Settings:
 -------------------------
 Trace Settings 
 
-Peak Memory Usage: 103 MB
+Peak Memory Usage: 91 MB
 
 
 

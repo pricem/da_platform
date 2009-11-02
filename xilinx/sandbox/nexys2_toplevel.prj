@@ -1,2 +1,3 @@
-verilog work "sandbox1.v"
+vhdl work "usb_fifos.vhd"
+vhdl work "usb_top.vhd"
 verilog work "toplevel.v"

@@ -1,18 +1,21 @@
-Release 11.1 - xst L.33 (nt)
+Release 11.1 - xst L.33 (lin)
 Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
---> Parameter TMPDIR set to xst/projnav.tmp
+--> 
+Parameter TMPDIR set to xst/projnav.tmp
 
 
 Total REAL time to Xst completion: 0.00 secs
-Total CPU time to Xst completion: 0.13 secs
+Total CPU time to Xst completion: 0.05 secs
  
---> Parameter xsthdpdir set to xst
+--> 
+Parameter xsthdpdir set to xst
 
 
 Total REAL time to Xst completion: 0.00 secs
-Total CPU time to Xst completion: 0.13 secs
+Total CPU time to Xst completion: 0.05 secs
  
---> Reading design: nexys2_toplevel.prj
+--> 
+Reading design: nexys2_toplevel.prj
 
 TABLE OF CONTENTS
   1) Synthesis Options Summary
@@ -103,9 +106,11 @@ Slice Utilization Ratio Delta      : 5
 =========================================================================
 *                          HDL Compilation                              *
 =========================================================================
-Compiling verilog file "sandbox1.v" in library work
+Compiling vhdl file "/home/price/projects/cdp/xilinx/sandbox/usb_fifos.vhd" in Library work.
+Architecture rtl of Entity usb_fifos is up to date.
+Compiling vhdl file "/home/price/projects/cdp/xilinx/sandbox/usb_top.vhd" in Library work.
+Architecture rtl of Entity usb_top is up to date.
 Compiling verilog file "toplevel.v" in library work
-Module <sandbox1> compiled
 Module <nexys2_toplevel> compiled
 No errors in compilation
 Analysis of file <"nexys2_toplevel.prj"> succeeded.
@@ -116,7 +121,9 @@ Analysis of file <"nexys2_toplevel.prj"> succeeded.
 =========================================================================
 Analyzing hierarchy for module <nexys2_toplevel> in library <work>.
 
-Analyzing hierarchy for module <sandbox1> in library <work>.
+Analyzing hierarchy for entity <usb_top> in library <work> (architecture <rtl>).
+
+Analyzing hierarchy for entity <usb_fifos> in library <work> (architecture <rtl>).
 
 
 =========================================================================
@@ -125,9 +132,19 @@ Analyzing hierarchy for module <sandbox1> in library <work>.
 Analyzing top module <nexys2_toplevel>.
 Module <nexys2_toplevel> is correct for synthesis.
  
-Analyzing module <sandbox1> in library <work>.
-Module <sandbox1> is correct for synthesis.
- 
+Analyzing Entity <usb_top> in library <work> (Architecture <rtl>).
+WARNING:Xst:753 - "/home/price/projects/cdp/xilinx/sandbox/usb_top.vhd" line 104: Unconnected output port 'fdata_oe' of component 'usb_fifos'.
+WARNING:Xst:819 - "/home/price/projects/cdp/xilinx/sandbox/usb_top.vhd" line 126: One or more signals are missing in the process sensitivity list. To enable synthesis of FPGA/CPLD hardware, XST will assume that all necessary signals are present in the sensitivity list. Please note that the result of the synthesis may differ from the initial design specification. The missing signals are:
+   <fdata_oe>, <fdata_out>
+WARNING:Xst:819 - "/home/price/projects/cdp/xilinx/sandbox/usb_top.vhd" line 190: One or more signals are missing in the process sensitivity list. To enable synthesis of FPGA/CPLD hardware, XST will assume that all necessary signals are present in the sensitivity list. Please note that the result of the synthesis may differ from the initial design specification. The missing signals are:
+   <U_SLCS_i>
+Entity <usb_top> analyzed. Unit <usb_top> generated.
+
+Analyzing Entity <usb_fifos> in library <work> (Architecture <rtl>).
+WARNING:Xst:819 - "/home/price/projects/cdp/xilinx/sandbox/usb_fifos.vhd" line 117: One or more signals are missing in the process sensitivity list. To enable synthesis of FPGA/CPLD hardware, XST will assume that all necessary signals are present in the sensitivity list. Please note that the result of the synthesis may differ from the initial design specification. The missing signals are:
+   <ifclk_div<2>>
+Entity <usb_fifos> analyzed. Unit <usb_fifos> generated.
+
 
 =========================================================================
 *                           HDL Synthesis                               *
@@ -135,9 +152,47 @@ Module <sandbox1> is correct for synthesis.
 
 Performing bidirectional port resolution...
 
-Synthesizing Unit <sandbox1>.
-    Related source file is "sandbox1.v".
-Unit <sandbox1> synthesized.
+Synthesizing Unit <usb_fifos>.
+    Related source file is "/home/price/projects/cdp/xilinx/sandbox/usb_fifos.vhd".
+WARNING:Xst:647 - Input <flaga> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <CLK_50M> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 8-bit register for signal <fifo0_outbyte>.
+    Found 8-bit register for signal <debugvec>.
+    Found 1-bit register for signal <fifo0_outflag>.
+    Found 8-bit register for signal <fdata_out>.
+    Found 2-bit register for signal <faddr_i>.
+    Found 1-bit register for signal <fdata_oe_i>.
+    Found 32-bit up counter for signal <fifo0_outcount_i>.
+    Found 8-bit up counter for signal <fifo2_inbyte>.
+    Found 32-bit up counter for signal <fifo2_incount_i>.
+    Found 8-bit up counter for signal <ifclk_div>.
+    Found 6-bit up counter for signal <sequencer>.
+    Found 1-bit register for signal <sloe_i>.
+    Found 1-bit register for signal <slrd_i>.
+    Found 1-bit register for signal <slwr_i>.
+    Summary:
+	inferred   5 Counter(s).
+	inferred  31 D-type flip-flop(s).
+Unit <usb_fifos> synthesized.
+
+
+Synthesizing Unit <usb_top>.
+    Related source file is "/home/price/projects/cdp/xilinx/sandbox/usb_top.vhd".
+WARNING:Xst:653 - Signal <slcs_enable> is used but never assigned. This sourceless signal will be automatically connected to value 1.
+WARNING:Xst:646 - Signal <fifo2_incount> is assigned but never used. This unconnected signal will be trimmed during the optimization process.
+WARNING:Xst:646 - Signal <fifo0_outflag> is assigned but never used. This unconnected signal will be trimmed during the optimization process.
+WARNING:Xst:646 - Signal <fifo0_outcount<31:24>> is assigned but never used. This unconnected signal will be trimmed during the optimization process.
+WARNING:Xst:653 - Signal <fdata_oe> is used but never assigned. This sourceless signal will be automatically connected to value 0.
+WARNING:Xst:1780 - Signal <data_enable> is never used or assigned. This unconnected signal will be trimmed during the optimization process.
+    Found 8-bit tristate buffer for signal <U_FDATA>.
+    Found 1-bit tristate buffer for signal <U_SLCS>.
+    Found 8-bit register for signal <LED>.
+    Found 28-bit up counter for signal <ifcounter>.
+    Summary:
+	inferred   1 Counter(s).
+	inferred   8 D-type flip-flop(s).
+	inferred   9 Tristate(s).
+Unit <usb_top> synthesized.
 
 
 Synthesizing Unit <nexys2_toplevel>.
@@ -145,16 +200,13 @@ Synthesizing Unit <nexys2_toplevel>.
 WARNING:Xst:2565 - Inout <pmod_d<3>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<12>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_a<1>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<5>> is never assigned.
-WARNING:Xst:2565 - Inout <fx2<29>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<34>> is never assigned.
+WARNING:Xst:2565 - Inout <fx2<29>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_a<2>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<13>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<6>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<35>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_a<3>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<14>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<7>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<36>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_a<4>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<15>> is never assigned.
@@ -187,7 +239,6 @@ WARNING:Xst:2565 - Inout <pmod_c<4>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<4>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_c<5>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<5>> is never assigned.
-WARNING:Xst:647 - Input <clk0> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
 WARNING:Xst:2565 - Inout <pmod_c<6>> is never assigned.
 WARNING:Xst:647 - Input <clk1> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
 WARNING:Xst:2565 - Inout <mem_data<6>> is never assigned.
@@ -199,13 +250,9 @@ WARNING:Xst:647 - Input <serial_in> is never used. This port will be preserved a
 WARNING:Xst:2565 - Inout <pmod_b<0>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_b<1>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<10>> is never assigned.
-WARNING:Xst:647 - Input <buttons<3:1>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
 WARNING:Xst:2565 - Inout <pmod_b<2>> is never assigned.
 WARNING:Xst:647 - Input <mem_wait> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
 WARNING:Xst:2565 - Inout <fx2<11>> is never assigned.
-WARNING:Xst:647 - Input <usb_flaga> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
-WARNING:Xst:647 - Input <usb_flagb> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
-WARNING:Xst:647 - Input <usb_flagc> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
 WARNING:Xst:2565 - Inout <pmod_b<3>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<12>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_b<4>> is never assigned.
@@ -222,30 +269,23 @@ WARNING:Xst:2565 - Inout <fx2<22>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<17>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<23>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<18>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_pktend> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<0>> is never assigned.
-WARNING:Xst:2565 - Inout <fx2<19>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<24>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<1>> is never assigned.
-WARNING:Xst:2565 - Inout <fx2<25>> is never assigned.
+WARNING:Xst:2565 - Inout <fx2<19>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<30>> is never assigned.
+WARNING:Xst:2565 - Inout <fx2<25>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_d<0>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<2>> is never assigned.
-WARNING:Xst:2565 - Inout <fx2<26>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<31>> is never assigned.
+WARNING:Xst:2565 - Inout <fx2<26>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_d<1>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<10>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_ifclk> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<3>> is never assigned.
-WARNING:Xst:2565 - Inout <fx2<27>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<32>> is never assigned.
+WARNING:Xst:2565 - Inout <fx2<27>> is never assigned.
 WARNING:Xst:647 - Input <flash_sts> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
 WARNING:Xst:2565 - Inout <pmod_d<2>> is never assigned.
 WARNING:Xst:2565 - Inout <pmod_a<0>> is never assigned.
 WARNING:Xst:2565 - Inout <mem_data<11>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<28>> is never assigned.
 WARNING:Xst:2565 - Inout <fx2<33>> is never assigned.
-WARNING:Xst:2565 - Inout <usb_data<4>> is never assigned.
 WARNING:Xst:646 - Signal <reset> is assigned but never used. This unconnected signal will be trimmed during the optimization process.
 Unit <nexys2_toplevel> synthesized.
 
@@ -253,36 +293,106 @@ Unit <nexys2_toplevel> synthesized.
 =========================================================================
 HDL Synthesis Report
 
-Found no macro
+Macro Statistics
+# Counters                                             : 6
+ 28-bit up counter                                     : 1
+ 32-bit up counter                                     : 2
+ 6-bit up counter                                      : 1
+ 8-bit up counter                                      : 2
+# Registers                                            : 10
+ 1-bit register                                        : 5
+ 2-bit register                                        : 1
+ 8-bit register                                        : 4
+# Tristates                                            : 2
+ 1-bit tristate buffer                                 : 1
+ 8-bit tristate buffer                                 : 1
+
 =========================================================================
 
 =========================================================================
 *                       Advanced HDL Synthesis                          *
 =========================================================================
 
+WARNING:Xst:1710 - FF/Latch <faddr_i_0> (without init value) has a constant value of 0 in block <usb_fifos0>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <debugvec_6> (without init value) has a constant value of 0 in block <usb_fifos0>. This FF/Latch will be trimmed during the optimization process.
 
 =========================================================================
 Advanced HDL Synthesis Report
 
-Found no macro
+Macro Statistics
+# Counters                                             : 6
+ 28-bit up counter                                     : 1
+ 32-bit up counter                                     : 2
+ 6-bit up counter                                      : 1
+ 8-bit up counter                                      : 2
+# Registers                                            : 39
+ Flip-Flops                                            : 39
+
 =========================================================================
 
 =========================================================================
 *                         Low Level Synthesis                           *
 =========================================================================
+WARNING:Xst:1710 - FF/Latch <faddr_i_0> (without init value) has a constant value of 0 in block <usb_fifos>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <debugvec_6> (without init value) has a constant value of 0 in block <usb_fifos>. This FF/Latch will be trimmed during the optimization process.
+INFO:Xst:2146 - In block <usb_fifos>, Counter <fifo2_incount_i> <fifo2_inbyte> are equivalent, XST will keep only <fifo2_incount_i>.
+WARNING:Xst:2677 - Node <ifclk_div_3> of sequential type is unconnected in block <usb_fifos>.
+WARNING:Xst:2677 - Node <ifclk_div_4> of sequential type is unconnected in block <usb_fifos>.
+WARNING:Xst:2677 - Node <ifclk_div_5> of sequential type is unconnected in block <usb_fifos>.
+WARNING:Xst:2677 - Node <ifclk_div_6> of sequential type is unconnected in block <usb_fifos>.
+WARNING:Xst:2677 - Node <ifclk_div_7> of sequential type is unconnected in block <usb_fifos>.
+WARNING:Xst:2677 - Node <sequencer_5> of sequential type is unconnected in block <usb_fifos>.
 
 Optimizing unit <nexys2_toplevel> ...
 
+Optimizing unit <usb_fifos> ...
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_31> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_30> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_29> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_28> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_27> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_26> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_25> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_24> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_23> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_22> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_21> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_20> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_19> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_18> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_17> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_16> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_15> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_14> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_13> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_12> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_11> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_10> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_9> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo2_incount_i_8> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_31> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_30> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_29> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_28> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_27> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_26> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_25> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outcount_i_24> of sequential type is unconnected in block <nexys2_toplevel>.
+WARNING:Xst:2677 - Node <usb/usb_fifos0/fifo0_outflag> of sequential type is unconnected in block <nexys2_toplevel>.
+
 Mapping all equations...
 Building and optimizing final netlist ...
-Found area constraint ratio of 100 (+ 5) on block nexys2_toplevel, actual ratio is 0.
+Found area constraint ratio of 100 (+ 5) on block nexys2_toplevel, actual ratio is 1.
 
 Final Macro Processing ...
 
 =========================================================================
 Final Register Report
 
-Found no macro
+Macro Statistics
+# Registers                                            : 104
+ Flip-Flops                                            : 104
+
 =========================================================================
 
 =========================================================================
@@ -307,15 +417,34 @@ Optimization Goal                  : Speed
 Keep Hierarchy                     : NO
 
 Design Statistics
-# IOs                              : 186
+# IOs                              : 187
 
 Cell Usage :
-# BELS                             : 2
+# BELS                             : 283
 #      GND                         : 1
+#      INV                         : 6
+#      LUT1                        : 59
+#      LUT2                        : 2
+#      LUT3                        : 17
+#      LUT3_D                      : 2
+#      LUT3_L                      : 2
+#      LUT4                        : 57
+#      MUXCY                       : 59
+#      MUXF5                       : 14
 #      VCC                         : 1
-# IO Buffers                       : 79
-#      IBUF                        : 8
-#      OBUF                        : 71
+#      XORCY                       : 63
+# FlipFlops/Latches                : 104
+#      FD                          : 41
+#      FDE                         : 55
+#      FDR                         : 4
+#      FDS                         : 4
+# Clock Buffers                    : 3
+#      BUFG                        : 1
+#      BUFGP                       : 2
+# IO Buffers                       : 96
+#      IBUF                        : 15
+#      IOBUF                       : 8
+#      OBUF                        : 73
 =========================================================================
 
 Device utilization summary:
@@ -323,9 +452,13 @@ Device utilization summary:
 
 Selected Device : 3s500efg320-5 
 
- Number of Slices:                        0  out of   4656     0%  
- Number of IOs:                         186
- Number of bonded IOBs:                  79  out of    232    34%  
+ Number of Slices:                       77  out of   4656     1%  
+ Number of Slice Flip Flops:             88  out of   9312     0%  
+ Number of 4 input LUTs:                145  out of   9312     1%  
+ Number of IOs:                         187
+ Number of bonded IOBs:                  98  out of    232    42%  
+    IOB Flip Flops:                      16
+ Number of GCLKs:                         3  out of     24    12%  
 
 ---------------------------
 Partition Resource Summary:
@@ -345,7 +478,13 @@ NOTE: THESE TIMING NUMBERS ARE ONLY A SYNTHESIS ESTIMATE.
 
 Clock Information:
 ------------------
-No clock signals found in this design
+-----------------------------------+------------------------+-------+
+Clock Signal                       | Clock buffer(FF name)  | Load  |
+-----------------------------------+------------------------+-------+
+usb_ifclk                          | BUFGP                  | 31    |
+clk0                               | BUFGP                  | 8     |
+usb/usb_fifos0/ifclk_div_21        | BUFG                   | 65    |
+-----------------------------------+------------------------+-------+
 
 Asynchronous Control Signals Information:
 ----------------------------------------
@@ -355,44 +494,181 @@ Timing Summary:
 ---------------
 Speed Grade: -5
 
-   Minimum period: No path found
-   Minimum input arrival time before clock: No path found
-   Maximum output required time after clock: No path found
-   Maximum combinational path delay: 4.632ns
+   Minimum period: 4.356ns (Maximum Frequency: 229.576MHz)
+   Minimum input arrival time before clock: 6.298ns
+   Maximum output required time after clock: 4.221ns
+   Maximum combinational path delay: No path found
 
 Timing Detail:
 --------------
 All values displayed in nanoseconds (ns)
 
 =========================================================================
-Timing constraint: Default path analysis
-  Total number of paths / destination ports: 8 / 8
+Timing constraint: Default period analysis for Clock 'usb_ifclk'
+  Clock period: 4.294ns (frequency: 232.910MHz)
+  Total number of paths / destination ports: 412 / 31
 -------------------------------------------------------------------------
-Delay:               4.632ns (Levels of Logic = 2)
-  Source:            switches<3> (PAD)
-  Destination:       pmod_d<4> (PAD)
+Delay:               4.294ns (Levels of Logic = 28)
+  Source:            usb/ifcounter_1 (FF)
+  Destination:       usb/ifcounter_27 (FF)
+  Source Clock:      usb_ifclk rising
+  Destination Clock: usb_ifclk rising
 
-  Data Path: switches<3> to pmod_d<4>
+  Data Path: usb/ifcounter_1 to usb/ifcounter_27
                                 Gate     Net
     Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
     ----------------------------------------  ------------
-     IBUF:I->O             1   1.106   0.357  switches_3_IBUF (switches_3_IBUF)
+     FD:C->Q               1   0.514   0.509  usb/ifcounter_1 (usb/ifcounter_1)
+     LUT1:I0->O            1   0.612   0.000  usb/Mcount_ifcounter_cy<1>_rt (usb/Mcount_ifcounter_cy<1>_rt)
+     MUXCY:S->O            1   0.404   0.000  usb/Mcount_ifcounter_cy<1> (usb/Mcount_ifcounter_cy<1>)
+     MUXCY:CI->O           1   0.052   0.000  usb/Mcount_ifcounter_cy<2> (usb/Mcount_ifcounter_cy<2>)
+     MUXCY:CI->O           1   0.052   0.000  usb/Mcount_ifcounter_cy<3> (usb/Mcount_ifcounter_cy<3>)
+     MUXCY:CI->O           1   0.052   0.000  usb/Mcount_ifcounter_cy<4> (usb/Mcount_ifcounter_cy<4>)
+     MUXCY:CI->O           1   0.052   0.000  usb/Mcount_ifcounter_cy<5> (usb/Mcount_ifcounter_cy<5>)
+     MUXCY:CI->O           1   0.052   0.000  usb/Mcount_ifcounter_cy<6> (usb/Mcount_ifcounter_cy<6>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<7> (usb/Mcount_ifcounter_cy<7>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<8> (usb/Mcount_ifcounter_cy<8>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<9> (usb/Mcount_ifcounter_cy<9>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<10> (usb/Mcount_ifcounter_cy<10>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<11> (usb/Mcount_ifcounter_cy<11>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<12> (usb/Mcount_ifcounter_cy<12>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<13> (usb/Mcount_ifcounter_cy<13>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<14> (usb/Mcount_ifcounter_cy<14>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<15> (usb/Mcount_ifcounter_cy<15>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<16> (usb/Mcount_ifcounter_cy<16>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<17> (usb/Mcount_ifcounter_cy<17>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<18> (usb/Mcount_ifcounter_cy<18>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<19> (usb/Mcount_ifcounter_cy<19>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<20> (usb/Mcount_ifcounter_cy<20>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<21> (usb/Mcount_ifcounter_cy<21>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<22> (usb/Mcount_ifcounter_cy<22>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<23> (usb/Mcount_ifcounter_cy<23>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<24> (usb/Mcount_ifcounter_cy<24>)
+     MUXCY:CI->O           1   0.051   0.000  usb/Mcount_ifcounter_cy<25> (usb/Mcount_ifcounter_cy<25>)
+     MUXCY:CI->O           0   0.051   0.000  usb/Mcount_ifcounter_cy<26> (usb/Mcount_ifcounter_cy<26>)
+     XORCY:CI->O           1   0.699   0.000  usb/Mcount_ifcounter_xor<27> (usb/Result<27>)
+     FD:D                      0.268          usb/ifcounter_27
+    ----------------------------------------
+    Total                      4.294ns (3.785ns logic, 0.509ns route)
+                                       (88.1% logic, 11.9% route)
+
+=========================================================================
+Timing constraint: Default period analysis for Clock 'usb/usb_fifos0/ifclk_div_21'
+  Clock period: 4.356ns (frequency: 229.576MHz)
+  Total number of paths / destination ports: 698 / 110
+-------------------------------------------------------------------------
+Delay:               4.356ns (Levels of Logic = 2)
+  Source:            usb/usb_fifos0/sequencer_0 (FF)
+  Destination:       usb/usb_fifos0/fifo2_incount_i_7 (FF)
+  Source Clock:      usb/usb_fifos0/ifclk_div_21 rising
+  Destination Clock: usb/usb_fifos0/ifclk_div_21 rising
+
+  Data Path: usb/usb_fifos0/sequencer_0 to usb/usb_fifos0/fifo2_incount_i_7
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDR:C->Q              9   0.514   0.727  usb/usb_fifos0/sequencer_0 (usb/usb_fifos0/sequencer_0)
+     LUT3_D:I2->O          4   0.612   0.529  usb/usb_fifos0/fifo0_outflag_mux000011 (usb/usb_fifos0/N0)
+     LUT3:I2->O           16   0.612   0.879  usb/usb_fifos0/fdata_out_not00011 (usb/usb_fifos0/fdata_out_not0001)
+     FDE:CE                    0.483          usb/usb_fifos0/fdata_out_0
+    ----------------------------------------
+    Total                      4.356ns (2.221ns logic, 2.135ns route)
+                                       (51.0% logic, 49.0% route)
+
+=========================================================================
+Timing constraint: Default OFFSET IN BEFORE for Clock 'clk0'
+  Total number of paths / destination ports: 199 / 12
+-------------------------------------------------------------------------
+Offset:              6.298ns (Levels of Logic = 5)
+  Source:            switches<2> (PAD)
+  Destination:       usb/LED_2 (FF)
+  Destination Clock: clk0 rising
+
+  Data Path: switches<2> to usb/LED_2
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IBUF:I->O            28   1.106   1.224  switches_2_IBUF (switches_2_IBUF)
+     LUT2:I0->O            2   0.612   0.532  usb/LED_or000011 (N0)
+     LUT4:I0->O            1   0.612   0.360  usb/LED_mux0012<2>83 (usb/LED_mux0012<2>83)
+     LUT4:I3->O            1   0.612   0.360  usb/LED_mux0012<2>123 (usb/LED_mux0012<2>123)
+     LUT4:I3->O            1   0.612   0.000  usb/LED_mux0012<2>149 (usb/LED_mux0012<2>)
+     FD:D                      0.268          usb/LED_2
+    ----------------------------------------
+    Total                      6.298ns (3.822ns logic, 2.476ns route)
+                                       (60.7% logic, 39.3% route)
+
+=========================================================================
+Timing constraint: Default OFFSET IN BEFORE for Clock 'usb/usb_fifos0/ifclk_div_21'
+  Total number of paths / destination ports: 46 / 29
+-------------------------------------------------------------------------
+Offset:              4.464ns (Levels of Logic = 3)
+  Source:            buttons<0> (PAD)
+  Destination:       usb/usb_fifos0/fifo2_incount_i_7 (FF)
+  Destination Clock: usb/usb_fifos0/ifclk_div_21 rising
+
+  Data Path: buttons<0> to usb/usb_fifos0/fifo2_incount_i_7
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IBUF:I->O             3   1.106   0.603  buttons_0_IBUF (buttons_0_IBUF)
+     LUT3_D:I0->LO         1   0.612   0.169  usb/usb_fifos0/fdata_oe_i_mux000011 (N81)
+     LUT3:I1->O           16   0.612   0.879  usb/usb_fifos0/fdata_out_not00011 (usb/usb_fifos0/fdata_out_not0001)
+     FDE:CE                    0.483          usb/usb_fifos0/fdata_out_0
+    ----------------------------------------
+    Total                      4.464ns (2.813ns logic, 1.651ns route)
+                                       (63.0% logic, 37.0% route)
+
+=========================================================================
+Timing constraint: Default OFFSET OUT AFTER for Clock 'clk0'
+  Total number of paths / destination ports: 8 / 8
+-------------------------------------------------------------------------
+Offset:              4.040ns (Levels of Logic = 1)
+  Source:            usb/LED_3 (FF)
+  Destination:       pmod_d<4> (PAD)
+  Source Clock:      clk0 rising
+
+  Data Path: usb/LED_3 to pmod_d<4>
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDS:C->Q              1   0.514   0.357  usb/LED_3 (usb/LED_3)
      OBUF:I->O                 3.169          pmod_d_4_OBUF (pmod_d<4>)
     ----------------------------------------
-    Total                      4.632ns (4.275ns logic, 0.357ns route)
-                                       (92.3% logic, 7.7% route)
+    Total                      4.040ns (3.683ns logic, 0.357ns route)
+                                       (91.2% logic, 8.8% route)
+
+=========================================================================
+Timing constraint: Default OFFSET OUT AFTER for Clock 'usb/usb_fifos0/ifclk_div_21'
+  Total number of paths / destination ports: 12 / 12
+-------------------------------------------------------------------------
+Offset:              4.221ns (Levels of Logic = 1)
+  Source:            usb/usb_fifos0/slrd_i (FF)
+  Destination:       usb_slrd (PAD)
+  Source Clock:      usb/usb_fifos0/ifclk_div_21 rising
+
+  Data Path: usb/usb_fifos0/slrd_i to usb_slrd
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDR:C->Q              5   0.514   0.538  usb/usb_fifos0/slrd_i (usb/usb_fifos0/slrd_i)
+     OBUF:I->O                 3.169          usb_slrd_OBUF (usb_slrd)
+    ----------------------------------------
+    Total                      4.221ns (3.683ns logic, 0.538ns route)
+                                       (87.3% logic, 12.7% route)
 
 =========================================================================
 
 
 Total REAL time to Xst completion: 4.00 secs
-Total CPU time to Xst completion: 4.05 secs
+Total CPU time to Xst completion: 4.59 secs
  
 --> 
 
-Total memory usage is 131540 kilobytes
+
+Total memory usage is 141328 kilobytes
 
 Number of errors   :    0 (   0 filtered)
-Number of warnings :  105 (   0 filtered)
-Number of infos    :    0 (   0 filtered)
+Number of warnings :  145 (   0 filtered)
+Number of infos    :    1 (   0 filtered)
 

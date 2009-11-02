@@ -1,20 +1,17 @@
 #-----------------------------------------------------------
 # PlanAhead v11.1
-# Build 44534 by hdbuild on Thu Mar  5 11:02:58 PST 2009
-# Start of session at: 11/1/09 9:07:06 PM
-# Process ID: 360
+# Build 44534 by hdbuild on Thu Mar  5 11:05:08 PST 2009
+# Start of session at: 11/1/09 9:46:59 PM
+# Process ID: 20313
 #-----------------------------------------------------------
-source C:/projects/cdp/xilinx/sandbox/pa.fromHdl.tcl
-# hdi::project new -name sandbox -dir C:/projects/cdp/xilinx/sandbox/patmp
+source /home/price/projects/cdp/xilinx/sandbox/pa.fromNetlist.tcl
+# hdi::project new -name sandbox -dir /home/price/projects/cdp/xilinx/sandbox/patmp -netlist nexys2_toplevel.ngc -search_path  {/home/price/projects/cdp/xilinx/sandbox} 
 # hdi::project setArch -name sandbox -arch spartan3e
-# hdi::design setOptions -project sandbox -top nexys2_toplevel
+# hdi::param set -name project.pinAheadLayout -bvalue yes
 # hdi::param set -name project.paUcfFile -svalue nexys2_toplevel.ucf
 # hdi::floorplan new -name floorplan_1 -part xc3s500efg320-5 -project sandbox
-# hdi::port import -project sandbox -verilog sandbox1.v work -verilog toplevel.v work
-# hdi::port export -project sandbox -file sandbox_pa_ports.v -format verilog
 # hdi::pconst import -project sandbox -floorplan floorplan_1 -file nexys2_toplevel.ucf
-hdi::project saveAs -name sandbox -newName sandbox_export -dir {C:\projects\cdp\xilinx\sandbox\patmp\sandbox_export}
 #-----------------------------------------------------------
-# End of session at: 11/1/09 9:09:22 PM
-# Process ID: 360
+# End of session at: 11/1/09 9:47:32 PM
+# Process ID: 20313
 #-----------------------------------------------------------

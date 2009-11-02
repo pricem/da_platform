@@ -1,4 +1,4 @@
-Release 11.1 Map L.33 (nt)
+Release 11.1 Map L.33 (lin)
 Xilinx Mapping Report File for Design 'nexys2_toplevel'
 
 Design Information
@@ -10,22 +10,34 @@ Target Device  : xc3s500e
 Target Package : fg320
 Target Speed   : -5
 Mapper Version : spartan3e -- $Revision: 1.51 $
-Mapped Date    : Sun Nov 01 16:13:39 2009
+Mapped Date    : Sun Nov  1 21:49:00 2009
 
 Design Summary
 --------------
 Number of errors:      0
-Number of warnings:   13
+Number of warnings:    8
 Logic Utilization:
+  Number of Slice Flip Flops:            72 out of   9,312    1%
+  Number of 4 input LUTs:                83 out of   9,312    1%
 Logic Distribution:
-    Number of Slices containing only related logic:       0 out of       0   0%
-    Number of Slices containing unrelated logic:          0 out of       0   0%
+  Number of occupied Slices:             76 out of   4,656    1%
+    Number of Slices containing only related logic:      76 out of      76 100%
+    Number of Slices containing unrelated logic:          0 out of      76   0%
       *See NOTES below for an explanation of the effects of unrelated logic.
-  Number of bonded IOBs:                 90 out of     232   38%
+  Total Number of 4 input LUTs:         136 out of   9,312    1%
+    Number used as logic:                83
+    Number used as a route-thru:         53
 
-Average Fanout of Non-Clock Nets:                0.42
+  The Slice Logic Distribution report is not meaningful if the design is
+  over-mapped for a non-slice resource or if Placement fails.
 
-Peak Memory Usage:  164 MB
+  Number of bonded IOBs:                103 out of     232   44%
+    IOB Flip Flops:                      16
+  Number of BUFGMUXs:                     3 out of      24   12%
+
+Average Fanout of Non-Clock Nets:                2.42
+
+Peak Memory Usage:  176 MB
 Total REAL time to MAP completion:  2 secs 
 Total CPU time to MAP completion:   2 secs 
 
@@ -70,36 +82,27 @@ Section 1 - Errors
 Section 2 - Warnings
 --------------------
 WARNING:LIT:243 - Logical network pmod_d<3> has no load.
-WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 106
+WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 88
    more times for the following (max. 5 shown):
    mem_data<12>,
    pmod_a<1>,
-   usb_data<5>,
+   fx2<34>,
    fx2<29>,
-   fx2<34>
+   pmod_a<2>
    To see the details of these warning messages, please use the -detail switch.
-WARNING:PhysDesignRules:367 - The signal <usb_flaga_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_flagb_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
+WARNING:Pack:266 - The function generator usb/LED_and00001 failed to merge with
+   F5 multiplexer usb/LED_mux0012<7>13_f5.  There is more than one F5MUX.  The
+   design will exhibit suboptimal timing.
 WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_ifclk_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk0_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
 
 Section 3 - Informational
 -------------------------
@@ -110,15 +113,129 @@ INFO:LIT:244 - All of the single ended outputs in this design are using slew
 
 Section 4 - Removed Logic Summary
 ---------------------------------
+  48 block(s) removed
    2 block(s) optimized away
+  40 signal(s) removed
 
 Section 5 - Removed Logic
 -------------------------
+
+The trimmed logic reported below is either:
+   1. part of a cycle
+   2. part of disabled logic
+   3. a side-effect of other trimmed logic
+
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<0>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<0>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_lut<0>" is unused and has been
+removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_lut<0>_INV_0" (BUF) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<0>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_0" (FF) removed.
+      The signal "usb/usb_fifos0/fdata_out_not0001" is unused and has been removed.
+       Unused block "usb/usb_fifos0/fdata_out_not00011" (ROM) removed.
+      The signal "usb/usb_fifos0/Result<0>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<0>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<1>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<1>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<1>_rt" is unused and has
+been removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<1>_rt" (ROM) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<1>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_1" (FF) removed.
+      The signal "usb/usb_fifos0/Result<1>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<1>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<2>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<2>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<2>_rt" is unused and has
+been removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<2>_rt" (ROM) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<2>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_2" (FF) removed.
+      The signal "usb/usb_fifos0/Result<2>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<2>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<3>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<3>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<3>_rt" is unused and has
+been removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<3>_rt" (ROM) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<3>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_3" (FF) removed.
+      The signal "usb/usb_fifos0/Result<3>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<3>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<4>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<4>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<4>_rt" is unused and has
+been removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<4>_rt" (ROM) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<4>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_4" (FF) removed.
+      The signal "usb/usb_fifos0/Result<4>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<4>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<5>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<5>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<5>_rt" is unused and has
+been removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<5>_rt" (ROM) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<5>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_5" (FF) removed.
+      The signal "usb/usb_fifos0/Result<5>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<5>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<6>" is unused and has been
+removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<6>" (MUX) removed.
+  The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<6>_rt" is unused and has
+been removed.
+   Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_cy<6>_rt" (ROM) removed.
+    The signal "usb/usb_fifos0/fifo2_incount_i<6>" is unused and has been removed.
+     Unused block "usb/usb_fifos0/fifo2_incount_i_6" (FF) removed.
+      The signal "usb/usb_fifos0/Result<6>2" is unused and has been removed.
+       Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<6>" (XOR) removed.
+The signal "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<7>_rt" is unused and has
+been removed.
+ Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<7>_rt" (ROM) removed.
+  The signal "usb/usb_fifos0/fifo2_incount_i<7>" is unused and has been removed.
+   Unused block "usb/usb_fifos0/fifo2_incount_i_7" (FF) removed.
+    The signal "usb/usb_fifos0/Result<7>2" is unused and has been removed.
+     Unused block "usb/usb_fifos0/Mcount_fifo2_incount_i_xor<7>" (XOR) removed.
+The signal "usb/usb_fifos0/fdata_out<0>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_0" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<1>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_1" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<2>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_2" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<3>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_3" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<4>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_4" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<5>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_5" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<6>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_6" (FF) removed.
+The signal "usb/usb_fifos0/fdata_out<7>" is unused and has been removed.
+ Unused block "usb/usb_fifos0/fdata_out_7" (FF) removed.
+Unused block "usb_data_0_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_1_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_2_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_3_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_4_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_5_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_6_IOBUF/OBUFT" (TRI) removed.
+Unused block "usb_data_7_IOBUF/OBUFT" (TRI) removed.
 
 Optimized Block(s):
 TYPE 		BLOCK
 GND 		XST_GND
 VCC 		XST_VCC
+
+To enable printing of redundant blocks removed and signals merged, set the
+detailed map report option and rerun map.
 
 Section 6 - IOB Properties
 --------------------------
@@ -127,6 +244,10 @@ Section 6 - IOB Properties
 | IOB Name                           | Type             | Direction | IO Standard          | Diff  | Drive    | Slew | Reg (s)      | Resistor | IOB      |
 |                                    |                  |           |                      | Term  | Strength | Rate |              |          | Delay    |
 +---------------------------------------------------------------------------------------------------------------------------------------------------------+
+| buttons<0>                         | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| buttons<1>                         | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| buttons<2>                         | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| buttons<3>                         | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | clk0                               | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | clk1                               | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | flash_ce                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
@@ -144,10 +265,10 @@ Section 6 - IOB Properties
 | led_7seg_cat<5>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | led_7seg_cat<6>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | led_7seg_cat<7>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| led_upper<0>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| led_upper<1>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| led_upper<2>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| led_upper<3>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_upper<0>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
+| led_upper<1>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
+| led_upper<2>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
+| led_upper<3>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
 | mem_addr<1>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | mem_addr<2>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | mem_addr<3>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
@@ -180,10 +301,10 @@ Section 6 - IOB Properties
 | mem_ub                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | mem_wait                           | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | mem_we                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| pmod_d<4>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| pmod_d<5>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| pmod_d<6>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
-| pmod_d<7>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_d<4>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
+| pmod_d<5>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
+| pmod_d<6>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
+| pmod_d<7>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
 | ps2_clk                            | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | ps2_data                           | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | serial_in                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
@@ -198,11 +319,20 @@ Section 6 - IOB Properties
 | switches<7>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | usb_addr<0>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | usb_addr<1>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_data<0>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<1>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<2>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<3>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<4>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<5>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<6>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
+| usb_data<7>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      | IFF1         |          | 0 / 3    |
 | usb_flaga                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | usb_flagb                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | usb_flagc                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | usb_ifclk                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
-| usb_pktend                         | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_int0                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_pktend                         | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | usb_slcs                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | usb_sloe                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | usb_slrd                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |

@@ -4,7 +4,7 @@
 //	Michael Price
 
 module nexys2_toplevel(
-    usb_ifclk, usb_flaga, usb_flagb, usb_flagc, usb_sloe, usb_slrd, usb_slwr, usb_slcs, usb_addr, usb_pktend, usb_data,
+    usb_ifclk, usb_flaga, usb_flagb, usb_flagc, usb_int0, usb_sloe, usb_slrd, usb_slwr, usb_slcs, usb_addr, usb_pktend, usb_data,
     mem_addr, mem_data,
     mem_ub, mem_lb, mem_oe, mem_we, mem_ce, mem_cre, mem_adv, mem_clk, mem_wait, 
     flash_sts, flash_rp, flash_ce,
@@ -21,6 +21,7 @@ module nexys2_toplevel(
     input usb_flaga;
     input usb_flagb;
     input usb_flagc;
+	inout usb_int0;
     output usb_sloe;
     output usb_slrd;
     output usb_slwr;
@@ -87,15 +88,36 @@ wire reset;
 assign reset = buttons[0];
 
 //  Logic module instances
-sandbox1 sandbox(led, switches);
+//	sandbox1 sandbox(led, switches);
+
+//  USB module from Joseph Rothweiler
+usb_top usb (
+    .CLK_50M(clk0),
+    .SW(switches),
+    .BTN(buttons),
+    .U_FDATA(usb_data),
+    .U_FADDR(usb_addr),
+    .U_SLRD(usb_slrd),
+    .U_SLWR(usb_slwr),
+    .U_SLOE(usb_sloe),
+    .U_SLCS(usb_slcs),
+    .U_INT0(usb_int0),
+    .U_PKTEND(usb_pktend),
+    .U_FLAGA(usb_flaga),
+    .U_FLAGB(usb_flagb),
+    .U_FLAGC(usb_flagc),
+    .U_IFCLK(usb_ifclk),
+    .LED(led)
+  );
 
 //  Assign unused ports.  (Replace with appropriate interfaces if needed.)
+/* Not commented since we have a usbtop module
 assign usb_sloe = 1;
 assign usb_slrd = 1;
 assign usb_slwr = 1;
 assign usb_slcs = 1;
 assign usb_addr[1:0] = 2'b00;
-
+*/
 assign vga_red[2:0] = 3'b000;
 assign vga_green[2:0] = 3'b000;
 assign vga_blue[1:0] = 2'b00;

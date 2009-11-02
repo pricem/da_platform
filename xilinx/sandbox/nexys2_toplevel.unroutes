@@ -1,23 +1,17 @@
-Release 11.1 - par L.33 (nt)
+Release 11.1 - par L.33 (lin)
 Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
 
-Sun Nov 01 16:13:51 2009
+Sun Nov  1 21:49:13 2009
 
 All signals are completely routed.
 
-WARNING:ParHelpers:361 - There are 11 loadless signals in this design. This design will cause Bitgen to issue DRC
+WARNING:ParHelpers:361 - There are 5 loadless signals in this design. This design will cause Bitgen to issue DRC
    warnings.
 
-   clk0_IBUF
    clk1_IBUF
    flash_sts_IBUF
    mem_wait_IBUF
    ps2_data_IBUF
    serial_in_IBUF
-   usb_flaga_IBUF
-   usb_flagb_IBUF
-   usb_flagc_IBUF
-   usb_ifclk_IBUF
-   usb_pktend_IBUF
 
 

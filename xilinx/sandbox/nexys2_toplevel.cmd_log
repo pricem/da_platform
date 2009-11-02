@@ -25,3 +25,25 @@ map -ise "sandbox.ise" -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr of
 par -ise "sandbox.ise" -w -intstyle ise -ol std -t 1 nexys2_toplevel_map.ncd nexys2_toplevel.ncd nexys2_toplevel.pcf 
 trce -ise "C:/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -v 3 -s 5 -fastpaths -xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf 
 bitgen -ise "sandbox.ise" -intstyle ise -f nexys2_toplevel.ut nexys2_toplevel.ncd 
+xst -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -ifn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.xst" -ofn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.syr" 
+xst -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -ifn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.xst" -ofn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.syr" 
+xst -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -ifn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.xst" -ofn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.syr" 
+ngdbuild -ise "sandbox.ise" -intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc nexys2_toplevel.ngd  
+map -ise "sandbox.ise" -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd nexys2_toplevel.pcf 
+par -ise "sandbox.ise" -w -intstyle ise -ol std -t 1 nexys2_toplevel_map.ncd nexys2_toplevel.ncd nexys2_toplevel.pcf 
+ngdbuild -ise "sandbox.ise" -intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc nexys2_toplevel.ngd  
+map -ise "sandbox.ise" -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd nexys2_toplevel.pcf 
+xst -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -ifn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.xst" -ofn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.syr" 
+ngdbuild -ise "sandbox.ise" -intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc nexys2_toplevel.ngd  
+map -ise "sandbox.ise" -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd nexys2_toplevel.pcf 
+par -ise "sandbox.ise" -w -intstyle ise -ol std -t 1 nexys2_toplevel_map.ncd nexys2_toplevel.ncd nexys2_toplevel.pcf 
+ngdbuild -ise "sandbox.ise" -intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc nexys2_toplevel.ngd  
+map -ise "sandbox.ise" -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd nexys2_toplevel.pcf 
+par -ise "sandbox.ise" -w -intstyle ise -ol std -t 1 nexys2_toplevel_map.ncd nexys2_toplevel.ncd nexys2_toplevel.pcf 
+trce -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -v 3 -s 5 -fastpaths -xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf 
+xst -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -ifn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.xst" -ofn "/home/price/projects/cdp/xilinx/sandbox/nexys2_toplevel.syr" 
+ngdbuild -ise "sandbox.ise" -intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc nexys2_toplevel.ngd  
+map -ise "sandbox.ise" -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd nexys2_toplevel.pcf 
+par -ise "sandbox.ise" -w -intstyle ise -ol std -t 1 nexys2_toplevel_map.ncd nexys2_toplevel.ncd nexys2_toplevel.pcf 
+trce -ise "/home/price/projects/cdp/xilinx/sandbox/sandbox.ise" -intstyle ise -v 3 -s 5 -fastpaths -xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf 
+bitgen -ise "sandbox.ise" -intstyle ise -f nexys2_toplevel.ut nexys2_toplevel.ncd 
