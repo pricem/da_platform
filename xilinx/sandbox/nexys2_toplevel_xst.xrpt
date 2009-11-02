@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<document OS="nt" product="ISE" version="11.1">
+
+  <!--The data in this file is primarily intended for consumption by Xilinx tools.
+    The structure and the elements are likely to change over the next few releases.
+    This means code written to parse this file will need to be revisited each subsequent release.-->
+
+  <application stringID="Xst" timeStamp="Sun Nov 01 16:13:28 2009">
+    <section stringID="User_Env">
+      <table stringID="User_EnvVar">
+        <column stringID="variable"/>
+        <column stringID="value"/>
+        <row stringID="row" value="0">
+          <item stringID="variable" value="XILINX"/>
+          <item stringID="value" value="C:\Xilinx\11.1\ISE"/>
+        </row>
+        <row stringID="row" value="1">
+          <item stringID="variable" value="XILINX_PLANAHEAD"/>
+          <item stringID="value" value="C:\Xilinx\11.1\PlanAhead"/>
+        </row>
+      </table>
+      <item stringID="User_EnvOs" value="OS Information">
+        <item stringID="User_EnvOsname" value="Microsoft Windows XP Professional"/>
+        <item stringID="User_EnvOsrelease" value="Service Pack 3  (build 2600)"/>
+      </item>
+      <item stringID="User_EnvHost" value="price-is-wrong"/>
+      <table stringID="User_EnvCpu">
+        <column stringID="arch"/>
+        <column stringID="speed"/>
+        <row stringID="row" value="0">
+          <item stringID="arch" value="Intel(R) Core(TM)2 CPU          6300  @ 1.86GHz"/>
+          <item stringID="speed" value="2238 MHz"/>
+        </row>
+        <row stringID="row" value="1">
+          <item stringID="arch" value="Intel(R) Core(TM)2 CPU          6300  @ 1.86GHz"/>
+          <item stringID="speed" value="2238 MHz"/>
+        </row>
+      </table>
+    </section>
+    <section stringID="XST_ADVANCED_HDL_SYNTHESIS_REPORTFOUND_NO_MACRO"/>
+    <section stringID="XST_FINAL_REGISTER_REPORTFOUND_NO_MACRO"/>
+    <section stringID="XST_PARTITION_REPORT">
+      <section stringID="XST_PARTITION_IMPLEMENTATION_STATUS">
+        <section stringID="XST_NO_PARTITIONS_WERE_FOUND_IN_THIS_DESIGN"/>
+      </section>
+    </section>
+    <section stringID="XST_FINAL_REPORT">
+      <section stringID="XST_FINAL_RESULTS">
+        <item stringID="XST_RTL_TOP_LEVEL_OUTPUT_FILE_NAME" value="nexys2_toplevel.ngr"/>
+        <item stringID="XST_TOP_LEVEL_OUTPUT_FILE_NAME" value="nexys2_toplevel"/>
+        <item stringID="XST_OUTPUT_FORMAT" value="NGC"/>
+        <item stringID="XST_OPTIMIZATION_GOAL" value="Speed"/>
+        <item stringID="XST_KEEP_HIERARCHY" value="NO"/>
+      </section>
+      <section stringID="XST_DESIGN_STATISTICS">
+        <item stringID="XST_IOS" value="186"/>
+      </section>
+      <section stringID="XST_CELL_USAGE">
+        <item dataType="int" stringID="XST_BELS" value="2">
+          <item dataType="int" stringID="XST_GND" value="1"/>
+          <item dataType="int" stringID="XST_VCC" value="1"/>
+        </item>
+        <item dataType="int" stringID="XST_IO_BUFFERS" value="79">
+          <item dataType="int" stringID="XST_IBUF" value="8"/>
+          <item dataType="int" stringID="XST_OBUF" value="71"/>
+        </item>
+      </section>
+    </section>
+    <section stringID="XST_DEVICE_UTILIZATION_SUMMARY">
+      <item stringID="XST_SELECTED_DEVICE" value="3s500efg320-5"/>
+      <item AVAILABLE="4656" dataType="int" label="Number of Slices" stringID="XST_NUMBER_OF_SLICES" value="0"/>
+      <item dataType="int" label="Number of IOs" stringID="XST_NUMBER_OF_IOS" value="186"/>
+      <item AVAILABLE="232" dataType="int" label="Number of bonded IOBs" stringID="XST_NUMBER_OF_BONDED_IOBS" value="79"/>
+    </section>
+    <section stringID="XST_PARTITION_RESOURCE_SUMMARY">
+      <section stringID="XST_NO_PARTITIONS_WERE_FOUND_IN_THIS_DESIGN"/>
+    </section>
+    <section stringID="XST_ERRORS_STATISTICS">
+      <item dataType="int" filtered="0" stringID="XST_NUMBER_OF_ERRORS" value="0"/>
+      <item dataType="int" filtered="0" stringID="XST_NUMBER_OF_WARNINGS" value="105"/>
+      <item dataType="int" filtered="0" stringID="XST_NUMBER_OF_INFOS" value="0"/>
+    </section>
+  </application>
+
+</document>

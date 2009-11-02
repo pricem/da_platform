@@ -1,0 +1,90 @@
+Release 11.1 Map L.33 (nt)
+Xilinx Map Application Log File for Design 'nexys2_toplevel'
+
+Design Information
+------------------
+Command Line   : map -ise sandbox.ise -intstyle ise -p xc3s500e-fg320-5 -cm area
+-ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd
+nexys2_toplevel.pcf 
+Target Device  : xc3s500e
+Target Package : fg320
+Target Speed   : -5
+Mapper Version : spartan3e -- $Revision: 1.51 $
+Mapped Date    : Sun Nov 01 16:13:39 2009
+
+WARNING:LIT:243 - Logical network pmod_d<3> has no load.
+WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 106
+   more times for the following (max. 5 shown):
+   mem_data<12>,
+   pmod_a<1>,
+   usb_data<5>,
+   fx2<29>,
+   fx2<34>
+   To see the details of these warning messages, please use the -detail switch.
+Mapping design into LUTs...
+Running directed packing...
+Running delay-based LUT packing...
+Running related packing...
+Updating timing models...
+WARNING:PhysDesignRules:367 - The signal <usb_flaga_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagb_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_ifclk_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk0_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+
+Design Summary
+--------------
+
+Design Summary:
+Number of errors:      0
+Number of warnings:   13
+Logic Utilization:
+Logic Distribution:
+    Number of Slices containing only related logic:       0 out of       0   0%
+    Number of Slices containing unrelated logic:          0 out of       0   0%
+      *See NOTES below for an explanation of the effects of unrelated logic.
+  Number of bonded IOBs:                 90 out of     232   38%
+
+Average Fanout of Non-Clock Nets:                0.42
+
+Peak Memory Usage:  164 MB
+Total REAL time to MAP completion:  2 secs 
+Total CPU time to MAP completion:   2 secs 
+
+NOTES:
+
+   Related logic is defined as being logic that shares connectivity - e.g. two
+   LUTs are "related" if they share common inputs.  When assembling slices,
+   Map gives priority to combine logic that is related.  Doing so results in
+   the best timing performance.
+
+   Unrelated logic shares no connectivity.  Map will only begin packing
+   unrelated logic into a slice once 99% of the slices are occupied through
+   related logic packing.
+
+   Note that once logic distribution reaches the 99% level through related
+   logic packing, this does not mean the device is completely utilized.
+   Unrelated logic packing will then begin, continuing until all usable LUTs
+   and FFs are occupied.  Depending on your timing budget, increased levels of
+   unrelated logic packing may adversely affect the overall timing performance
+   of your design.
+
+Mapping completed.
+See MAP report file "nexys2_toplevel_map.mrp" for details.

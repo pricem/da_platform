@@ -1,0 +1,520 @@
+Release 11.1 ngdbuild L.33 (nt)
+Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
+
+Command Line: C:\Xilinx\11.1\ISE\bin\nt\unwrapped\ngdbuild.exe -ise sandbox.ise
+-intstyle ise -dd _ngo -nt timestamp -i -p xc3s500e-fg320-5 nexys2_toplevel.ngc
+nexys2_toplevel.ngd
+
+Reading NGO file "C:/projects/cdp/xilinx/sandbox/nexys2_toplevel.ngc" ...
+Reading in constraint information from 'nexys2_toplevel.ucf'...
+Gathering constraint information from source properties...
+Done.
+
+Resolving constraint associations...
+Checking Constraint Associations...
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[0]" LOC = R14;>
+   [nexys2_toplevel.ucf(3)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[0]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[1]" LOC = R13;>
+   [nexys2_toplevel.ucf(4)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[1]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[2]" LOC = P13;>
+   [nexys2_toplevel.ucf(5)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[2]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[3]" LOC = T12;>
+   [nexys2_toplevel.ucf(6)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[3]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[4]" LOC = N11;>
+   [nexys2_toplevel.ucf(7)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[4]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[5]" LOC = R11;>
+   [nexys2_toplevel.ucf(8)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[5]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[6]" LOC = P10;>
+   [nexys2_toplevel.ucf(9)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[6]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "usb_data[7]" LOC = R10;>
+   [nexys2_toplevel.ucf(10)]: This constraint cannot be distributed from the
+   design objects matching 'NET "usb_data[7]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "buttons[0]" LOC = B18;>
+   [nexys2_toplevel.ucf(34)]: This constraint cannot be distributed from the
+   design objects matching 'NET "buttons[0]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "buttons[1]" LOC = D18;>
+   [nexys2_toplevel.ucf(35)]: This constraint cannot be distributed from the
+   design objects matching 'NET "buttons[1]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "buttons[2]" LOC = E18;>
+   [nexys2_toplevel.ucf(36)]: This constraint cannot be distributed from the
+   design objects matching 'NET "buttons[2]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "buttons[3]" LOC = H13;>
+   [nexys2_toplevel.ucf(37)]: This constraint cannot be distributed from the
+   design objects matching 'NET "buttons[3]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[0]" LOC = L1;>
+   [nexys2_toplevel.ucf(38)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[0]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[10]" LOC = M3;>
+   [nexys2_toplevel.ucf(39)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[10]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[11]" LOC = M6;>
+   [nexys2_toplevel.ucf(40)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[11]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[12]" LOC = L2;>
+   [nexys2_toplevel.ucf(41)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[12]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[13]" LOC = N4;>
+   [nexys2_toplevel.ucf(42)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[13]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[14]" LOC = R3;>
+   [nexys2_toplevel.ucf(43)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[14]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[15]" LOC = T1;>
+   [nexys2_toplevel.ucf(44)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[15]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[1]" LOC = L4;>
+   [nexys2_toplevel.ucf(45)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[1]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[2]" LOC = L6;>
+   [nexys2_toplevel.ucf(46)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[2]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[3]" LOC = M4;>
+   [nexys2_toplevel.ucf(47)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[3]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[4]" LOC = N5;>
+   [nexys2_toplevel.ucf(48)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[4]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[5]" LOC = P1;>
+   [nexys2_toplevel.ucf(49)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[5]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[6]" LOC = P2;>
+   [nexys2_toplevel.ucf(50)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[6]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[7]" LOC = R2;>
+   [nexys2_toplevel.ucf(51)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[7]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[8]" LOC = L3;>
+   [nexys2_toplevel.ucf(52)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[8]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[9]" LOC = L5;>
+   [nexys2_toplevel.ucf(53)]: This constraint cannot be distributed from the
+   design objects matching 'NET "mem_data[9]"' because those design objects do
+   not contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[0]" LOC = L15;>
+   [nexys2_toplevel.ucf(54)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[0]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[1]" LOC = K12;>
+   [nexys2_toplevel.ucf(55)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[1]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[2]" LOC = L17;>
+   [nexys2_toplevel.ucf(56)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[2]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[3]" LOC = M15;>
+   [nexys2_toplevel.ucf(57)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[3]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[4]" LOC = K13;>
+   [nexys2_toplevel.ucf(58)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[4]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[5]" LOC = L16;>
+   [nexys2_toplevel.ucf(59)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[5]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[6]" LOC = M14;>
+   [nexys2_toplevel.ucf(60)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[6]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[7]" LOC = M16;>
+   [nexys2_toplevel.ucf(61)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_a[7]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[0]" LOC = M13;>
+   [nexys2_toplevel.ucf(62)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[0]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[1]" LOC = R18;>
+   [nexys2_toplevel.ucf(63)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[1]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[2]" LOC = R15;>
+   [nexys2_toplevel.ucf(64)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[2]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[3]" LOC = T17;>
+   [nexys2_toplevel.ucf(65)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[3]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[4]" LOC = P17;>
+   [nexys2_toplevel.ucf(66)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[4]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[5]" LOC = R16;>
+   [nexys2_toplevel.ucf(67)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[5]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[6]" LOC = T18;>
+   [nexys2_toplevel.ucf(68)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[6]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_b[7]" LOC = U18;>
+   [nexys2_toplevel.ucf(69)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_b[7]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[0]" LOC = G15;>
+   [nexys2_toplevel.ucf(70)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[0]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[1]" LOC = J16;>
+   [nexys2_toplevel.ucf(71)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[1]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[2]" LOC = G13;>
+   [nexys2_toplevel.ucf(72)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[2]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[3]" LOC = H16;>
+   [nexys2_toplevel.ucf(73)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[3]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[4]" LOC = H15;>
+   [nexys2_toplevel.ucf(74)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[4]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[5]" LOC = F14;>
+   [nexys2_toplevel.ucf(75)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[5]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[6]" LOC = G16;>
+   [nexys2_toplevel.ucf(76)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[6]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_c[7]" LOC = J12;>
+   [nexys2_toplevel.ucf(77)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_c[7]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_d[0]" LOC = J13;>
+   [nexys2_toplevel.ucf(78)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_d[0]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_d[1]" LOC = M18;>
+   [nexys2_toplevel.ucf(79)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_d[1]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_d[2]" LOC = N18;>
+   [nexys2_toplevel.ucf(80)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_d[2]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "pmod_d[3]" LOC = P18;>
+   [nexys2_toplevel.ucf(81)]: This constraint cannot be distributed from the
+   design objects matching 'NET "pmod_d[3]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[0]" LOC = B4;>
+   [nexys2_toplevel.ucf(129)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[0]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[10]" LOC = C7;>
+   [nexys2_toplevel.ucf(130)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[10]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[11]" LOC = F8;>
+   [nexys2_toplevel.ucf(131)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[11]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[12]" LOC = D7;>
+   [nexys2_toplevel.ucf(132)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[12]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[13]" LOC = E8;>
+   [nexys2_toplevel.ucf(133)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[13]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[14]" LOC = E9;>
+   [nexys2_toplevel.ucf(134)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[14]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[15]" LOC = C9;>
+   [nexys2_toplevel.ucf(135)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[15]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[16]" LOC = A8;>
+   [nexys2_toplevel.ucf(136)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[16]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[17]" LOC = G9;>
+   [nexys2_toplevel.ucf(137)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[17]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[18]" LOC = F9;>
+   [nexys2_toplevel.ucf(138)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[18]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[19]" LOC = D10;>
+   [nexys2_toplevel.ucf(139)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[19]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[1]" LOC = A4;>
+   [nexys2_toplevel.ucf(140)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[1]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[20]" LOC = A10;>
+   [nexys2_toplevel.ucf(141)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[20]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[21]" LOC = B10;>
+   [nexys2_toplevel.ucf(142)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[21]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[22]" LOC = A11;>
+   [nexys2_toplevel.ucf(143)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[22]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[23]" LOC = D11;>
+   [nexys2_toplevel.ucf(144)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[23]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[24]" LOC = E10;>
+   [nexys2_toplevel.ucf(145)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[24]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[25]" LOC = B11;>
+   [nexys2_toplevel.ucf(146)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[25]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[26]" LOC = C11;>
+   [nexys2_toplevel.ucf(147)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[26]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[27]" LOC = E11;>
+   [nexys2_toplevel.ucf(148)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[27]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[28]" LOC = F11;>
+   [nexys2_toplevel.ucf(149)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[28]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[29]" LOC = E12;>
+   [nexys2_toplevel.ucf(150)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[29]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[2]" LOC = C3;>
+   [nexys2_toplevel.ucf(151)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[2]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[30]" LOC = F12;>
+   [nexys2_toplevel.ucf(152)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[30]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[31]" LOC = A13;>
+   [nexys2_toplevel.ucf(153)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[31]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[32]" LOC = B13;>
+   [nexys2_toplevel.ucf(154)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[32]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[33]" LOC = E13;>
+   [nexys2_toplevel.ucf(155)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[33]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[34]" LOC = A14;>
+   [nexys2_toplevel.ucf(156)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[34]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[35]" LOC = C14;>
+   [nexys2_toplevel.ucf(157)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[35]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[36]" LOC = D14;>
+   [nexys2_toplevel.ucf(158)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[36]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[37]" LOC = B14;>
+   [nexys2_toplevel.ucf(159)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[37]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[38]" LOC = A16;>
+   [nexys2_toplevel.ucf(160)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[38]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[39]" LOC = B16;>
+   [nexys2_toplevel.ucf(161)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[39]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[3]" LOC = C4;>
+   [nexys2_toplevel.ucf(162)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[3]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[4]" LOC = B6;>
+   [nexys2_toplevel.ucf(163)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[4]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[5]" LOC = D5;>
+   [nexys2_toplevel.ucf(164)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[5]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[6]" LOC = C5;>
+   [nexys2_toplevel.ucf(165)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[6]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[7]" LOC = F7;>
+   [nexys2_toplevel.ucf(166)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[7]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[8]" LOC = E7;>
+   [nexys2_toplevel.ucf(167)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[8]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+WARNING:ConstraintSystem:119 - Constraint <NET "fx2[9]" LOC = A6;>
+   [nexys2_toplevel.ucf(168)]: This constraint cannot be distributed from the
+   design objects matching 'NET "fx2[9]"' because those design objects do not
+   contain or drive any instances of the correct type.
+
+Done...
+Checking Partitions ...
+
+Checking expanded design ...
+WARNING:NgdBuild:470 - bidirect pad net 'ps2_data' has no legal driver
+WARNING:NgdBuild:470 - bidirect pad net 'usb_pktend' has no legal driver
+WARNING:NgdBuild:470 - bidirect pad net 'usb_ifclk' has no legal driver
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+NGDBUILD Design Results Summary:
+  Number of errors:     0
+  Number of warnings:  99
+
+Total memory usage is 79548 kilobytes
+
+Writing NGD file "nexys2_toplevel.ngd" ...
+Total REAL time to NGDBUILD completion:  3 sec
+Total CPU time to NGDBUILD completion:   3 sec
+
+Writing NGDBUILD log file "nexys2_toplevel.bld"...

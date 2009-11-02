@@ -1,0 +1,60 @@
+--------------------------------------------------------------------------------
+Release 11.1 Trace  (nt)
+Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
+
+C:\Xilinx\11.1\ISE\bin\nt\unwrapped\trce.exe -ise
+C:/projects/cdp/xilinx/sandbox/sandbox.ise -intstyle ise -v 3 -s 5 -fastpaths
+-xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr
+nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf
+
+Design file:              nexys2_toplevel.ncd
+Physical constraint file: nexys2_toplevel.pcf
+Device,package,speed:     xc3s500e,fg320,-5 (PRODUCTION 1.27 2009-03-03)
+Report level:             verbose report
+
+Environment Variable      Effect 
+--------------------      ------ 
+NONE                      No environment variables were set
+--------------------------------------------------------------------------------
+
+INFO:Timing:2698 - No timing constraints found, doing default enumeration.
+INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths 
+   option. All paths that are not constrained will be reported in the 
+   unconstrained paths section(s) of the report.
+INFO:Timing:3339 - The clock-to-out numbers in this timing report are based on 
+   a 50 Ohm transmission line loading model.  For the details of this model, 
+   and for more information on accounting for different loading conditions, 
+   please see the device datasheet.
+
+
+
+Data Sheet report:
+-----------------
+All values displayed in nanoseconds (ns)
+
+Pad to Pad
+---------------+---------------+---------+
+Source Pad     |Destination Pad|  Delay  |
+---------------+---------------+---------+
+switches<0>    |pmod_d<7>      |    4.792|
+switches<1>    |pmod_d<6>      |    4.261|
+switches<2>    |pmod_d<5>      |    4.261|
+switches<3>    |pmod_d<4>      |    4.742|
+switches<4>    |led_upper<0>   |    5.925|
+switches<5>    |led_upper<1>   |    4.847|
+switches<6>    |led_upper<2>   |    7.929|
+switches<7>    |led_upper<3>   |    6.473|
+---------------+---------------+---------+
+
+
+Analysis completed Sun Nov 01 16:13:55 2009 
+--------------------------------------------------------------------------------
+
+Trace Settings:
+-------------------------
+Trace Settings 
+
+Peak Memory Usage: 103 MB
+
+
+

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<DeviceUsageSummary rev="7">
+<DesignStatistics TimeStamp="Sun Nov 01 16:14:01 2009"><group name="NetStatistics">
+<item name="NumNets_Active" rev="7">
+<attrib name="value" value="109"/></item>
+<item name="NumNets_Gnd" rev="7">
+<attrib name="value" value="1"/></item>
+<item name="NumNets_Vcc" rev="7">
+<attrib name="value" value="1"/></item>
+<item name="NumNodesOfType_Active_DOUBLE" rev="7">
+<attrib name="value" value="15"/></item>
+<item name="NumNodesOfType_Active_DUMMYESC" rev="7">
+<attrib name="value" value="8"/></item>
+<item name="NumNodesOfType_Active_HFULLHEX" rev="7">
+<attrib name="value" value="1"/></item>
+<item name="NumNodesOfType_Active_HUNIHEX" rev="7">
+<attrib name="value" value="6"/></item>
+<item name="NumNodesOfType_Active_INPUT" rev="7">
+<attrib name="value" value="8"/></item>
+<item name="NumNodesOfType_Active_IOBOUTPUT" rev="7">
+<attrib name="value" value="8"/></item>
+<item name="NumNodesOfType_Active_OMUX" rev="7">
+<attrib name="value" value="4"/></item>
+<item name="NumNodesOfType_Active_VFULLHEX" rev="7">
+<attrib name="value" value="2"/></item>
+<item name="NumNodesOfType_Active_VUNIHEX" rev="7">
+<attrib name="value" value="10"/></item>
+<item name="NumNodesOfType_Gnd_DOUBLE" rev="7">
+<attrib name="value" value="2"/></item>
+<item name="NumNodesOfType_Gnd_INPUT" rev="7">
+<attrib name="value" value="39"/></item>
+<item name="NumNodesOfType_Gnd_OMUX" rev="7">
+<attrib name="value" value="38"/></item>
+<item name="NumNodesOfType_Gnd_OUTPUT" rev="7">
+<attrib name="value" value="25"/></item>
+<item name="NumNodesOfType_Vcc_INPUT" rev="7">
+<attrib name="value" value="24"/></item>
+<item name="NumNodesOfType_Vcc_VCCOUT" rev="7">
+<attrib name="value" value="20"/></item>
+</group>
+<group name="MiscellaneousStatistics">
+<item name="AGG_BONDED_IO" rev="6">
+<attrib name="value" value="90"/></item>
+<item name="AGG_IO" rev="6">
+<attrib name="value" value="90"/></item>
+<item name="NUM_BONDED_IBUF" rev="6">
+<attrib name="value" value="19"/></item>
+<item name="NUM_BONDED_IOB" rev="6">
+<attrib name="value" value="71"/></item>
+</group>
+<group name="SiteStatistics">
+<item name="IBUF-DIFFM" rev="7">
+<attrib name="value" value="3"/></item>
+<item name="IBUF-DIFFMI" rev="7">
+<attrib name="value" value="2"/></item>
+<item name="IBUF-DIFFSI" rev="7">
+<attrib name="value" value="1"/></item>
+<item name="IBUF-IOB" rev="7">
+<attrib name="value" value="1"/></item>
+<item name="IOB-DIFFM" rev="7">
+<attrib name="value" value="36"/></item>
+<item name="IOB-DIFFS" rev="7">
+<attrib name="value" value="28"/></item>
+</group>
+</DesignStatistics>
+<DeviceUsage TimeStamp="Sun Nov 01 16:14:01 2009"><group name="SiteSummary">
+<item name="IBUF" rev="7">
+<attrib name="total" value="1000000"/><attrib name="used" value="19"/></item>
+<item name="IBUF_INBUF" rev="7">
+<attrib name="total" value="1000000"/><attrib name="used" value="19"/></item>
+<item name="IBUF_PAD" rev="7">
+<attrib name="total" value="1000000"/><attrib name="used" value="19"/></item>
+<item name="IOB" rev="7">
+<attrib name="total" value="1000000"/><attrib name="used" value="71"/></item>
+<item name="IOB_OUTBUF" rev="7">
+<attrib name="total" value="1000000"/><attrib name="used" value="71"/></item>
+<item name="IOB_PAD" rev="7">
+<attrib name="total" value="1000000"/><attrib name="used" value="71"/></item>
+</group>
+</DeviceUsage>
+<ReportConfigData TimeStamp="Sun Nov 01 16:14:01 2009"><group name="IBUF_PAD">
+<item name="IOATTRBOX" rev="7">
+<attrib name="LVCMOS25" value="19"/></item>
+</group>
+<group name="IOB_OUTBUF">
+<item name="IN" rev="7">
+<attrib name="IN_INV" value="0"/><attrib name="IN" value="71"/></item>
+</group>
+<group name="IOB_PAD">
+<item name="DRIVEATTRBOX" rev="7">
+<attrib name="12" value="71"/></item>
+<item name="IOATTRBOX" rev="7">
+<attrib name="LVCMOS25" value="71"/></item>
+<item name="SLEW" rev="7">
+<attrib name="SLOW" value="71"/></item>
+</group>
+<group name="IOB">
+<item name="O1" rev="7">
+<attrib name="O1_INV" value="0"/><attrib name="O1" value="71"/></item>
+</group>
+</ReportConfigData>
+<ReportPinData TimeStamp="Sun Nov 01 16:14:01 2009"><group name="IBUF_PAD">
+<item name="PAD" rev="7">
+<attrib name="value" value="19"/></item>
+</group>
+<group name="IBUF_INBUF">
+<item name="IN" rev="7">
+<attrib name="value" value="19"/></item>
+<item name="OUT" rev="7">
+<attrib name="value" value="19"/></item>
+</group>
+<group name="IOB_OUTBUF">
+<item name="IN" rev="7">
+<attrib name="value" value="71"/></item>
+<item name="OUT" rev="7">
+<attrib name="value" value="71"/></item>
+</group>
+<group name="IBUF">
+<item name="I" rev="7">
+<attrib name="value" value="19"/></item>
+<item name="PAD" rev="7">
+<attrib name="value" value="19"/></item>
+</group>
+<group name="IOB_PAD">
+<item name="PAD" rev="7">
+<attrib name="value" value="71"/></item>
+</group>
+<group name="IOB">
+<item name="O1" rev="7">
+<attrib name="value" value="71"/></item>
+<item name="PAD" rev="7">
+<attrib name="value" value="71"/></item>
+</group>
+</ReportPinData>
+<CmdHistory>
+</CmdHistory>
+</DeviceUsageSummary>

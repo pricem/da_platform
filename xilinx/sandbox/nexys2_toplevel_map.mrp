@@ -1,0 +1,264 @@
+Release 11.1 Map L.33 (nt)
+Xilinx Mapping Report File for Design 'nexys2_toplevel'
+
+Design Information
+------------------
+Command Line   : map -ise sandbox.ise -intstyle ise -p xc3s500e-fg320-5 -cm area
+-ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd
+nexys2_toplevel.pcf 
+Target Device  : xc3s500e
+Target Package : fg320
+Target Speed   : -5
+Mapper Version : spartan3e -- $Revision: 1.51 $
+Mapped Date    : Sun Nov 01 16:13:39 2009
+
+Design Summary
+--------------
+Number of errors:      0
+Number of warnings:   13
+Logic Utilization:
+Logic Distribution:
+    Number of Slices containing only related logic:       0 out of       0   0%
+    Number of Slices containing unrelated logic:          0 out of       0   0%
+      *See NOTES below for an explanation of the effects of unrelated logic.
+  Number of bonded IOBs:                 90 out of     232   38%
+
+Average Fanout of Non-Clock Nets:                0.42
+
+Peak Memory Usage:  164 MB
+Total REAL time to MAP completion:  2 secs 
+Total CPU time to MAP completion:   2 secs 
+
+NOTES:
+
+   Related logic is defined as being logic that shares connectivity - e.g. two
+   LUTs are "related" if they share common inputs.  When assembling slices,
+   Map gives priority to combine logic that is related.  Doing so results in
+   the best timing performance.
+
+   Unrelated logic shares no connectivity.  Map will only begin packing
+   unrelated logic into a slice once 99% of the slices are occupied through
+   related logic packing.
+
+   Note that once logic distribution reaches the 99% level through related
+   logic packing, this does not mean the device is completely utilized.
+   Unrelated logic packing will then begin, continuing until all usable LUTs
+   and FFs are occupied.  Depending on your timing budget, increased levels of
+   unrelated logic packing may adversely affect the overall timing performance
+   of your design.
+
+Table of Contents
+-----------------
+Section 1 - Errors
+Section 2 - Warnings
+Section 3 - Informational
+Section 4 - Removed Logic Summary
+Section 5 - Removed Logic
+Section 6 - IOB Properties
+Section 7 - RPMs
+Section 8 - Guide Report
+Section 9 - Area Group and Partition Summary
+Section 10 - Modular Design Summary
+Section 11 - Timing Report
+Section 12 - Configuration String Information
+Section 13 - Control Set Information
+Section 14 - Utilization by Hierarchy
+
+Section 1 - Errors
+------------------
+
+Section 2 - Warnings
+--------------------
+WARNING:LIT:243 - Logical network pmod_d<3> has no load.
+WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 106
+   more times for the following (max. 5 shown):
+   mem_data<12>,
+   pmod_a<1>,
+   usb_data<5>,
+   fx2<29>,
+   fx2<34>
+   To see the details of these warning messages, please use the -detail switch.
+WARNING:PhysDesignRules:367 - The signal <usb_flaga_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagb_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_ifclk_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk0_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+
+Section 3 - Informational
+-------------------------
+INFO:MapLib:562 - No environment variables are currently set.
+INFO:LIT:244 - All of the single ended outputs in this design are using slew
+   rate limited output drivers. The delay on speed critical single ended outputs
+   can be dramatically reduced by designating them as fast outputs.
+
+Section 4 - Removed Logic Summary
+---------------------------------
+   2 block(s) optimized away
+
+Section 5 - Removed Logic
+-------------------------
+
+Optimized Block(s):
+TYPE 		BLOCK
+GND 		XST_GND
+VCC 		XST_VCC
+
+Section 6 - IOB Properties
+--------------------------
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------+
+| IOB Name                           | Type             | Direction | IO Standard          | Diff  | Drive    | Slew | Reg (s)      | Resistor | IOB      |
+|                                    |                  |           |                      | Term  | Strength | Rate |              |          | Delay    |
++---------------------------------------------------------------------------------------------------------------------------------------------------------+
+| clk0                               | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| clk1                               | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| flash_ce                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| flash_rp                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| flash_sts                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| led_7seg_an<0>                     | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_an<1>                     | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_an<2>                     | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_an<3>                     | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<0>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<1>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<2>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<3>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<4>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<5>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<6>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_7seg_cat<7>                    | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_upper<0>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_upper<1>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_upper<2>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| led_upper<3>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<1>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<2>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<3>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<4>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<5>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<6>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<7>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<8>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<9>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<10>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<11>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<12>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<13>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<14>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<15>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<16>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<17>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<18>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<19>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<20>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<21>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<22>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_addr<23>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_adv                            | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_ce                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_clk                            | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_cre                            | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_lb                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_oe                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_ub                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| mem_wait                           | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| mem_we                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_d<4>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_d<5>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_d<6>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_d<7>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| ps2_clk                            | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| ps2_data                           | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| serial_in                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| serial_out                         | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| switches<0>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<1>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<2>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<3>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<4>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<5>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<6>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| switches<7>                        | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_addr<0>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_addr<1>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_flaga                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_flagb                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_flagc                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_ifclk                          | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_pktend                         | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
+| usb_slcs                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_sloe                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_slrd                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| usb_slwr                           | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_blue<0>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_blue<1>                        | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_green<0>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_green<1>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_green<2>                       | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_hsync                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_red<0>                         | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_red<1>                         | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_red<2>                         | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| vga_vsync                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
++---------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+Section 7 - RPMs
+----------------
+
+Section 8 - Guide Report
+------------------------
+Guide not run on this design.
+
+Section 9 - Area Group and Partition Summary
+--------------------------------------------
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+Area Group Information
+----------------------
+
+  No area groups were found in this design.
+
+----------------------
+
+Section 10 - Modular Design Summary
+-----------------------------------
+Modular Design not used for this design.
+
+Section 11 - Timing Report
+--------------------------
+This design was not run using timing mode.
+
+Section 12 - Configuration String Details
+-----------------------------------------
+Use the "-detail" map option to print out Configuration Strings
+
+Section 13 - Control Set Information
+------------------------------------
+No control set information for this architecture.
+
+Section 14 - Utilization by Hierarchy
+-------------------------------------
+Use the "-detail" map option to print out the Utilization by Hierarchy section.

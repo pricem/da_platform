@@ -1,0 +1,24 @@
+WARNING:PhysDesignRules:367 - The signal <usb_flaga_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagb_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_ifclk_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk0_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+DRC detected 0 errors and 11 warnings.  Please see the previously displayed
+individual error or warning messages for more details.
