@@ -50,7 +50,9 @@ entity usb_top is
     U_FLAGC  : in  STD_LOGIC;
     U_IFCLK  : in  STD_LOGIC;
     --
-    LED       : out STD_LOGIC_VECTOR(7 downto 0)
+    LED       : out STD_LOGIC_VECTOR(7 downto 0);
+    DATA     : out STD_LOGIC_VECTOR(7 downto 0);
+    ACTIVE   : out STD_LOGIC
   );
 end usb_top;
 
@@ -187,6 +189,11 @@ begin
   U_SLOE   <= U_SLOE_i;
   U_PKTEND <= U_PKTEND_i;
   U_INT0   <= U_INT0_i;
+  
+  -- Added by Michael Price
+  DATA <= fifo0_outbyte;
+  ACTIVE <= fifo0_outflag;
+  
   process(slcs_enable) begin
     if (slcs_enable='1') then
       U_SLCS   <= U_SLCS_i;

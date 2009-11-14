@@ -10,34 +10,34 @@ Target Device  : xc3s500e
 Target Package : fg320
 Target Speed   : -5
 Mapper Version : spartan3e -- $Revision: 1.51 $
-Mapped Date    : Sun Nov  1 21:49:00 2009
+Mapped Date    : Sat Nov 14 15:11:54 2009
 
 Design Summary
 --------------
 Number of errors:      0
 Number of warnings:    8
 Logic Utilization:
-  Number of Slice Flip Flops:            72 out of   9,312    1%
-  Number of 4 input LUTs:                83 out of   9,312    1%
+  Number of Slice Flip Flops:           163 out of   9,312    1%
+  Number of 4 input LUTs:               133 out of   9,312    1%
 Logic Distribution:
-  Number of occupied Slices:             76 out of   4,656    1%
-    Number of Slices containing only related logic:      76 out of      76 100%
-    Number of Slices containing unrelated logic:          0 out of      76   0%
+  Number of occupied Slices:            129 out of   4,656    2%
+    Number of Slices containing only related logic:     129 out of     129 100%
+    Number of Slices containing unrelated logic:          0 out of     129   0%
       *See NOTES below for an explanation of the effects of unrelated logic.
-  Total Number of 4 input LUTs:         136 out of   9,312    1%
-    Number used as logic:                83
-    Number used as a route-thru:         53
+  Total Number of 4 input LUTs:         187 out of   9,312    2%
+    Number used as logic:               133
+    Number used as a route-thru:         54
 
   The Slice Logic Distribution report is not meaningful if the design is
   over-mapped for a non-slice resource or if Placement fails.
 
-  Number of bonded IOBs:                103 out of     232   44%
+  Number of bonded IOBs:                107 out of     232   46%
     IOB Flip Flops:                      16
-  Number of BUFGMUXs:                     3 out of      24   12%
+  Number of BUFGMUXs:                     4 out of      24   16%
 
-Average Fanout of Non-Clock Nets:                2.42
+Average Fanout of Non-Clock Nets:                2.59
 
-Peak Memory Usage:  176 MB
+Peak Memory Usage:  177 MB
 Total REAL time to MAP completion:  2 secs 
 Total CPU time to MAP completion:   2 secs 
 
@@ -82,27 +82,27 @@ Section 1 - Errors
 Section 2 - Warnings
 --------------------
 WARNING:LIT:243 - Logical network pmod_d<3> has no load.
-WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 88
+WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 84
    more times for the following (max. 5 shown):
    mem_data<12>,
-   pmod_a<1>,
    fx2<34>,
    fx2<29>,
-   pmod_a<2>
+   mem_data<13>,
+   fx2<35>
    To see the details of these warning messages, please use the -detail switch.
 WARNING:Pack:266 - The function generator usb/LED_and00001 failed to merge with
    F5 multiplexer usb/LED_mux0012<7>13_f5.  There is more than one F5MUX.  The
    design will exhibit suboptimal timing.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
 
 Section 3 - Informational
 -------------------------
@@ -301,6 +301,10 @@ Section 6 - IOB Properties
 | mem_ub                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | mem_wait                           | IBUF             | INPUT     | LVCMOS25             |       |          |      |              |          | 0 / 0    |
 | mem_we                             | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_a<0>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_a<1>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_a<2>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
+| pmod_a<3>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW |              |          | 0 / 0    |
 | pmod_d<4>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
 | pmod_d<5>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |
 | pmod_d<6>                          | IOB              | OUTPUT    | LVCMOS25             |       | 12       | SLOW | OFF1         |          | 0 / 0    |

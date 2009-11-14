@@ -6,7 +6,7 @@ Loading device for application Rf_Device from file '3s500e.nph' in environment
 speed -5
 Opened constraints file nexys2_toplevel.pcf.
 
-Sun Nov  1 21:49:18 2009
+Sat Nov 14 15:12:25 2009
 
 /opt/Xilinx/11.1/ISE/bin/lin/unwrapped/bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:1 -g ProgPin:PullUp -g DonePin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutdown:Disable -g StartUpClk:JtagClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Security:None -g DonePipe:No -g DriveDone:No nexys2_toplevel.ncd 
 
@@ -86,16 +86,16 @@ Summary of Bitgen Options:
  ** The specified setting matches the default setting.
 
 Running DRC.
+WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
 DRC detected 0 errors and 5 warnings.  Please see the previously displayed
 individual error or warning messages for more details.
 Creating bit map...

@@ -130,18 +130,18 @@ begin
       when "00001" =>    -- Start the FIFO 0 read cycle.
         faddr_i <= "00";
         sloe_i  <= '1';
-	if(flagc = '0') then
+        if(flagc = '0') then
           slrd_i  <= '1';
-	else
+        else
           slrd_i  <= '0';
-	end if;
+        end if;
         slwr_i  <= '0';
       when "00010" =>    -- Complete the FIFO 0 read cycle.
         if(slrd_i = '1') then -- Reading.
-	  fifo0_outbyte <= fdata_in;             -- Capture the data.
-	  fifo0_outcount_i <= fifo0_outcount_i + 1; -- Increment the byte count.
-	  fifo0_outflag <= '1';
-	end if;
+          fifo0_outbyte <= fdata_in;             -- Capture the data.
+          fifo0_outcount_i <= fifo0_outcount_i + 1; -- Increment the byte count.
+          fifo0_outflag <= '1';
+        end if;
         faddr_i <= "00";
         sloe_i  <= '0';
         slrd_i  <= '0'; -- Read cycle done.

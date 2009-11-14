@@ -90,6 +90,16 @@ assign reset = buttons[0];
 //  Logic module instances
 //	sandbox1 sandbox(led, switches);
 
+// Extra signals for sample-by-sample DAC
+wire [7:0] usb_fifo0_out;
+wire usb_fifo0_active;
+reg [7:0] data [3:0];           //  Data for current DAC samples
+reg [1:0] data_index;           //  Counter for current byte (0 to 3)
+reg [11:0] dac_data1;           //  DAC left channel
+reg [11:0] dac_data2;           //  DAC right channel
+reg dac_start;                  //  DAC control lines
+wire dac_done;
+
 //  USB module from Joseph Rothweiler
 usb_top usb (
     .CLK_50M(clk0),
@@ -107,8 +117,48 @@ usb_top usb (
     .U_FLAGB(usb_flagb),
     .U_FLAGC(usb_flagc),
     .U_IFCLK(usb_ifclk),
-    .LED(led)
+    .LED(led),
+    .DATA(usb_fifo0_out),
+    .ACTIVE(usb_fifo0_active)
   );
+  
+
+// Instantiate DAC
+DA2RefComp dac_interface(
+    .CLK(clk0),
+    .RST(reset),
+    .D1(pmod_a[1]),
+    .D2(pmod_a[2]),
+    .CLK_OUT(pmod_a[3]),
+    .nSYNC(pmod_a[0]),
+    .DATA1(dac_data1),
+    .DATA2(dac_data2),
+    .START(dac_start),
+    .DONE(dac_done)
+    );
+
+always @(posedge clk0) begin
+
+    if (reset)
+        //  Handle resets
+        data_index <= 2'b0;
+    else
+        //  Take data when available
+        if (usb_fifo0_active) begin
+            data[data_index] <= usb_fifo0_out;
+            data_index <= data_index + 1;
+        end
+        
+        //  Write to DAC after 4 bytes were read
+        if ((data_index == 0) && (dac_done == 1)) begin
+            dac_data1 <= {data[1], data[0][3:0]};
+            dac_data2 <= {data[3], data[2][3:0]};
+            dac_start <= 1;           
+            end
+        else
+            dac_start <= 0;
+end
+
 
 //  Assign unused ports.  (Replace with appropriate interfaces if needed.)
 /* Not commented since we have a usbtop module

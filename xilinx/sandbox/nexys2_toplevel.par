@@ -1,7 +1,7 @@
 Release 11.1 par L.33 (lin)
 Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
 
-price-thingamajig::  Sun Nov 01 21:49:05 2009
+price-thingamajig::  Sat Nov 14 15:11:59 2009
 
 par -ise sandbox.ise -w -intstyle ise -ol std -t 1 nexys2_toplevel_map.ncd
 nexys2_toplevel.ncd nexys2_toplevel.pcf 
@@ -25,7 +25,7 @@ Device speed data version:  "PRODUCTION 1.27 2009-03-03".
 
 Design Summary Report:
 
- Number of External IOBs                         103 out of 232    44%
+ Number of External IOBs                         107 out of 232    46%
 
    Number of External Input IOBs                 30
 
@@ -33,17 +33,17 @@ Design Summary Report:
         Number of LOCed External Input IBUFs     30 out of 30    100%
 
 
-   Number of External Output IOBs                73
+   Number of External Output IOBs                77
 
-      Number of External Output IOBs             73
-        Number of LOCed External Output IOBs     73 out of 73    100%
+      Number of External Output IOBs             77
+        Number of LOCed External Output IOBs     77 out of 77    100%
 
 
    Number of External Bidir IOBs                  0
 
 
-   Number of BUFGMUXs                        3 out of 24     12%
-   Number of Slices                         76 out of 4656    1%
+   Number of BUFGMUXs                        4 out of 24     16%
+   Number of Slices                        129 out of 4656    2%
       Number of SLICEMs                      0 out of 2328    0%
 
 
@@ -56,24 +56,24 @@ Router effort level (-rl):    Standard
 Starting initial Timing Analysis.  REAL time: 1 secs 
 Finished initial Timing Analysis.  REAL time: 1 secs 
 
+WARNING:Par:288 - The signal ps2_data_IBUF has no load.  PAR will not attempt to route this signal.
+WARNING:Par:288 - The signal clk1_IBUF has no load.  PAR will not attempt to route this signal.
 WARNING:Par:288 - The signal flash_sts_IBUF has no load.  PAR will not attempt to route this signal.
 WARNING:Par:288 - The signal serial_in_IBUF has no load.  PAR will not attempt to route this signal.
 WARNING:Par:288 - The signal mem_wait_IBUF has no load.  PAR will not attempt to route this signal.
-WARNING:Par:288 - The signal ps2_data_IBUF has no load.  PAR will not attempt to route this signal.
-WARNING:Par:288 - The signal clk1_IBUF has no load.  PAR will not attempt to route this signal.
 
 Starting Placer
 Total REAL time at the beginning of Placer: 1 secs 
 Total CPU  time at the beginning of Placer: 1 secs 
 
 Phase 1.1  Initial Placement Analysis
-Phase 1.1  Initial Placement Analysis (Checksum:7fef07b6) REAL time: 2 secs 
+Phase 1.1  Initial Placement Analysis (Checksum:c754a865) REAL time: 2 secs 
 
 Phase 2.7  Design Feasibility Check
-Phase 2.7  Design Feasibility Check (Checksum:7fef07b6) REAL time: 2 secs 
+Phase 2.7  Design Feasibility Check (Checksum:c754a865) REAL time: 2 secs 
 
 Phase 3.31  Local Placement Optimization
-Phase 3.31  Local Placement Optimization (Checksum:7fef07b6) REAL time: 2 secs 
+Phase 3.31  Local Placement Optimization (Checksum:c754a865) REAL time: 2 secs 
 
 Phase 4.2  Initial Clock and IO Placement
 
@@ -85,26 +85,26 @@ WARNING:Place:1019 - A clock IOB / clock component pair have been found that are
    allowing your design to continue. This constraint disables all clock placer rules related to the specified COMP.PIN.
    The use of this override is highly discouraged as it may lead to very poor timing results. It is recommended that
    this error condition be corrected in the design.
-Phase 4.2  Initial Clock and IO Placement (Checksum:39aec898) REAL time: 4 secs 
+Phase 4.2  Initial Clock and IO Placement (Checksum:f16c8f43) REAL time: 4 secs 
 
 Phase 5.30  Global Clock Region Assignment
-Phase 5.30  Global Clock Region Assignment (Checksum:39aec898) REAL time: 4 secs 
+Phase 5.30  Global Clock Region Assignment (Checksum:f16c8f43) REAL time: 4 secs 
 
 Phase 6.8  Global Placement
-..
-..
-Phase 6.8  Global Placement (Checksum:ae9e59bd) REAL time: 4 secs 
+..........
+...
+Phase 6.8  Global Placement (Checksum:84c8f375) REAL time: 4 secs 
 
 Phase 7.5  Local Placement Optimization
-Phase 7.5  Local Placement Optimization (Checksum:ae9e59bd) REAL time: 4 secs 
+Phase 7.5  Local Placement Optimization (Checksum:84c8f375) REAL time: 4 secs 
 
 Phase 8.18  Placement Optimization
-Phase 8.18  Placement Optimization (Checksum:bce7dfc1) REAL time: 4 secs 
+Phase 8.18  Placement Optimization (Checksum:fef4f20c) REAL time: 5 secs 
 
 Phase 9.5  Local Placement Optimization
-Phase 9.5  Local Placement Optimization (Checksum:bce7dfc1) REAL time: 4 secs 
+Phase 9.5  Local Placement Optimization (Checksum:fef4f20c) REAL time: 5 secs 
 
-Total REAL time to Placer completion: 4 secs 
+Total REAL time to Placer completion: 5 secs 
 Total CPU  time to Placer completion: 4 secs 
 Writing design to file nexys2_toplevel.ncd
 
@@ -113,30 +113,30 @@ Writing design to file nexys2_toplevel.ncd
 Starting Router
 
 
-Phase  1  : 570 unrouted;      REAL time: 6 secs 
+Phase  1  : 872 unrouted;      REAL time: 7 secs 
 
-Phase  2  : 483 unrouted;      REAL time: 6 secs 
+Phase  2  : 734 unrouted;      REAL time: 7 secs 
 
-Phase  3  : 69 unrouted;      REAL time: 6 secs 
+Phase  3  : 143 unrouted;      REAL time: 7 secs 
 
-Phase  4  : 70 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase  4  : 156 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
-Phase  5  : 0 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase  5  : 0 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
 Updating file: nexys2_toplevel.ncd with current fully routed design.
 
-Phase  6  : 0 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase  6  : 0 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
-Phase  7  : 0 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase  7  : 0 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
-Phase  8  : 0 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase  8  : 0 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
-Phase  9  : 0 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase  9  : 0 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
-Phase 10  : 0 unrouted; (Par is working to improve performance)     REAL time: 7 secs 
+Phase 10  : 0 unrouted; (Par is working to improve performance)     REAL time: 8 secs 
 
-Total REAL time to Router completion: 7 secs 
-Total CPU time to Router completion: 7 secs 
+Total REAL time to Router completion: 8 secs 
+Total CPU time to Router completion: 8 secs 
 
 Partition Implementation Status
 -------------------------------
@@ -154,12 +154,15 @@ Generating Clock Report
 +---------------------+--------------+------+------+------------+-------------+
 |        Clock Net    |   Resource   |Locked|Fanout|Net Skew(ns)|Max Delay(ns)|
 +---------------------+--------------+------+------+------------+-------------+
-|          clk0_BUFGP | BUFGMUX_X2Y11| No   |    8 |  0.007     |  0.168      |
+|     usb_ifclk_BUFGP |  BUFGMUX_X2Y0| No   |   16 |  0.037     |  0.152      |
 +---------------------+--------------+------+------+------------+-------------+
 |usb/usb_fifos0/ifclk |              |      |      |            |             |
-|             _div<2> | BUFGMUX_X1Y11| No   |   33 |  0.050     |  0.160      |
+|             _div<2> | BUFGMUX_X2Y10| No   |   34 |  0.045     |  0.160      |
 +---------------------+--------------+------+------+------------+-------------+
-|     usb_ifclk_BUFGP |  BUFGMUX_X2Y0| No   |   16 |  0.041     |  0.153      |
+|          clk0_BUFGP | BUFGMUX_X2Y11| No   |   35 |  0.064     |  0.168      |
++---------------------+--------------+------+------+------------+-------------+
+|dac_interface/clk_co |              |      |      |            |             |
+|            unter<0> | BUFGMUX_X1Y10| No   |   20 |  0.014     |  0.118      |
 +---------------------+--------------+------+------+------------+-------------+
 
 * Net Skew is the difference between the minimum and maximum routing
@@ -176,11 +179,17 @@ Asterisk (*) preceding a constraint indicates it was not met.
   Constraint                                |    Check    | Worst Case |  Best Case | Timing |   Timing   
                                             |             |    Slack   | Achievable | Errors |    Score   
 ----------------------------------------------------------------------------------------------------------
-  Autotimespec constraint for clock net usb | SETUP       |         N/A|     5.859ns|     N/A|           0
-  /usb_fifos0/ifclk_div<2>                  | HOLD        |     1.118ns|            |       0|           0
-------------------------------------------------------------------------------------------------------
-  Autotimespec constraint for clock net usb | SETUP       |         N/A|     3.965ns|     N/A|           0
+  Autotimespec constraint for clock net usb | SETUP       |         N/A|     3.978ns|     N/A|           0
   _ifclk_BUFGP                              | HOLD        |     1.360ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  Autotimespec constraint for clock net usb | SETUP       |         N/A|     7.087ns|     N/A|           0
+  /usb_fifos0/ifclk_div<2>                  | HOLD        |     1.136ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  Autotimespec constraint for clock net clk | SETUP       |         N/A|     3.458ns|     N/A|           0
+  0_BUFGP                                   | HOLD        |     0.808ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  Autotimespec constraint for clock net dac | SETUP       |         N/A|     3.144ns|     N/A|           0
+  _interface/clk_counter<0>                 | HOLD        |     0.954ns|            |       0|           0
 ------------------------------------------------------------------------------------------------------
 
 
@@ -195,10 +204,10 @@ All signals are completely routed.
 
 WARNING:Par:283 - There are 5 loadless signals in this design. This design will cause Bitgen to issue DRC warnings.
 
-Total REAL time to PAR completion: 8 secs 
-Total CPU time to PAR completion: 7 secs 
+Total REAL time to PAR completion: 9 secs 
+Total CPU time to PAR completion: 9 secs 
 
-Peak Memory Usage:  141 MB
+Peak Memory Usage:  142 MB
 
 Placement: Completed - No errors found.
 Routing: Completed - No errors found.

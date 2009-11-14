@@ -5,27 +5,19 @@
     The structure and the elements are likely to change over the next few releases.
     This means code written to parse this file will need to be revisited each subsequent release.-->
 
-  <application stringID="NgdBuild" timeStamp="Sun Nov  1 21:48:56 2009">
+  <application stringID="NgdBuild" timeStamp="Sat Nov 14 15:11:49 2009">
     <section stringID="User_Env">
       <table stringID="User_EnvVar">
         <column stringID="variable"/>
         <column stringID="value"/>
         <row stringID="row" value="0">
-          <item stringID="variable" value="XILINX_DSP"/>
-          <item stringID="value" value="/opt/Xilinx/11.1/DSP_Tools/lin"/>
-        </row>
-        <row stringID="row" value="1">
-          <item stringID="variable" value="XILINX_PLANAHEAD"/>
-          <item stringID="value" value="/opt/Xilinx/11.1/PlanAhead"/>
-        </row>
-        <row stringID="row" value="2">
           <item stringID="variable" value="XILINX"/>
           <item stringID="value" value="/opt/Xilinx/11.1/ISE"/>
         </row>
       </table>
       <item stringID="User_EnvOs" value="OS Information">
         <item stringID="User_EnvOsname" value="Ubuntu"/>
-        <item stringID="User_EnvOsrelease" value="Ubuntu 9.04"/>
+        <item stringID="User_EnvOsrelease" value="Ubuntu 9.10"/>
       </item>
       <item stringID="User_EnvHost" value="price-thingamajig"/>
       <table stringID="User_EnvCpu">
@@ -33,7 +25,7 @@
         <column stringID="speed"/>
         <row stringID="row" value="0">
           <item stringID="arch" value="Intel(R) Core(TM)2 Duo CPU     E7400  @ 2.80GHz"/>
-          <item stringID="speed" value="2800.000 MHz"/>
+          <item stringID="speed" value="1600.000 MHz"/>
         </row>
         <row stringID="row" value="1">
           <item stringID="arch" value="Intel(R) Core(TM)2 Duo CPU     E7400  @ 2.80GHz"/>
@@ -45,7 +37,7 @@
       <section stringID="NGDBUILD_DESIGN_SUMMARY">
         <item dataType="int" stringID="NGDBUILD_NUM_ERRORS" value="0"/>
         <item dataType="int" stringID="NGDBUILD_FILTERED_WARNINGS" value="0"/>
-        <item dataType="int" stringID="NGDBUILD_NUM_WARNINGS" value="85"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_WARNINGS" value="81"/>
         <item dataType="int" stringID="NGDBUILD_FILTERED_INFOS" value="0"/>
         <item dataType="int" stringID="NGDBUILD_NUM_INFOS" value="0"/>
       </section>

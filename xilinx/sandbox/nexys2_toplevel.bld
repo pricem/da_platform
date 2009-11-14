@@ -93,26 +93,6 @@ WARNING:ConstraintSystem:119 - Constraint <NET "mem_data[9]" LOC = L5;>
    design objects matching 'NET "mem_data[9]"' because those design objects do
    not contain or drive any instances of the correct type.
 
-WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[0]" LOC = L15;>
-   [nexys2_toplevel.ucf(54)]: This constraint cannot be distributed from the
-   design objects matching 'NET "pmod_a[0]"' because those design objects do not
-   contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[1]" LOC = K12;>
-   [nexys2_toplevel.ucf(55)]: This constraint cannot be distributed from the
-   design objects matching 'NET "pmod_a[1]"' because those design objects do not
-   contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[2]" LOC = L17;>
-   [nexys2_toplevel.ucf(56)]: This constraint cannot be distributed from the
-   design objects matching 'NET "pmod_a[2]"' because those design objects do not
-   contain or drive any instances of the correct type.
-
-WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[3]" LOC = M15;>
-   [nexys2_toplevel.ucf(57)]: This constraint cannot be distributed from the
-   design objects matching 'NET "pmod_a[3]"' because those design objects do not
-   contain or drive any instances of the correct type.
-
 WARNING:ConstraintSystem:119 - Constraint <NET "pmod_a[4]" LOC = K13;>
    [nexys2_toplevel.ucf(58)]: This constraint cannot be distributed from the
    design objects matching 'NET "pmod_a[4]"' because those design objects do not
@@ -448,9 +428,9 @@ Partition Implementation Status
 
 NGDBUILD Design Results Summary:
   Number of errors:     0
-  Number of warnings:  85
+  Number of warnings:  81
 
-Total memory usage is 78036 kilobytes
+Total memory usage is 78136 kilobytes
 
 Writing NGD file "nexys2_toplevel.ngd" ...
 Total REAL time to NGDBUILD completion:  2 sec
