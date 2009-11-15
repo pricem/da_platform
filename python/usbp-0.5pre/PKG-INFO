@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: usbp
+Version: 0.5pre
+Summary: Collection of packages for USBP
+Home-page: http://www.myhdl.org/doku.php/users:cfelton:projects:usbp
+Author: Christopher L. Felton
+Author-email: cfelton@ieee.org
+License: MIT
+Description: UNKNOWN
+Keywords: Python HDL MyHDL USB FPGA
+Platform: Any

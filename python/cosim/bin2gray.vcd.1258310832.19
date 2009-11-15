@@ -1,0 +1,31 @@
+$date
+    Sun Nov 15 13:47:12 2009
+$end
+$version
+    MyHDL 0.6
+$end
+$timescale
+    1ns
+$end
+
+$scope module bin2gray $end
+$var real 1 ! B $end
+$var real 1 " G $end
+$upscope $end
+
+$enddefinitions $end
+$dumpvars
+s-0x1 !
+s0x0 "
+$end
+s0x0 !
+#10
+s0x1 !
+s0x1L "
+#20
+s0x2 !
+s0x3L "
+#30
+s0x3 !
+s0x2L "
+#40
