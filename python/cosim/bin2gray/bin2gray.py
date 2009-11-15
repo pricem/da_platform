@@ -18,4 +18,5 @@ def bin2gray(B, G, width):
 cmd = "iverilog -o bin2gray -Dwidth=%s bin2gray.v dut_bin2gray.v"
 def bin2gray_verilog(B, G, width):
     os.system(cmd % width)
-    return Cosimulation("vvp -m ./myhdl.vpi bin2gray", B=B, G=G)
+    return Cosimulation("vvp -m ../myhdl.vpi bin2gray", B=B, G=G)
+
