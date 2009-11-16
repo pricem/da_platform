@@ -13,8 +13,10 @@ module bram_2k_8 (clk, we, a, dpra, di, spo, dpo);
     output [7:0] dpo;
     reg [7:0] ram[2047:0];
     always @(posedge clk) begin
-        if (we)
+        if (we) begin
+            $display("Wrote %c to address %d.", di, a);
             ram[a] <= di;
+        end
     end
     assign spo = ram[a];
     assign dpo = ram[dpra];
