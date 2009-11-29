@@ -83,18 +83,26 @@ module memory_arbitrator(
     reg read_write [7:0];
     reg [31:0] write_fifo_byte_count [7:0];
     reg [31:0] read_fifo_byte_count [7:0];
-    for (i = 0; i < 8; i++) begin
-        assign write_in_addr[i] = write_in_addrs[((i + 1) * 11 - 1):(i * 11)];
-        assign write_out_addr[i] = write_out_addrs[((i + 1) * 11 - 1):(i * 11)];
-        assign write_read_data[i] = write_read_datas[((i + 1) * 8 - 1):(i * 8)];
-        assign read_in_addr[i] = read_in_addrs[((i + 1) * 11 - 1):(i * 11)];
-        assign read_out_addr[i] = read_out_addrs[((i + 1) * 11 - 1):(i * 11)];
-        assign read_write_datas[((i + 1) * 8 - 1):(i * 8)] = read_write_data[i];
-        assign write_reads[i] = write_read[i];
-        assign read_writes[i] = read_write[i];
-        assign write_fifo_byte_count[i] = write_fifo_byte_counts[((i + 1) * 32 - 1):(i * 32)];
-        assign read_fifo_byte_counts[((i + 1) * 32 - 1):(i * 32)] = read_fifo_byte_count[i];
-    end
+    always @(write_in_addrs) for (i = 0; i < 8; i = i + 1) 
+        write_in_addr[i] = write_in_addrs[((i + 1) * 11 - 1):(i * 11)];
+    always @(write_out_addrs) for (i = 0; i < 8; i = i + 1)
+        write_out_addr[i] = write_out_addrs[((i + 1) * 11 - 1):(i * 11)];
+    always @(write_read_datas) for (i = 0; i < 8; i = i + 1)
+        write_read_data[i] = write_read_datas[((i + 1) * 8 - 1):(i * 8)];
+    always @(read_in_addrs) for (i = 0; i < 8; i = i + 1)
+        read_in_addr[i] = read_in_addrs[((i + 1) * 11 - 1):(i * 11)];
+    always @(read_out_addrs) for (i = 0; i < 8; i = i + 1)
+        read_out_addr[i] = read_out_addrs[((i + 1) * 11 - 1):(i * 11)];
+    always @(read_write_data) for (i = 0; i < 8; i = i + 1)
+        read_write_datas[((i + 1) * 8 - 1):(i * 8)] = read_write_data[i];
+    always @(write_read) for (i = 0; i < 8; i = i + 1)
+        write_reads[i] = write_read[i];
+    always @(read_write) for (i = 0; i < 8; i = i + 1)
+        read_writes[i] = read_write[i];
+    always @(write_fifo_byte_counts) for (i = 0; i < 8; i = i + 1)
+        write_fifo_byte_count[i] = write_fifo_byte_counts[((i + 1) * 32 - 1):(i * 32)];
+    always @(read_fifo_byte_count) for (i = 0; i < 8; i = i + 1)
+        read_fifo_byte_counts[((i + 1) * 32 - 1):(i * 32)] = read_fifo_byte_count[i];
     
     //  The primary clock (100-150 MHz) is divided by 2 to obtain the memory clock.
     reg clk_div2;
@@ -131,8 +139,8 @@ module memory_arbitrator(
     
     //  Main clock: handle resets and lower/upper bytes
     always @(posedge clk) begin
-        if (reset) 
-            for (i = 0; i < 8; i++) begin
+        if (reset) begin
+            for (i = 0; i < 8; i = i + 1) begin
                 write_read[i] <= 0;
                 read_write_data[i] <= 0;
                 read_write[i] <= 0;
@@ -144,6 +152,7 @@ module memory_arbitrator(
             current_delta <= 0;
             start_flag <= 1;
             clk_div2 <= 0;
+        end
         else begin
             //  Run clk_div2
             clk_div2 <= clk_div2 + 1;
@@ -199,7 +208,7 @@ module memory_arbitrator(
             start_flag <= 0;
         end
         //  Once cycle is under way, perform read or write task
-        else
+        else begin
 
             if (current_direction == READING) begin
                 read_write[current_port] <= 1;
@@ -214,7 +223,6 @@ module memory_arbitrator(
                 current_delta <= current_delta - 1;
             end
         end
-        
     end
 
 endmodule
