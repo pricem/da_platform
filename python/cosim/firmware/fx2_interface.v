@@ -40,10 +40,10 @@ module fx2_interface(
     //  Endpoint ports to/from tracking FIFOs
     //  They share data and clock, but only one is being read or written at any given time
     output [7:0] ep2_port_data;
-    output ep2_port_write[3:0];
+    output [3:0] ep2_port_write;
     output ep2_port_clk;
-    input [7:0] ep6_port_data[3:0];
-    output ep6_port_read[3:0];
+    input [31:0] ep6_port_datas;
+    output [3:0] ep6_port_read;
     output ep6_port_clk;
     
     //  Connection to configuration RAM
@@ -89,6 +89,10 @@ module fx2_interface(
     wire state_read;
     wire state_write;
     
+    //  Break out signal lists
+    wire [7:0] ep6_port_data [3:0];
+    always @(ep6_port_data) for (i = 0; i < 4; i = i + 1)
+        ep6_port_datas[((i + 1) * 8 - 1):(i * 8)] = ep6_port_data[i];
     
     /*  Logic processes */
     
