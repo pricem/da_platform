@@ -73,6 +73,7 @@ module memory_arbitrator(
     /* Internal signals */
     
     integer i;
+    genvar g;
     
     //  Break down and assign buses
     wire [10:0] write_in_addr [7:0];
@@ -83,73 +84,20 @@ module memory_arbitrator(
     reg [7:0] read_write_data [7:0];
     reg [31:0] write_fifo_byte_count [7:0];
     reg [31:0] read_fifo_byte_count [7:0];
+    generate for (g = 0; g < 8; g = g + 1) begin
+        assign write_in_addr[g] = write_in_addrs[((g + 1) * 11 - 1):(g * 11)];
+        assign write_out_addr[g] = write_out_addrs[((g + 1) * 11 - 1):(g * 11)];
+        assign read_in_addr[g] = read_in_addrs[((g + 1) * 11 - 1):(g * 11)];
+        assign read_out_addr[g] = read_out_addrs[((g + 1) * 11 - 1):(g * 11)];
+        
+        assign write_read_data[g] = write_read_datas[((g + 1) * 8 - 1):(g * 8)];
+        assign read_write_datas[((g + 1) * 8 - 1):(g * 8)] = read_write_data[g];
 
-    //  Automatically generated statements
-    assign write_in_addr[0] = write_in_addrs[10:0];
-    assign write_in_addr[1] = write_in_addrs[21:11];
-    assign write_in_addr[2] = write_in_addrs[32:22];
-    assign write_in_addr[3] = write_in_addrs[43:33];
-    assign write_in_addr[4] = write_in_addrs[54:44];
-    assign write_in_addr[5] = write_in_addrs[65:55];
-    assign write_in_addr[6] = write_in_addrs[76:66];
-    assign write_in_addr[7] = write_in_addrs[87:77];
-    assign write_out_addr[0] = write_out_addrs[10:0];
-    assign write_out_addr[1] = write_out_addrs[21:11];
-    assign write_out_addr[2] = write_out_addrs[32:22];
-    assign write_out_addr[3] = write_out_addrs[43:33];
-    assign write_out_addr[4] = write_out_addrs[54:44];
-    assign write_out_addr[5] = write_out_addrs[65:55];
-    assign write_out_addr[6] = write_out_addrs[76:66];
-    assign write_out_addr[7] = write_out_addrs[87:77];
-    assign write_read_data[0] = write_read_datas[7:0];
-    assign write_read_data[1] = write_read_datas[15:8];
-    assign write_read_data[2] = write_read_datas[23:16];
-    assign write_read_data[3] = write_read_datas[31:24];
-    assign write_read_data[4] = write_read_datas[39:32];
-    assign write_read_data[5] = write_read_datas[47:40];
-    assign write_read_data[6] = write_read_datas[55:48];
-    assign write_read_data[7] = write_read_datas[63:56];
-    assign read_in_addr[0] = read_in_addrs[10:0];
-    assign read_in_addr[1] = read_in_addrs[21:11];
-    assign read_in_addr[2] = read_in_addrs[32:22];
-    assign read_in_addr[3] = read_in_addrs[43:33];
-    assign read_in_addr[4] = read_in_addrs[54:44];
-    assign read_in_addr[5] = read_in_addrs[65:55];
-    assign read_in_addr[6] = read_in_addrs[76:66];
-    assign read_in_addr[7] = read_in_addrs[87:77];
-    assign read_out_addr[0] = read_out_addrs[10:0];
-    assign read_out_addr[1] = read_out_addrs[21:11];
-    assign read_out_addr[2] = read_out_addrs[32:22];
-    assign read_out_addr[3] = read_out_addrs[43:33];
-    assign read_out_addr[4] = read_out_addrs[54:44];
-    assign read_out_addr[5] = read_out_addrs[65:55];
-    assign read_out_addr[6] = read_out_addrs[76:66];
-    assign read_out_addr[7] = read_out_addrs[87:77];
-    assign read_write_datas[7:0] = read_write_data[0];
-    assign read_write_datas[15:8] = read_write_data[1];
-    assign read_write_datas[23:16] = read_write_data[2];
-    assign read_write_datas[31:24] = read_write_data[3];
-    assign read_write_datas[39:32] = read_write_data[4];
-    assign read_write_datas[47:40] = read_write_data[5];
-    assign read_write_datas[55:48] = read_write_data[6];
-    assign read_write_datas[63:56] = read_write_data[7];
-    assign write_fifo_byte_count[0] = write_fifo_byte_counts[31:0];
-    assign write_fifo_byte_count[1] = write_fifo_byte_counts[63:32];
-    assign write_fifo_byte_count[2] = write_fifo_byte_counts[95:64];
-    assign write_fifo_byte_count[3] = write_fifo_byte_counts[127:96];
-    assign write_fifo_byte_count[4] = write_fifo_byte_counts[159:128];
-    assign write_fifo_byte_count[5] = write_fifo_byte_counts[191:160];
-    assign write_fifo_byte_count[6] = write_fifo_byte_counts[223:192];
-    assign write_fifo_byte_count[7] = write_fifo_byte_counts[255:224];
-    assign read_fifo_byte_counts[31:0] = read_fifo_byte_count[0];
-    assign read_fifo_byte_counts[63:32] = read_fifo_byte_count[1];
-    assign read_fifo_byte_counts[95:64] = read_fifo_byte_count[2];
-    assign read_fifo_byte_counts[127:96] = read_fifo_byte_count[3];
-    assign read_fifo_byte_counts[159:128] = read_fifo_byte_count[4];
-    assign read_fifo_byte_counts[191:160] = read_fifo_byte_count[5];
-    assign read_fifo_byte_counts[223:192] = read_fifo_byte_count[6];
-    assign read_fifo_byte_counts[255:224] = read_fifo_byte_count[7];
-
+        assign write_fifo_byte_count[g] = write_fifo_byte_counts[((g + 1) * 32 - 1):(g * 32)];
+        assign read_fifo_byte_counts[((g + 1) * 32 - 1):(g * 32)] = read_fifo_byte_count[g];
+        end
+    endgenerate
+    
     //  The primary clock (100-150 MHz) is divided by 2 to obtain the memory clock.
     reg clk_div2;
     
