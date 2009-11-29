@@ -17,6 +17,8 @@ module usb_toplevel(
     reset, clk
     );
     
+    genvar i;
+    
     /*  In/out declarations  */
     
     //  USB interface
@@ -69,10 +71,10 @@ module usb_toplevel(
     
     //  Between FX2 interface and tracking FIFOs
     wire [7:0] ep2_port_data;
-    wire ep2_port_write[3:0];
+    wire [3:0] ep2_port_write;
     wire ep2_port_clk;
     wire [7:0] ep6_port_data[3:0];
-    wire ep6_port_read[3:0];
+    wire [3:0] ep6_port_read;
     wire ep6_port_clk;
     
     //  Between FX2 interface and configuration memory
@@ -92,18 +94,18 @@ module usb_toplevel(
     wire [10:0] write_out_addr[7:0];
     wire [7:0] write_read_data[7:0];
     wire write_fifo_clk;
-    wire write_read[7:0];
+    wire [7:0] write_read;
     wire [10:0] read_in_addr[7:0];
     wire [10:0] read_out_addr[7:0];
     wire [7:0] read_write_data[7:0];
     wire read_fifo_clk;
-    wire read_write[7:0];
+    wire [7:0] read_write;
     
     //  Between tracking FIFOs and converter interfaces
-    wire slot_dac_fifo_clk[3:0];
-    wire slot_adc_fifo_clk[3:0];
-    wire slot_dac_fifo_read[3:0];
-    wire slot_adc_fifo_write[3:0];
+    wire [3:0] slot_dac_fifo_clk;
+    wire [3:0] slot_adc_fifo_clk;
+    wire [3:0] slot_dac_fifo_read;
+    wire [3:0] slot_adc_fifo_write;
     wire [7:0] slot_dac_fifo_data[3:0];
     wire [7:0] slot_adc_fifo_data[3:0];
     
@@ -125,7 +127,7 @@ module usb_toplevel(
         .ep2_port_data(ep2_port_data), 
         .ep2_port_write(ep2_port_write), 
         .ep2_port_clk(ep2_port_clk), 
-        .ep6_port_datas(ep6_port_data), 
+        .ep6_port_datas({ep6_port_data[3], ep6_port_data[2], ep6_port_data[1], ep6_port_data[0]}), 
         .ep6_port_read(ep6_port_read), 
         .ep6_port_clk(ep6_port_clk), 
         .config_addr(config_addr), 
@@ -141,56 +143,58 @@ module usb_toplevel(
         );
     
     //  Tracking FIFOs: EP2->RAM
-    tracking_fifo fifos_ep2_in [3:0] (
-        .clk_in(ep2_port_clk),
-        .data_in(ep2_port_data), 
-        .write_in(ep2_port_write), 
-        .clk_out(write_fifo_clk), 
-        .data_out(write_read_data[3:0]),
-        .read_out(write_read[3:0]), 
-        .addr_in(write_in_addr[3:0]), 
-        .addr_out(write_out_addr[3:0]), 
-        .reset(reset)
-        );
-    
-    //  Tracking FIFOs: RAM->DACs
-    tracking_fifo fifos_dac_out [3:0] (
-        .clk_in(read_fifo_clk),
-        .data_in(read_write_data[3:0]), 
-        .write_in(read_write[3:0]), 
-        .clk_out(slot_dac_fifo_clk), 
-        .data_out(slot_dac_fifo_data),
-        .read_out(slot_dac_fifo_read), 
-        .addr_in(read_in_addr[3:0]), 
-        .addr_out(read_out_addr[3:0]), 
-        .reset(reset)
-        );
-    
-    //  Tracking FIFOs: ADCs->RAM
-    tracking_fifo fifos_adc_in [3:0] (
-        .clk_in(slot_adc_fifo_clk),
-        .data_in(slot_adc_fifo_data), 
-        .write_in(slot_adc_fifo_write), 
-        .clk_out(write_fifo_clk), 
-        .data_out(write_read_data[7:4]),
-        .read_out(write_read[7:4]), 
-        .addr_in(write_in_addr[7:4]), 
-        .addr_out(write_out_addr[7:4]), 
-        .reset(reset)
-        );
-    
-    //  Tracking FIFOs: RAM->EP6
-    tracking_fifo fifos_ep6_out [3:0] (
-        .clk_in(read_fifo_clk),
-        .data_in(read_write_data[7:4]), 
-        .write_in(read_write[7:4]), 
-        .clk_out(ep6_port_clk), 
-        .data_out(ep6_port_data),
-        .read_out(ep6_port_read), 
-        .addr_in(read_in_addr[7:4]), 
-        .addr_out(read_out_addr[7:4]), 
-        .reset(reset)
-        );
+    generate for (i = 0; i < 4; i = i + 1) begin
+        tracking_fifo fifos_ep2_in_i (
+            .clk_in(ep2_port_clk),
+            .data_in(ep2_port_data), 
+            .write_in(ep2_port_write), 
+            .clk_out(write_fifo_clk), 
+            .data_out(write_read_data[i]),
+            .read_out(write_read[i]), 
+            .addr_in(write_in_addr[i]), 
+            .addr_out(write_out_addr[i]), 
+            .reset(reset)
+            );
+        
+        //  Tracking FIFOs: RAM->DACs
+        tracking_fifo fifos_dac_out_i (
+            .clk_in(read_fifo_clk),
+            .data_in(read_write_data[i]), 
+            .write_in(read_write[i]), 
+            .clk_out(slot_dac_fifo_clk), 
+            .data_out(slot_dac_fifo_data[i]),
+            .read_out(slot_dac_fifo_read), 
+            .addr_in(read_in_addr[i]), 
+            .addr_out(read_out_addr[i]), 
+            .reset(reset)
+            );
+        
+        //  Tracking FIFOs: ADCs->RAM
+        tracking_fifo fifos_adc_in_i (
+            .clk_in(slot_adc_fifo_clk),
+            .data_in(slot_adc_fifo_data[i]), 
+            .write_in(slot_adc_fifo_write), 
+            .clk_out(write_fifo_clk), 
+            .data_out(write_read_data[i + 4]),
+            .read_out(write_read[i + 4]), 
+            .addr_in(write_in_addr[i + 4]), 
+            .addr_out(write_out_addr[i + 4]), 
+            .reset(reset)
+            );
+        
+        //  Tracking FIFOs: RAM->EP6
+        tracking_fifo fifos_ep6_out_i (
+            .clk_in(read_fifo_clk),
+            .data_in(read_write_data[i + 4]), 
+            .write_in(read_write[i + 4]), 
+            .clk_out(ep6_port_clk), 
+            .data_out(ep6_port_data),
+            .read_out(ep6_port_read), 
+            .addr_in(read_in_addr[i + 4]), 
+            .addr_out(read_out_addr[i + 4]), 
+            .reset(reset)
+            );
+    endgenerate
     
     //  Memory arbitrator
     memory_arbitrator arb(
