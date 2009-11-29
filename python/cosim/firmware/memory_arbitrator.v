@@ -24,34 +24,69 @@
 
 module memory_arbitrator(
     //  Connections to write port FIFOs
-    write_in_addr[7:0], write_out_addr[7:0], write_read_data[7:0], write_read[7:0],
+    write_in_addrs, write_out_addrs, write_read_datas, write_clk, write_reads,
     //  Connections to read port FIFOs
-    read_in_addr[7:0], read_out_addr[7:0], read_write_data[7:0], read_write[7:0],
+    read_in_addrs, read_out_addrs, read_write_datas, read_clk, read_writes,
     //  Connections to other devices
-    write_fifo_byte_count[7:0],         //  Byte count on the "in" side of the write FIFOs
-    read_fifo_byte_count[7:0],          //  Byte count on the "in" side of the read FIFOs
+    write_fifo_byte_counts,         //  Byte count on the "in" side of the write FIFOs
+    read_fifo_byte_counts,          //  Byte count on the "in" side of the read FIFOs
     //  Connections to memory
     mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, 
     //  Double the memory clock; synchronous reset
     clk, reset);
     
-    input [10:0] write_in_addr[7:0];
-    input [10:0] write_out_addr[7:0];
-    input [7:0] write_read_data[7:0];
-    output reg write_read[7:0];
+    /*  I/O declarations */
     
-    input [10:0] read_in_addr[7:0];
-    input [10:0] read_out_addr[7:0];
-    output [7:0] read_write_data[7:0];
-    output reg read_write[7:0];
+    //  Connections to write side FIFOs
+    input [87:0] write_in_addrs;
+    input [87:0] write_out_addrs;
+    input [63:0] write_read_datas;
+    output write_clk;
+    output write_read;
     
-    input [31:0] write_fifo_byte_count[7:0];
-    output reg [31:0] read_fifo_byte_count[7:0];
+    //  Connection to read side FIFOs
+    input [87:0] read_in_addrs;
+    input [87:0] read_out_addrs;
+    output [63:0] read_write_datas;
+    output read_clk;
+    output read_writes;
     
+    //  Byte counters for tracking
+    input [255:0] write_fifo_byte_counts;
+    output [255:0] read_fifo_byte_counts;
+    
+    //  Connections to cell RAM
+    //  Memory definition (elsewhere) looks like this:
+    //  cellram = bram_8m_16(.clk(clk_div2), .we(mem_we), .addr(mem_addr), .din(mem_data), .dout(mem_data));
+    output [22:0] mem_addr;
+    inout [15:0] mem_data;
+    output mem_oe;
+    output mem_we;
+    output mem_clk;
+    output mem_addr_valid;
+    
+    //  Controls
     input clk;
     input reset;
 
-    //  Internal signals
+
+    /* Internal signals */
+    
+    //  Break down and assign buses
+    reg [10:0] write_in_addr [7:0];
+    reg [10:0] write_out_addr [7:0];
+    reg write_read [7:0];
+    reg [10:0] read_in_addr [7:0];
+    reg [10:0] read_out_addr [7:0];
+    reg read_write [7:0];
+    for (i = 0; i < 8; i++) begin
+        assign write_in_addrs[((i + 1) * 11 - 1):(i * 11)] = write_in_addr[i];
+        assign write_out_addrs[((i + 1) * 11 - 1):(i * 11)] = write_out_addr[i];
+        assign read_in_addrs[((i + 1) * 11 - 1):(i * 11)] = read_in_addr[i];
+        assign read_out_addrs[((i + 1) * 11 - 1):(i * 11)] = read_out_addr[i];
+    end
+    
+    //  The primary clock (100-150 MHz) is divided by 2 to obtain the memory clock.
     reg clk_div2;
     
     //  Concatenated memory buses for read and write
@@ -64,6 +99,9 @@ module memory_arbitrator(
     wire [7:0] read_upper_byte;
     assign read_lower_byte = mem_read_data[7:0];
     assign read_upper_byte = mem_read_data[15:8];
+    assign mem_clk = clk_div2;
+    assign write_clk = clk;
+    assign read_clk = clk;
 
     //  States
     parameter READING = 1'b0;       //  READING cellram into FIFO (destination: EP6 or DAC)
@@ -78,9 +116,10 @@ module memory_arbitrator(
     //  Internal byte counter for data as it is written to RAM
     reg [31:0] write_mem_byte_count[7:0];
     
-    //  Memory definition (elsewhere) looks like this:
-    //  cellram = bram_8m_16(.clk(clk_div2), .we(mem_we), .addr(mem_addr), .din(mem_data), .dout(mem_data));
     
+    /*  Logic processes */
+    
+    //  Main clock: handle resets and lower/upper bytes
     always @(posedge clk) begin
         if (reset) 
             for (i = 0; i < 8; i++) begin
@@ -108,6 +147,7 @@ module memory_arbitrator(
         end
     end
     
+    //  Memory clock: do everything else
     always @(posedge clk_div2) begin
         //  Advance state if necessary
         if ((current_delta == 0) && (!start_flag)) begin
