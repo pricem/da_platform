@@ -78,7 +78,7 @@ module usb_toplevel(
     wire ep6_port_clk;
     
     //  Between FX2 interface and configuration memory
-    wire [7:0] config_addr;
+    wire [10:0] config_addr;
     wire config_write;
     wire config_clk;
     wire [7:0] config_data;
@@ -100,6 +100,8 @@ module usb_toplevel(
     wire [7:0] read_write_data[7:0];
     wire read_fifo_clk;
     wire [7:0] read_write;
+    wire [31:0] write_fifo_byte_count[7:0];
+    wire [31:0] read_fifo_byte_count[7:0];
     
     //  Between tracking FIFOs and converter interfaces
     wire slot_dac_fifo_clk[3:0];
@@ -108,6 +110,10 @@ module usb_toplevel(
     wire slot_adc_fifo_write[3:0];
     wire [7:0] slot_dac_fifo_data[3:0];
     wire [7:0] slot_adc_fifo_data[3:0];
+    
+    //  Between configuration memory and serial port controller
+    wire [10:0] config_read_addr;
+    wire [7:0] config_read_data;
     
     /* Logic module instances */
     
@@ -199,18 +205,18 @@ module usb_toplevel(
     
     //  Memory arbitrator
     memory_arbitrator arb(
-        .write_in_addrs(write_in_addr), 
-        .write_out_addrs(write_out_addr), 
-        .write_read_datas(write_read_data), 
+        .write_in_addrs({write_in_addr[7], write_in_addr[6], write_in_addr[5], write_in_addr[4], write_in_addr[3], write_in_addr[2], write_in_addr[1], write_in_addr[0]}), 
+        .write_out_addrs({write_out_addr[7], write_out_addr[6], write_out_addr[5], write_out_addr[4], write_out_addr[3], write_out_addr[2], write_out_addr[1], write_out_addr[0]}), 
+        .write_read_datas({write_read_data[7], write_read_data[6], write_read_data[5], write_read_data[4], write_read_data[3], write_read_data[2], write_read_data[1], write_read_data[0]}), 
         .write_clk(write_clk), 
         .write_read(write_read),
-        .read_in_addrs(read_in_addr), 
-        .read_out_addrs(read_out_addr), 
-        .read_write_datas(read_write_data), 
+        .read_in_addrs({read_in_addr[7], read_in_addr[6], read_in_addr[5], read_in_addr[4], read_in_addr[3], read_in_addr[2], read_in_addr[1], read_in_addr[0]}), 
+        .read_out_addrs({read_out_addr[7], read_out_addr[6], read_out_addr[5], read_out_addr[4], read_out_addr[3], read_out_addr[2], read_out_addr[1], read_out_addr[0]}), 
+        .read_write_datas({read_write_data[7], read_write_data[6], read_write_data[5], read_write_data[4], read_write_data[3], read_write_data[2], read_write_data[1], read_write_data[0]}), 
         .read_clk(read_clk), 
         .read_write(read_write),
-        .write_fifo_byte_counts(write_fifo_byte_count),
-        .read_fifo_byte_counts(read_fifo_byte_count),
+        .write_fifo_byte_counts({write_fifo_byte_count[7], write_fifo_byte_count[6], write_fifo_byte_count[5], write_fifo_byte_count[4], write_fifo_byte_count[3], write_fifo_byte_count[2], write_fifo_byte_count[1], write_fifo_byte_count[0]}),
+        .read_fifo_byte_counts({read_fifo_byte_count[7], read_fifo_byte_count[6], read_fifo_byte_count[5], read_fifo_byte_count[4], read_fifo_byte_count[3], read_fifo_byte_count[2], read_fifo_byte_count[1], read_fifo_byte_count[0]}),
         .mem_addr(mem_addr), 
         .mem_data(mem_data),
         .mem_oe(mem_oe), 

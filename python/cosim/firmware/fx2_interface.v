@@ -47,7 +47,7 @@ module fx2_interface(
     output ep6_port_clk;
     
     //  Connection to configuration RAM
-    output [7:0] config_addr;
+    output [10:0] config_addr;
     output config_write;
     output config_clk;
     output [7:0] config_data;

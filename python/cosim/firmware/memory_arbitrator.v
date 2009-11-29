@@ -82,7 +82,7 @@ module memory_arbitrator(
     wire [10:0] read_in_addr [7:0];
     wire [10:0] read_out_addr [7:0];
     reg [7:0] read_write_data [7:0];
-    reg [31:0] write_fifo_byte_count [7:0];
+    wire [31:0] write_fifo_byte_count [7:0];
     reg [31:0] read_fifo_byte_count [7:0];
     generate for (g = 0; g < 8; g = g + 1) begin
         assign write_in_addr[g] = write_in_addrs[((g + 1) * 11 - 1):(g * 11)];
