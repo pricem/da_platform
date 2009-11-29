@@ -14,7 +14,7 @@ module fx2_interface(
     //  USB interface
     usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full,
     //  Endpoint ports
-    ep2_port_data, ep2_port_write, ep2_port_clk, ep6_port_data, ep6_port_read, ep6_port_clk,
+    ep2_port_data, ep2_port_write, ep2_port_clk, ep6_port_datas, ep6_port_read, ep6_port_clk,
     //  Connection to configuration RAM
     config_addr, config_write, config_clk, config_data,
     //  Connection to command encoder
@@ -57,6 +57,9 @@ module fx2_interface(
     input [7:0] cmd_data;
     output cmd_clk;
     output cmd_read;
+    
+    input clk;
+    input reset;
 
 
     /*  State machine parameters   */
@@ -79,6 +82,8 @@ module fx2_interface(
 
     /*  Internal signals  */
     
+    integer i;
+    
     //  The endpoint currently being serviced
     reg [1:0] state_endpoint_index;
     
@@ -91,8 +96,10 @@ module fx2_interface(
     
     //  Break out signal lists
     wire [7:0] ep6_port_data [3:0];
-    always @(ep6_port_data) for (i = 0; i < 4; i = i + 1)
-        ep6_port_datas[((i + 1) * 8 - 1):(i * 8)] = ep6_port_data[i];
+    assign ep6_port_data[0] = ep6_port_datas[7:0];
+    assign ep6_port_data[1] = ep6_port_datas[15:8];
+    assign ep6_port_data[2] = ep6_port_datas[23:16];
+    assign ep6_port_data[3] = ep6_port_datas[31:24];
     
     /*  Logic processes */
     
@@ -106,27 +113,28 @@ module fx2_interface(
     always @(posedge clk) begin
         if (reset) begin
             state_endpoint_index <= EP2;
-            for (i = 0; i < 4; i++)
+            for (i = 0; i < 4; i = i + 1)
                 state_packet_status[i] <= PACKET_WAITING;
+        end
         else begin
         
             //  Main state machine
-            case (state_packet_status)
+            case (state_packet_status[state_endpoint_index])
                 //  If waiting, look for a header byte and, once it is received, 
                 PACKET_WAITING:
-                    state_packet_status <= PACKET_HEADER;
+                    state_packet_status[state_endpoint_index] <= PACKET_HEADER;
                 
                 //  If reading the header, 
                 PACKET_HEADER:
-                    state_packet_status <= PACKET_DATA;
+                    state_packet_status[state_endpoint_index] <= PACKET_DATA;
                 
                 //  If data is currently being 
                 PACKET_DATA:
-                    state_packet_status <= PACKET_DONE;
+                    state_packet_status[state_endpoint_index] <= PACKET_DONE;
 
                 //  If the current packet is done, move to the next endpoint
                 PACKET_DONE: begin
-                    state_packet_status <= PACKET_WAITING;
+                    state_packet_status[state_endpoint_index] <= PACKET_WAITING;
                     case (state_endpoint_index)
                         EP2: state_endpoint_index <= EP4;
                         EP4: state_endpoint_index <= EP6;

@@ -72,6 +72,8 @@ module memory_arbitrator(
 
     /* Internal signals */
     
+    integer i;
+    
     //  Break down and assign buses
     wire [10:0] write_in_addr [7:0];
     wire [10:0] write_out_addr [7:0];
