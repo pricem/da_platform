@@ -42,14 +42,14 @@ module memory_arbitrator(
     input [87:0] write_out_addrs;
     input [63:0] write_read_datas;
     output write_clk;
-    output write_read;
+    output [7:0] write_reads;
     
     //  Connection to read side FIFOs
     input [87:0] read_in_addrs;
     input [87:0] read_out_addrs;
     output [63:0] read_write_datas;
     output read_clk;
-    output read_writes;
+    output [7:0] read_writes;
     
     //  Byte counters for tracking
     input [255:0] write_fifo_byte_counts;
@@ -73,17 +73,27 @@ module memory_arbitrator(
     /* Internal signals */
     
     //  Break down and assign buses
-    reg [10:0] write_in_addr [7:0];
-    reg [10:0] write_out_addr [7:0];
+    wire [10:0] write_in_addr [7:0];
+    wire [10:0] write_out_addr [7:0];
+    wire [7:0] write_read_data [7:0];
     reg write_read [7:0];
-    reg [10:0] read_in_addr [7:0];
-    reg [10:0] read_out_addr [7:0];
+    wire [10:0] read_in_addr [7:0];
+    wire [10:0] read_out_addr [7:0];
+    reg [7:0] read_write_data [7:0];
     reg read_write [7:0];
+    reg [31:0] write_fifo_byte_count [7:0];
+    reg [31:0] read_fifo_byte_count [7:0];
     for (i = 0; i < 8; i++) begin
-        assign write_in_addrs[((i + 1) * 11 - 1):(i * 11)] = write_in_addr[i];
-        assign write_out_addrs[((i + 1) * 11 - 1):(i * 11)] = write_out_addr[i];
-        assign read_in_addrs[((i + 1) * 11 - 1):(i * 11)] = read_in_addr[i];
-        assign read_out_addrs[((i + 1) * 11 - 1):(i * 11)] = read_out_addr[i];
+        assign write_in_addr[i] = write_in_addrs[((i + 1) * 11 - 1):(i * 11)];
+        assign write_out_addr[i] = write_out_addrs[((i + 1) * 11 - 1):(i * 11)];
+        assign write_read_data[i] = write_read_datas[((i + 1) * 8 - 1):(i * 8)];
+        assign read_in_addr[i] = read_in_addrs[((i + 1) * 11 - 1):(i * 11)];
+        assign read_out_addr[i] = read_out_addrs[((i + 1) * 11 - 1):(i * 11)];
+        assign read_write_datas[((i + 1) * 8 - 1):(i * 8)] = read_write_data[i];
+        assign write_reads[i] = write_read[i];
+        assign read_writes[i] = read_write[i];
+        assign write_fifo_byte_count[i] = write_fifo_byte_counts[((i + 1) * 32 - 1):(i * 32)];
+        assign read_fifo_byte_counts[((i + 1) * 32 - 1):(i * 32)] = read_fifo_byte_count[i];
     end
     
     //  The primary clock (100-150 MHz) is divided by 2 to obtain the memory clock.
