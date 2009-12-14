@@ -12,7 +12,7 @@ module usb_toplevel(
     //  Cell RAM connections
     mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, 
     //  Audio converter connections
-    slot0_data, slot1_data, slot2_data, slot3_data, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1,
+    slot_data_in, slot_data_out, custom_dirchan, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1,
     //  Control
     reset, clk
     );
@@ -43,10 +43,9 @@ module usb_toplevel(
     output mem_addr_valid;
     
     //  Audio converter (40-pin isolated bus)
-    inout [5:0] slot0_data;
-    inout [5:0] slot1_data;
-    inout [5:0] slot2_data;
-    inout [5:0] slot3_data;
+    input [23:0] slot_data_in;
+    output [23:0] slot_data_out;
+    input custom_dirchan;
     output spi_adc_cs;
     output spi_adc_mclk;
     output spi_adc_mdi;
@@ -114,6 +113,17 @@ module usb_toplevel(
     //  Between configuration memory and serial port controller
     wire [10:0] config_read_addr;
     wire [7:0] config_read_data;
+    
+    //  Between I/O connections and converter modules
+    wire [5:0] slot_data [3:0];
+    wire [3:0] directions = 4'b1100;    //  Ports 0-1 are DAC, ports 2-3 are ADC
+                                        //  This should be updated to reflect the DIR/CHAN port
+    wire [3:0] channels = 4'b0000;      //  All ports 2-channel for now
+    generate for (i = 0; i < 4; i = i + 1) begin:slot_assign
+            assign slot_data[i] = directions[i] ? slot_data_in[((i + 1) * 4 - 1):(i * 4)] : 6'hZZ;
+            assign slot_data_out[((i + 1) * 4 - 1):(i * 4)] = slot_data[i];
+        end
+    endgenerate
     
     /* Logic module instances */
     
@@ -203,17 +213,49 @@ module usb_toplevel(
         end
     endgenerate
     
+    //  Converters
+    generate for (i = 0; i < 4; i = i + 1) begin:dacs
+        dummy_dac dac_i (
+            .fifo_clk(slot_dac_fifo_clk[i]),
+            .fifo_data(slot_dac_fifo_data[i]),
+            .fifo_read(slot_dac_fifo_read[i]),
+            .fifo_addr_in(read_in_addr[i]),
+            .fifo_addr_out(read_out_addr[i]),
+            .slot_data(slot_data[i]),
+            .direction(directions[i]),
+            .channels(channels[i]),
+            .clk(clk), 
+            .reset(reset)
+            );
+        end
+    endgenerate
+    generate for (i = 0; i < 4; i = i + 1) begin:adcs
+        dummy_adc adc_i (
+            .fifo_clk(slot_adc_fifo_clk[i]),
+            .fifo_data(slot_adc_fifo_data[i]),
+            .fifo_write(slot_adc_fifo_write[i]),
+            .fifo_addr_in(write_in_addr[i + 4]),
+            .fifo_addr_out(write_out_addr[i + 4]),
+            .slot_data(slot_data[i]),
+            .direction(directions[i]),
+            .channels(channels[i]),
+            .clk(clk), 
+            .reset(reset)
+            );
+        end
+    endgenerate
+    
     //  Memory arbitrator
     memory_arbitrator arb(
         .write_in_addrs({write_in_addr[7], write_in_addr[6], write_in_addr[5], write_in_addr[4], write_in_addr[3], write_in_addr[2], write_in_addr[1], write_in_addr[0]}), 
         .write_out_addrs({write_out_addr[7], write_out_addr[6], write_out_addr[5], write_out_addr[4], write_out_addr[3], write_out_addr[2], write_out_addr[1], write_out_addr[0]}), 
         .write_read_datas({write_read_data[7], write_read_data[6], write_read_data[5], write_read_data[4], write_read_data[3], write_read_data[2], write_read_data[1], write_read_data[0]}), 
-        .write_clk(write_clk), 
+        .write_clk(write_fifo_clk), 
         .write_read(write_read),
         .read_in_addrs({read_in_addr[7], read_in_addr[6], read_in_addr[5], read_in_addr[4], read_in_addr[3], read_in_addr[2], read_in_addr[1], read_in_addr[0]}), 
         .read_out_addrs({read_out_addr[7], read_out_addr[6], read_out_addr[5], read_out_addr[4], read_out_addr[3], read_out_addr[2], read_out_addr[1], read_out_addr[0]}), 
         .read_write_datas({read_write_data[7], read_write_data[6], read_write_data[5], read_write_data[4], read_write_data[3], read_write_data[2], read_write_data[1], read_write_data[0]}), 
-        .read_clk(read_clk), 
+        .read_clk(read_fifo_clk), 
         .read_write(read_write),
         .write_fifo_byte_counts({write_fifo_byte_count[7], write_fifo_byte_count[6], write_fifo_byte_count[5], write_fifo_byte_count[4], write_fifo_byte_count[3], write_fifo_byte_count[2], write_fifo_byte_count[1], write_fifo_byte_count[0]}),
         .read_fifo_byte_counts({read_fifo_byte_count[7], read_fifo_byte_count[6], read_fifo_byte_count[5], read_fifo_byte_count[4], read_fifo_byte_count[3], read_fifo_byte_count[2], read_fifo_byte_count[1], read_fifo_byte_count[0]}),

@@ -3,21 +3,33 @@
 //  From XST 11.3 manual page 142
 //
 
-module bram_2k_8 (clk, we, a, dpra, di, spo, dpo);
+module bram_2k_8 (clk, we, a, dpra, di, spo, dpo, reset);
     input clk;
     input we;
     input [10:0] a;
     input [10:0] dpra;
     input [7:0] di;
+    input reset;
     output reg [7:0] spo;
     output reg [7:0] dpo;
     reg [7:0] ram[2047:0];
+    
+    integer i;
+    
     always @(posedge clk) begin
-        if (we) begin
-            $display("Wrote %c to address %d.", di, a);
-            ram[a] <= di;
+        if (reset) begin
+            spo <= 0;
+            dpo <= 0;
+            for (i = 0; i < 2048; i = i + 1)
+                ram[i] <= 0;
         end
-        spo <= ram[a];
-        dpo <= ram[dpra];
+        else begin
+            if (we) begin
+                $display("Wrote %c to address %d.", di, a);
+                ram[a] <= di;
+            end
+            spo <= ram[a];
+            dpo <= ram[dpra];
+        end
     end
 endmodule

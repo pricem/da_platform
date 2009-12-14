@@ -134,7 +134,7 @@ module memory_arbitrator(
     //  Main clock: handle resets and lower/upper bytes
     always @(posedge clk) begin
         if (reset) begin
-            clk_div2 <= 0;
+            clk_div2 <= 1;
             write_lower_byte <= 0;
             write_upper_byte <= 0;
         end

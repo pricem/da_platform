@@ -27,13 +27,9 @@ module dut_usb_toplevel;
     wire mem_addr_valid; 
     
     //  Audio converter (40-pin isolated bus)
-    reg [5:0] slot_data_myhdl_in [3:0];
-    reg slot_data_myhdl_driven [3:0];
-    wire [5:0] slot0_data;
-    wire [5:0] slot1_data;
-    wire [5:0] slot2_data;
-    wire [5:0] slot3_data;
-    wire [5:0] slot_data [3:0];
+    reg custom_dirchan;
+    reg [23:0] slot_data_in;
+    wire [23:0] slot_data_out;
     
     wire spi_adc_cs;
     wire spi_adc_mclk;
@@ -57,24 +53,11 @@ module dut_usb_toplevel;
     initial begin
         $dumpfile("usb_toplevel_verilog.vcd");
         $dumpvars(0, dut);
-        $from_myhdl(usb_ifclk, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_data_myhdl_in, mem_data_myhdl_driven, spi_adc_mdo, spi_dac_mdo, custom_adc_ovf, custom_clk0, custom_clk1, clk, reset);
-        $to_myhdl(usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, custom_adc_hwcon, custom_srclk, custom_clksel);
+        $from_myhdl(usb_ifclk, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_data_myhdl_in, mem_data_myhdl_driven, slot_data_in, custom_dirchan, spi_adc_mdo, spi_dac_mdo, custom_adc_ovf, custom_clk0, custom_clk1, clk, reset);
+        $to_myhdl(usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data_out, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, custom_adc_hwcon, custom_srclk, custom_clksel);
     end
     
     assign mem_data = mem_data_myhdl_driven ? mem_data_myhdl_in : 16'hZZZZ;
-        
-    //  Not worrying about bidirectional slot data ports (leaving them driven only by Verilog DUT)
-    /*
-    assign slot0_data = slot_data_myhdl_driven[0] ? slot_data_myhdl_in[0] : 6'bZZZZZZ;
-    assign slot1_data = slot_data_myhdl_driven[1] ? slot_data_myhdl_in[1] : 6'bZZZZZZ;
-    assign slot2_data = slot_data_myhdl_driven[2] ? slot_data_myhdl_in[2] : 6'bZZZZZZ;
-    assign slot3_data = slot_data_myhdl_driven[3] ? slot_data_myhdl_in[3] : 6'bZZZZZZ;
-    */
-    
-    assign slot_data[0] = slot0_data;
-    assign slot_data[1] = slot1_data;
-    assign slot_data[2] = slot2_data;
-    assign slot_data[3] = slot3_data;
     
     usb_toplevel dut (
         .usb_ifclk(usb_ifclk),
@@ -94,10 +77,9 @@ module dut_usb_toplevel;
         .mem_we(mem_we),
         .mem_clk(mem_clk),
         .mem_addr_valid(mem_addr_valid),
-        .slot0_data(slot0_data),
-        .slot1_data(slot1_data),
-        .slot2_data(slot2_data),
-        .slot3_data(slot3_data),
+        .slot_data_in(slot_data_in),
+        .slot_data_out(slot_data_out),
+        .custom_dirchan(custom_dirchan),
         .spi_adc_cs(spi_adc_cs),
         .spi_adc_mclk(spi_adc_mclk),
         .spi_adc_mdi(spi_adc_mdi),

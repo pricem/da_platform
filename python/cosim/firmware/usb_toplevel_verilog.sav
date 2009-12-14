@@ -1,7 +1,7 @@
 [timestart] 0
 [size] 1280 953
 [pos] -1 -1
-*-16.000000 144800 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.000000 50700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.ports[0].
@@ -83,6 +83,7 @@ dut_usb_toplevel.dut.ports[0].fifos_ep2_in_i.data_in[7:0]
 -Port 0
 @28
 dut_usb_toplevel.dut.ports[0].fifos_ep2_in_i.write_in
+dut_usb_toplevel.dut.ports[0].fifos_ep2_in_i.clk_in
 @22
 dut_usb_toplevel.dut.ports[0].fifos_ep2_in_i.addr_in[10:0]
 dut_usb_toplevel.dut.ports[0].fifos_ep2_in_i.addr_out[10:0]
@@ -149,3 +150,20 @@ dut_usb_toplevel.dut.ports[3].fifos_ep6_out_i.addr_out[10:0]
 dut_usb_toplevel.dut.ports[3].fifos_ep6_out_i.read_out
 @200
 -Memory arbitrator
+@28
+dut_usb_toplevel.dut.arb.clk_div2
+dut_usb_toplevel.dut.arb.start_flag
+dut_usb_toplevel.dut.arb.current_port[2:0]
+@22
+dut_usb_toplevel.dut.arb.current_delta[10:0]
+@28
+dut_usb_toplevel.dut.arb.current_direction
+@22
+dut_usb_toplevel.dut.arb.current_fifo_addr[10:0]
+@28
+dut_usb_toplevel.dut.arb.mem_clk
+@22
+dut_usb_toplevel.dut.arb.mem_data[15:0]
+@28
+dut_usb_toplevel.dut.arb.mem_oe
+dut_usb_toplevel.dut.arb.mem_we

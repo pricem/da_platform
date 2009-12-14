@@ -26,15 +26,17 @@ def usb_toplevel_test():
     usb_ep8_full = Signal(False)
     
     mem_addr = Signal(intbv(0)[23:])
-    mem_data_in = Signal(intbv(0)[15:])
-    mem_data_out = Signal(intbv(0)[15:])
+    mem_data_in = Signal(intbv(0)[16:])
+    mem_data_out = Signal(intbv(0)[16:])
     mem_data_driven = Signal(False)
     mem_oe = Signal(False)
     mem_we = Signal(False)
     mem_clk = Signal(False)
     mem_addr_valid = Signal(False)
     
-    slot_data = [Signal(intbv(0)[6:]) for i in range(4)]
+    slot_data_in = Signal(intbv(0)[24:])
+    slot_data_out = Signal(intbv(0)[24:])
+    custom_dirchan = Signal(False)
     spi_adc_cs = Signal(False)
     spi_adc_mclk = Signal(False)
     spi_adc_mdi = Signal(False)
@@ -85,7 +87,7 @@ def usb_toplevel_test():
     
     fx2 = virtual_fx2(usb_ifclk, reset_neg, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full)
     
-    doobie = usb_toplevel(usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_addr, mem_data_in, mem_data_driven, mem_data_out, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1, reset, clk)
+    doobie = usb_toplevel(usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_addr, mem_data_in, mem_data_driven, mem_data_out, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data_in, slot_data_out, custom_dirchan, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1, reset, clk)
 
     return instances()
 

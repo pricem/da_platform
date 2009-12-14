@@ -167,6 +167,8 @@ module fx2_interface(
         end
     endgenerate
     
+    assign ep6_port_clk = usb_ifclk;
+    
     //  Assign command decoder outputs
     assign cmd_in_id = ep4_command_index;
     //  assign cmd_in_data = cmd_valid ? usb_data_out : 8'b0;
