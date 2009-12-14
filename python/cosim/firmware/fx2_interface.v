@@ -160,9 +160,10 @@ module fx2_interface(
     
     //  Assign audio port outputs
     assign ep2_port_clk = usb_ifclk;
-    assign ep2_port_data = ((state_endpoint_index == EP2) && (state_packet_status[state_endpoint_index] == PACKET_DATA)) ? usb_data_in : 8'b0;
+    //  assign ep2_port_data = ep2_port_write[ep2_port_index] ? usb_data_out : 8'b0;
+    assign ep2_port_data = usb_data_out;
     generate for (g = 0; g < 4; g = g + 1) begin
-        assign ep2_port_write[g] = (ep2_port_index == g);
+        assign ep2_port_write[g] = ((ep2_port_index == g) && ((state_endpoint_index == EP2) && (state_packet_status[state_endpoint_index] == PACKET_DATA)));
         end
     endgenerate
     

@@ -1,7 +1,7 @@
-[timestart] 22200
+[timestart] 1501100
 [size] 1280 953
 [pos] -1 -1
-*-15.000000 30300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.000000 1609800 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.genblk0001.
@@ -41,6 +41,7 @@ dut_usb_toplevel.dut.interface.ep2_port_clk
 dut_usb_toplevel.dut.interface.ep2_port_index[1:0]
 @22
 dut_usb_toplevel.dut.interface.ep2_port_data[7:0]
+@28
 dut_usb_toplevel.dut.interface.ep2_port_write[3:0]
 @200
 -EP4
@@ -49,6 +50,11 @@ dut_usb_toplevel.dut.interface.state_packet_status_ep4[2:0]
 @22
 dut_usb_toplevel.dut.interface.ep4_command_index[7:0]
 dut_usb_toplevel.dut.interface.ep4_command_length[15:0]
+dut_usb_toplevel.dut.interface.cmd_in_id[15:0]
+@28
+dut_usb_toplevel.dut.interface.cmd_valid
+@22
+dut_usb_toplevel.dut.interface.cmd_in_data[7:0]
 @200
 -EP6
 @28
