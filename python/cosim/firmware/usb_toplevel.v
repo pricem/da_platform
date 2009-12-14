@@ -121,7 +121,6 @@ module usb_toplevel(
     wire [3:0] channels = 4'b0000;      //  All ports 2-channel for now
     generate for (i = 0; i < 4; i = i + 1) begin:slot_assign
             assign slot_data[i] = directions[i] ? slot_data_in[((i + 1) * 4 - 1):(i * 4)] : 6'hZZ;
-            assign slot_data_out[((i + 1) * 4 - 1):(i * 4)] = slot_data[i];
         end
     endgenerate
     
@@ -227,7 +226,7 @@ module usb_toplevel(
             .fifo_read(slot_dac_fifo_read[i]),
             .fifo_addr_in(read_in_addr[i]),
             .fifo_addr_out(read_out_addr[i]),
-            .slot_data(slot_data[i]),
+            .slot_data(slot_data_out[((i + 1) * 6 - 1):(i * 6)]),
             .direction(directions[i]),
             .channels(channels[i]),
             .clk(clk), 
@@ -242,7 +241,7 @@ module usb_toplevel(
             .fifo_write(slot_adc_fifo_write[i]),
             .fifo_addr_in(write_in_addr[i + 4]),
             .fifo_addr_out(write_out_addr[i + 4]),
-            .slot_data(slot_data[i]),
+            .slot_data(slot_data_in[((i + 1) * 6 - 1):(i * 6)]),
             .direction(directions[i]),
             .channels(channels[i]),
             .clk(clk), 

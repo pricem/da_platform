@@ -20,8 +20,10 @@ module bram_2k_8 (clk, we, a, dpra, di, spo, dpo, reset);
         if (reset) begin
             spo <= 0;
             dpo <= 0;
+            /*  Reset circuitry not actually available.
             for (i = 0; i < 2048; i = i + 1)
                 ram[i] <= 0;
+            */
         end
         else begin
             if (we) begin
