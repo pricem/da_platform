@@ -1,13 +1,17 @@
 [timestart] 0
 [size] 1280 953
 [pos] -1 -1
-*-16.000000 50700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.000000 72400 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
-[treeopen] dut_usb_toplevel.dut.ports[0].
-[treeopen] dut_usb_toplevel.dut.ports[1].
-[treeopen] dut_usb_toplevel.dut.ports[2].
-[treeopen] dut_usb_toplevel.dut.ports[3].
+[treeopen] dut_usb_toplevel.dut.adcs[0].
+[treeopen] dut_usb_toplevel.dut.adcs[1].
+[treeopen] dut_usb_toplevel.dut.adcs[2].
+[treeopen] dut_usb_toplevel.dut.adcs[3].
+[treeopen] dut_usb_toplevel.dut.dacs[0].
+[treeopen] dut_usb_toplevel.dut.dacs[1].
+[treeopen] dut_usb_toplevel.dut.dacs[2].
+[treeopen] dut_usb_toplevel.dut.dacs[3].
 @200
 -FX2 bus
 @28
@@ -167,3 +171,56 @@ dut_usb_toplevel.dut.arb.mem_data[15:0]
 @28
 dut_usb_toplevel.dut.arb.mem_oe
 dut_usb_toplevel.dut.arb.mem_we
+@200
+-Converter bus
+@28
+dut_usb_toplevel.dut.directions[3:0]
+dut_usb_toplevel.dut.channels[3:0]
+dut_usb_toplevel.dut.custom_adc_hwcon
+dut_usb_toplevel.dut.custom_adc_ovf
+dut_usb_toplevel.dut.custom_clk0
+dut_usb_toplevel.dut.custom_clk1
+dut_usb_toplevel.dut.custom_clksel
+dut_usb_toplevel.dut.custom_dirchan
+dut_usb_toplevel.dut.custom_srclk
+@200
+-DACs and RAM->DAC FIFOs
+@28
++Slot_0_data dut_usb_toplevel.dut.dacs[0].dac_i.slot_data[5:0]
++Slot_1_data dut_usb_toplevel.dut.dacs[1].dac_i.slot_data[5:0]
++Slot_2_data dut_usb_toplevel.dut.dacs[2].dac_i.slot_data[5:0]
++Slot_3_data dut_usb_toplevel.dut.dacs[3].dac_i.slot_data[5:0]
+@200
+-Port 0
+@22
+dut_usb_toplevel.dut.dacs[0].dac_i.fifo_addr_in[10:0]
+dut_usb_toplevel.dut.dacs[0].dac_i.fifo_addr_out[10:0]
+@28
+dut_usb_toplevel.dut.dacs[0].dac_i.fifo_read
+dut_usb_toplevel.dut.dacs[0].dac_i.fifo_clk
+dut_usb_toplevel.dut.dacs[0].dac_i.clk
+dut_usb_toplevel.dut.dacs[0].dac_i.reset
+@200
+-Port 1
+-Port 2
+-Port 3
+-ADCs and ADC->RAM FIFOs
+-Port 0
+@28
+dut_usb_toplevel.dut.adcs[0].adc_i.fifo_clk
+dut_usb_toplevel.dut.adcs[0].adc_i.fifo_write
+@22
+dut_usb_toplevel.dut.adcs[0].adc_i.fifo_addr_in[10:0]
+dut_usb_toplevel.dut.adcs[0].adc_i.fifo_addr_out[10:0]
+@200
+-Port 1
+-Port 2
+@28
+dut_usb_toplevel.dut.adcs[2].adc_i.fifo_clk
+dut_usb_toplevel.dut.adcs[2].adc_i.fifo_write
+@22
+dut_usb_toplevel.dut.adcs[2].adc_i.fifo_data[7:0]
+dut_usb_toplevel.dut.adcs[2].adc_i.fifo_addr_in[10:0]
+dut_usb_toplevel.dut.adcs[2].adc_i.fifo_addr_out[10:0]
+@200
+-Port 3

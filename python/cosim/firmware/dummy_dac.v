@@ -27,6 +27,9 @@ module dummy_dac(
     reg [7:0] clk_counter;
     reg [1:0] msg_counter;
     reg fifo_clk_last;
+
+    //  Keep reset around so you can cycle FIFO clock at reset
+    reg reset_last;
     
     //  Tristate outputs
     assign slot_data = (direction == 0) ? data_out : 6'hZZ;
@@ -36,10 +39,18 @@ module dummy_dac(
             clk_counter <= 0;
             msg_counter <= 0;
             fifo_clk_last <= 0;
-            fifo_clk <= 0;
+            
+            //  Cycle FIFO clock at reset
+            if (reset_last)
+                fifo_clk <= 0;
+            else
+                fifo_clk <= 1;
             data_out <= 0;
+            reset_last <= 1;
         end
         else begin
+            reset_last <= 0;
+        
             clk_counter <= clk_counter + 1;
             
             //  Trigger the FIFO clock once in a while

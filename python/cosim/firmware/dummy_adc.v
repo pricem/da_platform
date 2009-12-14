@@ -28,15 +28,24 @@ module dummy_adc(
     reg fifo_clk_last;
     wire [31:0] message = 32'hDEADBEEF;
     
+    //  Keep reset around so you can cycle FIFO clock at reset
+    reg reset_last;
+    
     always @(posedge clk) begin
         if (reset) begin
             clk_counter <= 0;
             msg_counter <= 0;
             fifo_clk_last <= 0;
-            fifo_clk <= 0;
+            //  Cycle FIFO clock at reset
+            if (reset_last)
+                fifo_clk <= 0;
+            else
+                fifo_clk <= 1;
             fifo_data <= 0;
+            reset_last <= 1;
         end
         else begin
+            reset_last <= 0;
             clk_counter <= clk_counter + 1;
             
             //  Trigger the FIFO clock once in a while

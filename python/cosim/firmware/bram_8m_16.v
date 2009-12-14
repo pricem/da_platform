@@ -8,14 +8,12 @@ module bram_8m_16 (clk, we, addr, din, dout);
     input we;
     input [22:0] addr;
     input [15:0] din;
-    output [15:0] dout;
+    output reg [15:0] dout;
     //  Should be larger in reality.  This is big enough for simulation.
     reg [15:0] ram[65536:0];
-    reg [22:0] read_a;
     always @(posedge clk) begin
         if (we)
             ram[addr[15:0]] <= din;
-        read_a <= addr;
+        dout <= ram[addr];
         end
-    assign dout = ram[read_a];
 endmodule

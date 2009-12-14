@@ -159,6 +159,7 @@ module memory_arbitrator(
                 read_write_data[i] <= 0;
                 read_write[i] <= 0;
                 read_fifo_byte_count[i] <= 0;
+                write_mem_byte_count[i] <= 0;
             end
             current_direction <= READING;
             current_port <= 0;

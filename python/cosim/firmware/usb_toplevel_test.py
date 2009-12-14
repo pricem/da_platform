@@ -74,7 +74,8 @@ def usb_toplevel_test():
     def stimulus():
     
         reset.next = True
-        yield usb_ifclk.negedge
+        for i in range(2):
+            yield usb_ifclk.negedge
         reset.next = False
         yield usb_ifclk.negedge
     

@@ -125,6 +125,12 @@ module usb_toplevel(
         end
     endgenerate
     
+    //  Assign byte counters for now
+    generate for (i = 0; i < 4; i = i + 1) begin:counters
+            assign write_fifo_byte_count[i] = 0;
+        end
+    endgenerate
+    
     /* Logic module instances */
     
     //  FX2 interface (includes command decoder and port decoders)
