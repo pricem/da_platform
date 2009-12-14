@@ -71,10 +71,10 @@ module usb_toplevel(
     
     //  Between FX2 interface and tracking FIFOs
     wire [7:0] ep2_port_data;
-    wire ep2_port_write[3:0];
+    wire [3:0] ep2_port_write;
     wire ep2_port_clk;
     wire [7:0] ep6_port_data[3:0];
-    wire ep6_port_read[3:0];
+    wire [3:0] ep6_port_read;
     wire ep6_port_clk;
     
     //  Between FX2 interface and command decoder (which in turn writes configuration memory)
@@ -131,10 +131,10 @@ module usb_toplevel(
         .usb_ep6_full(usb_ep6_full), 
         .usb_ep8_full(usb_ep8_full), 
         .ep2_port_data(ep2_port_data), 
-        .ep2_port_write({ep2_port_write[3], ep2_port_write[2], ep2_port_write[1], ep2_port_write[0]}), 
+        .ep2_port_write(ep2_port_write), 
         .ep2_port_clk(ep2_port_clk), 
         .ep6_port_datas({ep6_port_data[3], ep6_port_data[2], ep6_port_data[1], ep6_port_data[0]}), 
-        .ep6_port_read({ep6_port_read[3], ep6_port_read[2], ep6_port_read[1], ep6_port_read[0]}), 
+        .ep6_port_read(ep6_port_read), 
         .ep6_port_clk(ep6_port_clk), 
         .cmd_in_id(cmd_in_id),
         .cmd_in_data(cmd_in_data),
@@ -149,7 +149,7 @@ module usb_toplevel(
         );
     
     //  Tracking FIFOs: EP2->RAM
-    generate for (i = 0; i < 4; i = i + 1) begin
+    generate for (i = 0; i < 4; i = i + 1) begin:ports
         tracking_fifo fifos_ep2_in_i (
             .clk_in(ep2_port_clk),
             .data_in(ep2_port_data), 

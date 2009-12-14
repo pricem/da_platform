@@ -84,7 +84,7 @@ module memory_arbitrator(
     reg [7:0] read_write_data [7:0];
     wire [31:0] write_fifo_byte_count [7:0];
     reg [31:0] read_fifo_byte_count [7:0];
-    generate for (g = 0; g < 8; g = g + 1) begin
+    generate for (g = 0; g < 8; g = g + 1) begin:fifos
         assign write_in_addr[g] = write_in_addrs[((g + 1) * 11 - 1):(g * 11)];
         assign write_out_addr[g] = write_out_addrs[((g + 1) * 11 - 1):(g * 11)];
         assign read_in_addr[g] = read_in_addrs[((g + 1) * 11 - 1):(g * 11)];
@@ -134,18 +134,9 @@ module memory_arbitrator(
     //  Main clock: handle resets and lower/upper bytes
     always @(posedge clk) begin
         if (reset) begin
-            for (i = 0; i < 8; i = i + 1) begin
-                write_read[i] <= 0;
-                read_write_data[i] <= 0;
-                read_write[i] <= 0;
-                read_fifo_byte_count[i] <= 0;
-            end
-            current_direction <= READING;
-            current_port <= 0;
-            current_fifo_addr <= 0;
-            current_delta <= 0;
-            start_flag <= 1;
             clk_div2 <= 0;
+            write_lower_byte <= 0;
+            write_upper_byte <= 0;
         end
         else begin
             //  Run clk_div2
@@ -162,59 +153,74 @@ module memory_arbitrator(
     
     //  Memory clock: do everything else
     always @(posedge clk_div2) begin
-        //  Advance state if necessary
-        if ((current_delta == 0) && (!start_flag)) begin
-            //  If the last port was reached, reset to port 0 and switch directions.
-            if (current_port == (NUM_PORTS - 1)) begin
-                current_port <= 0;
-                if (current_direction == READING)
-                    current_direction <= WRITING;
-                else
-                    current_direction <= READING;
+        if (reset) begin
+            for (i = 0; i < 8; i = i + 1) begin
+                write_read[i] <= 0;
+                read_write_data[i] <= 0;
+                read_write[i] <= 0;
+                read_fifo_byte_count[i] <= 0;
             end
-            //  Otherwise go to the next port
-            else
-                current_port <= current_port + 1;
-                
-            write_read[current_port] <= 0;
-            read_write[current_port] <= 0;
+            current_direction <= READING;
+            current_port <= 0;
+            current_fifo_addr <= 0;
+            current_delta <= 0;
             start_flag <= 1;
         end
-        //  At beginning of cycle, load parameters and clear start flag
-        else if (start_flag) begin
-            
-            if (current_direction == WRITING) begin
-                //  Latch effective byte count at input.
-                write_mem_byte_count[current_port] <= write_fifo_byte_count[current_port];
-                
-                current_fifo_addr <= write_out_addr[current_port];
-                current_delta <= write_in_addr[current_port] - write_out_addr[current_port];
-            end
-            else begin
-                current_fifo_addr <= read_in_addr[current_port];
-                
-                //  Compute delta from byte count lag between read side and write site.
-                current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
-            end
-        
-            write_read[current_port] <= 0;
-            read_write[current_port] <= 0;
-            start_flag <= 0;
-        end
-        //  Once cycle is under way, perform read or write task
         else begin
-
-            if (current_direction == READING) begin
-                read_write[current_port] <= 1;
+            //  Advance state if necessary
+            if ((current_delta == 0) && (!start_flag)) begin
+                //  If the last port was reached, reset to port 0 and switch directions.
+                if (current_port == (NUM_PORTS - 1)) begin
+                    current_port <= 0;
+                    if (current_direction == READING)
+                        current_direction <= WRITING;
+                    else
+                        current_direction <= READING;
+                end
+                //  Otherwise go to the next port
+                else
+                    current_port <= current_port + 1;
+                    
                 write_read[current_port] <= 0;
-            end
-
-            else begin
                 read_write[current_port] <= 0;
-                write_read[current_port] <= 1;
-                //  Update counters
-                current_fifo_addr <= current_fifo_addr + 1;
-                current_delta <= current_delta - 1;
+                start_flag <= 1;
+            end
+            //  At beginning of cycle, load parameters and clear start flag
+            else if (start_flag) begin
+                
+                if (current_direction == WRITING) begin
+                    //  Latch effective byte count at input.
+                    write_mem_byte_count[current_port] <= write_fifo_byte_count[current_port];
+                    
+                    current_fifo_addr <= write_out_addr[current_port];
+                    current_delta <= write_in_addr[current_port] - write_out_addr[current_port];
+                end
+                else begin
+                    current_fifo_addr <= read_in_addr[current_port];
+                    
+                    //  Compute delta from byte count lag between read side and write site.
+                    current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
+                end
+            
+                write_read[current_port] <= 0;
+                read_write[current_port] <= 0;
+                start_flag <= 0;
+            end
+            //  Once cycle is under way, perform read or write task
+            else begin
+
+                if (current_direction == READING) begin
+                    read_write[current_port] <= 1;
+                    write_read[current_port] <= 0;
+                end
+
+                else begin
+                    read_write[current_port] <= 0;
+                    write_read[current_port] <= 1;
+                    //  Update counters
+                    current_fifo_addr <= current_fifo_addr + 1;
+                    current_delta <= current_delta - 1;
+                end
             end
         end
     end

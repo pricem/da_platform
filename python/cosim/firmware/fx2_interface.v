@@ -129,7 +129,7 @@ module fx2_interface(
     wire [7:0] ep6_port_data [3:0];
     wire [10:0] ep6_port_addr_in [3:0];
     wire [10:0] ep6_port_addr_out [3:0];
-    generate for (g = 0; g < 4; g = g + 1) begin
+    generate for (g = 0; g < 4; g = g + 1) begin:ep6_ports
         assign ep6_port_data[g] = ep6_port_datas[((g + 1) * 8 - 1):(g * 8)];
         assign ep6_port_addr_in[g] = ep6_port_addr_ins[((g + 1) * 11 - 1):(g * 11)];
         assign ep6_port_addr_out[g] = ep6_port_addr_outs[((g + 1) * 11 - 1):(g * 11)];       
@@ -153,7 +153,7 @@ module fx2_interface(
     assign state_write = ((state_endpoint_index == EP6) || (state_endpoint_index == EP8));
     assign state_data = ((state_endpoint_index == EP2) || (state_endpoint_index == EP6));
     assign state_command = ((state_endpoint_index == EP4) || (state_endpoint_index == EP8));
-    generate for (g = 0; g < 4; g = g + 1) begin
+    generate for (g = 0; g < 4; g = g + 1) begin:ep6_states
         assign state_ep6_active[g] = (ep6_port_addr_out[g] != ep6_port_addr_in[g]);
         end
     endgenerate
@@ -162,7 +162,7 @@ module fx2_interface(
     assign ep2_port_clk = usb_ifclk;
     //  assign ep2_port_data = ep2_port_write[ep2_port_index] ? usb_data_out : 8'b0;
     assign ep2_port_data = usb_data_out;
-    generate for (g = 0; g < 4; g = g + 1) begin
+    generate for (g = 0; g < 4; g = g + 1) begin:ep2_ports
         assign ep2_port_write[g] = ((ep2_port_index == g) && ((state_endpoint_index == EP2) && (state_packet_status[state_endpoint_index] == PACKET_DATA)));
         end
     endgenerate
@@ -303,7 +303,7 @@ module fx2_interface(
                         EP6: begin
                             //  Write the upper byte of the packet data length and move on.
                             usb_slwr <= 0;
-                            usb_data_in <= ep6_destination_length[15:8];
+                            usb_data_in <= ep6_destination_length[10:8];
                             state_packet_status[state_endpoint_index] <= PACKET_HEADER_LENGTH_LOWER;
                         end
                         EP8: begin
