@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from myhdl import *
 import unittest
 from unittest import TestCase

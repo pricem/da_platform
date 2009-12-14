@@ -77,11 +77,11 @@ module usb_toplevel(
     wire ep6_port_read[3:0];
     wire ep6_port_clk;
     
-    //  Between FX2 interface and configuration memory
-    wire [10:0] config_addr;
-    wire config_write;
-    wire config_clk;
-    wire [7:0] config_data;
+    //  Between FX2 interface and command decoder (which in turn writes configuration memory)
+    wire [15:0] cmd_in_id;
+    wire [7:0] cmd_in_data;
+    wire cmd_in_clk;
+    wire cmd_valid;
     
     //  Between FX2 interface and command encoder
     wire cmd_new_command;
@@ -136,10 +136,10 @@ module usb_toplevel(
         .ep6_port_datas({ep6_port_data[3], ep6_port_data[2], ep6_port_data[1], ep6_port_data[0]}), 
         .ep6_port_read({ep6_port_read[3], ep6_port_read[2], ep6_port_read[1], ep6_port_read[0]}), 
         .ep6_port_clk(ep6_port_clk), 
-        .config_addr(config_addr), 
-        .config_write(config_write), 
-        .config_clk(config_clk), 
-        .config_data(config_data), 
+        .cmd_in_id(cmd_in_id),
+        .cmd_in_data(cmd_in_data),
+        .cmd_valid(cmd_valid),
+        .cmd_in_clk(cmd_in_clk),
         .cmd_new_command(cmd_new_command), 
         .cmd_data(cmd_data), 
         .cmd_clk(cmd_clk), 
@@ -227,18 +227,8 @@ module usb_toplevel(
         .reset(reset)
         );
     
-    //  Configuration memory
-    bram_2k_8 config_mem (
-        .clk(config_clk),
-        .we(config_write), 
-        .a(config_addr), 
-        .dpra(config_read_addr), 
-        .di(config_data), 
-        .dpo(config_read_data)
-        );
-    
     //  Uncompleted modules follow
-    //  Configuration controller
+    //  Configuration controller (and memory)
     //  Local button controller
     //  Monitor
     

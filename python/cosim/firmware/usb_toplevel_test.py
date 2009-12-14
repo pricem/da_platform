@@ -16,7 +16,7 @@ def usb_toplevel_test():
     usb_ifclk = Signal(False)
     usb_slwr = Signal(True)
     usb_slrd = Signal(True)
-    usb_sloe = Signal(True)
+    usb_sloe = Signal(False)
     usb_addr = Signal(intbv(0)[2:])
     usb_data_in = Signal(intbv(0)[8:])
     usb_data_out = Signal(intbv(0)[8:])
@@ -72,12 +72,12 @@ def usb_toplevel_test():
     def stimulus():
     
         reset.next = True
-        yield clk.negedge
+        yield usb_ifclk.negedge
         reset.next = False
-        yield clk.negedge
+        yield usb_ifclk.negedge
     
         for i in range(100):
-            yield clk.negedge
+            yield usb_ifclk.negedge
             
         raise StopSimulation
             

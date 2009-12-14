@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module dut_usb_toplevel;
 
     reg usb_ifclk;
@@ -53,6 +55,8 @@ module dut_usb_toplevel;
     reg reset;
     
     initial begin
+        $dumpfile("usb_toplevel_verilog.vcd");
+        $dumpvars(0, dut);
         $from_myhdl(usb_ifclk, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_data_myhdl_in, mem_data_myhdl_driven, spi_adc_mdo, spi_dac_mdo, custom_adc_ovf, custom_clk0, custom_clk1, clk, reset);
         $to_myhdl(usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, custom_adc_hwcon, custom_srclk, custom_clksel);
     end
