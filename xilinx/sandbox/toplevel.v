@@ -100,27 +100,51 @@ reg [11:0] dac_data2;           //  DAC right channel
 reg dac_start;                  //  DAC control lines
 wire dac_done;
 
-//  USB module from Joseph Rothweiler
-usb_top usb (
-    .CLK_50M(clk0),
-    .SW(switches),
-    .BTN(buttons),
-    .U_FDATA(usb_data),
-    .U_FADDR(usb_addr),
-    .U_SLRD(usb_slrd),
-    .U_SLWR(usb_slwr),
-    .U_SLOE(usb_sloe),
-    .U_SLCS(usb_slcs),
-    .U_INT0(usb_int0),
-    .U_PKTEND(usb_pktend),
-    .U_FLAGA(usb_flaga),
-    .U_FLAGB(usb_flagb),
-    .U_FLAGC(usb_flagc),
-    .U_IFCLK(usb_ifclk),
-    .LED(led),
-    .DATA(usb_fifo0_out),
-    .ACTIVE(usb_fifo0_active)
-  );
+//  Handle in/out nature of USB data
+wire usb_data_out = usb_data;
+wire usb_data_in;
+assign usb_data = usb_slwr ? 8'hZZ : usb_data_in;
+
+//  USB module 
+usb_toplevel dut(
+        .usb_ifclk(usb_ifclk),
+        .usb_slwr(usb_slwr),
+        .usb_slrd(usb_slrd),
+        .usb_sloe(usb_sloe),
+        .usb_addr(usb_addr),
+        .usb_data_in(usb_data_in),
+        .usb_data_out(usb_data_out),
+        .usb_ep2_empty(usb_flaga),
+        .usb_ep4_empty(usb_flagb),
+        .usb_ep6_full(usb_flagc),
+        .usb_ep8_full(usb_flagb),
+        .mem_addr(mem_addr),
+        .mem_data(mem_data),
+        .mem_oe(mem_oe),
+        .mem_we(mem_we),
+        .mem_clk(mem_clk),
+        .mem_addr_valid(mem_adv),
+        .slot0_data({fx2[11], fx2[9], fx2[7], fx2[5], fx2[3], fx2[1]}),
+        .slot1_data({fx2[8], fx2[10], fx2[4], fx2[6], fx2[0], fx2[2]}),
+        .slot2_data({fx2[23], fx2[21], fx2[19], fx2[17], fx2[15], fx2[13]}),
+        .slot3_data({fx2[20], fx2[22], fx2[16], fx2[18], fx2[12], fx2[14]}),
+        .spi_adc_cs(fx2[24]),
+        .spi_adc_mclk(fx2[26]),
+        .spi_adc_mdi(fx2[34]),
+        .spi_adc_mdo(fx2[30]),
+        .spi_dac_cs(fx2[32]),
+        .spi_dac_mclk(fx2[26]),
+        .spi_dac_mdi(fx2[34]),
+        .spi_dac_mdo(fx2[36]),
+        .custom_adc_hwcon({fx2[29], fx2[31]}),
+        .custom_adc_ovf(fx2[27]),
+        .custom_clk0(fx2[25]),
+        .custom_srclk(fx2[37]),
+        .custom_clksel(fx2[35]),
+        .custom_clk1(fx2[33]),
+        .clk(clk),
+        .reset(reset)
+);
   
 
 // Instantiate DAC
@@ -181,18 +205,11 @@ assign ps2_clk = 0;
 assign led_7seg_an[3:0] = 4'b1111;
 assign led_7seg_cat[7:0] = 8'b11111111;
 
-assign mem_addr[23:1] = 23'h000000;
-
 assign flash_rp = 1;
 assign flash_ce = 1;
-
 assign mem_ub = 1;
 assign mem_lb = 1;
-assign mem_oe = 1;
-assign mem_we = 1;
 assign mem_ce = 1;
 assign mem_cre = 0;
-assign mem_adv = 1;
-assign mem_clk = 0;
 
 endmodule

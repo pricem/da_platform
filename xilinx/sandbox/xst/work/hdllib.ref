@@ -1,8 +1,13 @@
-AR da2refcomp da2 /home/price/projects/cdp/xilinx/sandbox/DA2RefComp.vhd sub00/vhpl05 1258229500
+AR da2refcomp da2 /home/price/projects/cdp/xilinx/sandbox/DA2RefComp.vhd sub00/vhpl05 1260757833
 EN usb_fifos NULL /home/price/projects/cdp/xilinx/sandbox/usb_fifos.vhd sub00/vhpl00 1258229497
+MO fx2_interface NULL fx2_interface.v vlg04/fx2__interface.bin 1260757832
 AR usb_fifos rtl /home/price/projects/cdp/xilinx/sandbox/usb_fifos.vhd sub00/vhpl01 1258229498
-MO nexys2_toplevel NULL toplevel.v vlg4B/nexys2__toplevel.bin 1258229497
+MO memory_arbitrator NULL memory_arbitrator.v vlg12/memory__arbitrator.bin 1260757832
+MO nexys2_toplevel NULL toplevel.v vlg4B/nexys2__toplevel.bin 1260757832
 MO sandbox1 NULL sandbox1.v vlg44/sandbox1.bin 1257110009
 AR usb_top rtl /home/price/projects/cdp/xilinx/sandbox/usb_top.vhd sub00/vhpl03 1258229502
+MO tracking_fifo NULL tracking_fifo.v vlg22/tracking__fifo.bin 1260757832
+MO bram_2k_8 NULL bram_2k_8.v vlg05/bram__2k__8.bin 1260757832
 EN usb_top NULL /home/price/projects/cdp/xilinx/sandbox/usb_top.vhd sub00/vhpl02 1258229501
-EN da2refcomp NULL /home/price/projects/cdp/xilinx/sandbox/DA2RefComp.vhd sub00/vhpl04 1258229499
+EN da2refcomp NULL /home/price/projects/cdp/xilinx/sandbox/DA2RefComp.vhd sub00/vhpl04 1260757832
+MO usb_toplevel NULL usb_toplevel.v vlg68/usb__toplevel.bin 1260757832
