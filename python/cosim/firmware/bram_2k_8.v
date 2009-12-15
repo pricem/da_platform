@@ -3,8 +3,9 @@
 //  From XST 11.3 manual page 142
 //
 
-module bram_2k_8 (clk, we, a, dpra, di, spo, dpo, reset);
+module bram_2k_8 (clk, clk2, we, a, dpra, di, spo, dpo, reset);
     input clk;
+    input clk2;
     input we;
     input [10:0] a;
     input [10:0] dpra;
@@ -19,7 +20,6 @@ module bram_2k_8 (clk, we, a, dpra, di, spo, dpo, reset);
     always @(posedge clk) begin
         if (reset) begin
             spo <= 0;
-            dpo <= 0;
             /*  Reset circuitry not actually available.
             for (i = 0; i < 2048; i = i + 1)
                 ram[i] <= 0;
@@ -31,7 +31,13 @@ module bram_2k_8 (clk, we, a, dpra, di, spo, dpo, reset);
                 ram[a] <= di;
             end
             spo <= ram[a];
-            dpo <= ram[dpra];
         end
     end
+    
+    always @(posedge clk2)
+        if (reset)
+            dpo <= 0;
+        else 
+            dpo <= ram[dpra];
+    
 endmodule

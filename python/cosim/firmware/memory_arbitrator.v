@@ -121,6 +121,7 @@ module memory_arbitrator(
     parameter NUM_PORTS = 4;
     reg current_direction;          //  READING or WRITING
     reg [2:0] current_port;         //  Port index (0 to 7)
+    reg [2:0] current_port_delayed;
     reg [10:0] current_fifo_addr;
     reg [10:0] current_delta;
     reg start_flag;                 //  Single clk_div2 pulse at beginning of each cycle
@@ -144,15 +145,16 @@ module memory_arbitrator(
             
             //  Load lower/upper byte
             if (clk_div2 == 0)
-                write_lower_byte <= write_read_data[current_port];
+                write_lower_byte <= write_read_data[current_port_delayed];
             else
-                write_upper_byte <= write_read_data[current_port];
+                write_upper_byte <= write_read_data[current_port_delayed];
             
         end
     end
     
     //  Memory clock: do everything else
-    always @(posedge clk_div2) begin
+    //  always @(posedge clk_div2) begin
+    always @(posedge clk) begin
         if (reset) begin
             for (i = 0; i < 8; i = i + 1) begin
                 write_read[i] <= 0;
@@ -163,11 +165,14 @@ module memory_arbitrator(
             end
             current_direction <= READING;
             current_port <= 0;
+            current_port_delayed <= 0;
             current_fifo_addr <= 0;
             current_delta <= 0;
             start_flag <= 1;
         end
         else begin
+            current_port_delayed <= current_port;
+        
             //  Advance state if necessary
             if ((current_delta == 0) && (!start_flag)) begin
                 //  If the last port was reached, reset to port 0 and switch directions.
@@ -194,17 +199,25 @@ module memory_arbitrator(
                     write_mem_byte_count[current_port] <= write_fifo_byte_count[current_port];
                     
                     current_fifo_addr <= write_out_addr[current_port];
-                    current_delta <= write_in_addr[current_port] - write_out_addr[current_port];
+                    //  Write only up to an even number of bytes (due to 16-bit memory word)
+                    current_delta <= ((write_in_addr[current_port] - write_out_addr[current_port]) / 2) << 1;
+                    
+                    /*
+                    //  Start reads from write FIFOs ahead of time due to the 1-cycle latency in reading from a FIFO.
+                    write_read[current_port] <= 1;
+                    read_write[current_port] <= 0;
+                    */
                 end
                 else begin
                     current_fifo_addr <= read_in_addr[current_port];
                     
                     //  Compute delta from byte count lag between read side and write site.
                     current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
+
+                    read_write[current_port] <= 0;
+                    write_read[current_port] <= 0;
                 end
-            
-                write_read[current_port] <= 0;
-                read_write[current_port] <= 0;
+
                 start_flag <= 0;
             end
             //  Once cycle is under way, perform read or write task
