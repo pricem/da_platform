@@ -143,7 +143,7 @@ module memory_arbitrator(
     //  Control memory
     reg write_read_delayed;
     reg read_write_delayed;
-    assign mem_we = write_read_delayed;
+    assign mem_we = write_read[current_port];
     assign mem_data = mem_we ? mem_write_data : 16'hZZZZ;
     assign mem_oe = ~write_read_delayed;
     

@@ -1,7 +1,7 @@
-[timestart] 0
+[timestart] 433300
 [size] 1280 953
 [pos] -1 -1
-*-15.000000 43700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.000000 500002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.adcs[0].
@@ -184,6 +184,9 @@ dut_usb_toplevel.dut.arb.mem_write_data[15:0]
 dut_usb_toplevel.dut.arb.mem_read_data[15:0]
 dut_usb_toplevel.dut.arb.mem_addr[22:0]
 @28
+dut_usb_toplevel.dut.arb.config_counter[2:0]
+dut_usb_toplevel.dut.arb.config_done
+dut_usb_toplevel.dut.arb.mem_wait
 dut_usb_toplevel.dut.arb.mem_cre
 dut_usb_toplevel.dut.arb.mem_addr_valid
 dut_usb_toplevel.dut.arb.mem_clk
@@ -194,6 +197,17 @@ dut_usb_toplevel.dut.arb.mem_we
 dut_usb_toplevel.dut.arb.mem_data[15:0]
 @200
 -Cell RAM model
+@28
+dut_usb_toplevel.dut.buffer.mode[2:0]
+dut_usb_toplevel.dut.buffer.clk
+dut_usb_toplevel.dut.buffer.reset
+dut_usb_toplevel.dut.buffer.cre
+@22
+dut_usb_toplevel.dut.buffer.last_data[15:0]
+@28
+dut_usb_toplevel.dut.buffer.config_counter[1:0]
+dut_usb_toplevel.dut.buffer.write_counter[2:0]
+dut_usb_toplevel.dut.buffer.read_counter[2:0]
 @22
 dut_usb_toplevel.dut.buffer.config[22:0]
 @200

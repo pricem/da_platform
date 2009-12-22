@@ -32,45 +32,133 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     wire reset_neg = ~reset;
     
     //  Internal signals
+    parameter IDLE = 3'b000;
+    parameter CONFIGURING = 3'b001;
+    parameter READING_INIT = 3'b010;
+    parameter WRITING_INIT = 3'b011;
+    parameter READING = 3'b100;
+    parameter WRITING = 3'b101;
+    reg [2:0] mode;
+    
     reg [22:0] config;
     reg [15:0] last_data;
     reg [1:0] config_counter;
+
+    reg [2:0] write_counter;
+    reg [2:0] read_counter;
     
     //  Assign data line if chip is enabled
     assign data = ce ? 16'hZZZZ : last_data;
     
-    //  Assign active high memory control signals based on active low inputs
-    assign mem_we = (~ce && ~we);
-    assign mem_oe = ~oe;
+    //  Assign active high memory control signals based on state
+    assign mem_we = (mode == WRITING);
+    assign mem_oe = (mode == READING);
 
     always @(posedge clk) begin
         if (~reset) begin
-            config <= 23'h009D1F;
-            last_data <= 16'hZZZZ;
-            config_counter <= 0;
-            mem_wait <= 1'bZ;
             mem_addr <= 23'h000000;
             mem_data_in <= 16'hZZZZ;
+            
+            mode <= IDLE;
+            
+            config <= 23'h009D1F;
+            last_data <= 16'hZZZZ;
+            
+            config_counter <= 0;
+            write_counter <= 0;
+            read_counter <= 0;
+            
+            mem_wait <= 1'bZ;
+
         end
-        else begin
-            if (cre) begin
-                config <= addr;
-                last_data <= 16'hZZZZ;
-                config_counter <= 1;
-                mem_wait <= 0;
-            end
-            else begin
-                if (config_counter != 0) begin
-                    config_counter <= config_counter + 1;
-                    mem_wait <= 0;
+        else if (~ce) begin
+            
+            case (mode)
+                IDLE: begin
+                    //  This idle state is a disambiguator that chooses a next state when
+                    //  the control lines cre or adv are asserted
+                    if (cre) begin
+                        //  Latch new configuration
+                        mode <= CONFIGURING;
+                        config <= addr;
+                        config_counter <= 0;
+                        mem_wait <= 0;
+                    end
+                    else if (~adv) begin
+                        //  Load address when adv ("address valid") is taken active low
+                        mem_addr <= addr;
+                        //  Determine whether this is a read using the active low we line
+                        if (we) begin
+                            mode <= READING_INIT;
+                            read_counter <= 0;
+                        end
+                        else begin
+                            mode <= WRITING_INIT;
+                            write_counter <= 0;
+                        end
+                    end
                 end
-                else begin
-                    mem_wait <= ce ? 1'bZ : 1;
-                    mem_addr <= addr;
-                    mem_data_in <= data;
+              
+                //  Each of the 3 modes below (configuring, initializing read, initializing write) has a 
+                //  delay of 3 clock cycles (set in BCR).
+                //  The configuration mode ends there; the reading and writing modes begin reading/writing then
+                //  and are only taken back to idle mode when the chip enable (ce) is deasserted (high).
+                CONFIGURING: begin
+                    if (config_counter == 2) begin
+                        config_counter <= 0;
+                        mode <= IDLE;
+                        mem_wait <= 1;
+                    end
+                    else begin
+                        config_counter <= config_counter + 1;
+                        mem_wait <= 0;
+                    end
+                end
+                
+                READING_INIT: begin
+                    if (read_counter == 2) begin
+                        read_counter <= 0;
+                        mode <= READING;
+                        mem_wait <= 1;
+                    end
+                    else begin
+                        read_counter <= read_counter + 1;
+                        mem_wait <= 0;
+                    end
+                end
+                
+                WRITING_INIT: begin
+                    if (write_counter == 2) begin
+                        write_counter <= 0;
+                        mode <= WRITING;
+                        mem_wait <= 1;
+                    end
+                    else begin
+                        write_counter <= write_counter + 1;
+                        mem_wait <= 0;
+                    end
+                end
+                
+                READING: begin
+                    mem_addr <= mem_addr + 1;
                     last_data <= mem_data_out;
                 end
-            end
+                
+                WRITING: begin
+                    mem_addr <= mem_addr + 1;
+                    mem_data_in <= data;
+                end
+            
+            endcase
+            
+        end
+        else begin
+            //  Reset the state if the chip is not enabled
+            mem_wait <= 1'bZ;
+            mode <= IDLE;
+            config_counter <= 0;
+            read_counter <= 0;
+            write_counter <= 0;
         end
     end
     
