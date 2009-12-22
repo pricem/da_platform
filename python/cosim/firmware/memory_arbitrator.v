@@ -31,7 +31,7 @@ module memory_arbitrator(
     write_fifo_byte_counts,         //  Byte count on the "in" side of the write FIFOs
     read_fifo_byte_counts,          //  Byte count on the "in" side of the read FIFOs
     //  Connections to memory
-    mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, 
+    mem_addr, mem_data, mem_ce, mem_oe, mem_we, mem_clk, mem_wait, mem_addr_valid, mem_cre,
     //  Double the memory clock; synchronous reset
     clk, reset);
     
@@ -60,10 +60,13 @@ module memory_arbitrator(
     //  cellram = bram_8m_16(.clk(clk_div2), .we(mem_we), .addr(mem_addr), .din(mem_data), .dout(mem_data));
     output [22:0] mem_addr;
     inout [15:0] mem_data;
+    output reg mem_ce;
     output mem_oe;
     output mem_we;
     output mem_clk;
-    output mem_addr_valid;
+    input mem_wait;
+    output reg mem_addr_valid;
+    output reg mem_cre;
     
     //  Controls
     input clk;
@@ -115,20 +118,38 @@ module memory_arbitrator(
     assign write_clk = clk;
     assign read_clk = clk;
 
-    //  States
+    //  Parameters
     parameter READING = 1'b0;       //  READING cellram into FIFO (destination: EP6 or DAC)
     parameter WRITING = 1'b1;       //  WRITING FIFO into cellram (source: EP2 or ADC)
     parameter NUM_PORTS = 4;
+    parameter BCR_VALUE = 23'h081D0F;
+    
+    //  States
+    reg config_done;
+    reg [2:0] config_counter;       //  Allow up to 8 cycles for memory to finish writing configuration register
+    
     reg current_direction;          //  READING or WRITING
     reg [2:0] current_port;         //  Port index (0 to 7)
     reg [2:0] current_port_delayed;
     reg [10:0] current_fifo_addr;
+    reg [10:0] fifo_addr_delayed;
     reg [10:0] current_delta;
     reg start_flag;                 //  Single clk_div2 pulse at beginning of each cycle
+    reg start_flag_delayed;
     
     //  Internal byte counter for data as it is written to RAM
     reg [31:0] write_mem_byte_count[7:0];
     
+    //  Control memory
+    reg write_read_delayed;
+    reg read_write_delayed;
+    assign mem_we = write_read_delayed;
+    assign mem_data = mem_we ? mem_write_data : 16'hZZZZ;
+    assign mem_oe = ~write_read_delayed;
+    
+    //  8M address space divided evenly into 8 sections of 1M each
+    //  Address lines carry configuration register value during configuration
+    assign mem_addr = mem_cre ? BCR_VALUE : (current_port << 10) + (fifo_addr >> 1);
     
     /*  Logic processes */
     
@@ -138,8 +159,18 @@ module memory_arbitrator(
             clk_div2 <= 1;
             write_lower_byte <= 0;
             write_upper_byte <= 0;
+            write_read_delayed <= 0;
+            read_write_delayed <= 0;
+            fifo_addr_delayed <= 0;
         end
         else begin
+            //  Update delayed signals
+            if (clk_div2 == 0) begin
+                write_read_delayed <= write_read[current_port];
+                read_write_delayed <= read_write[current_port];
+                fifo_addr_delayed <= current_fifo_addr;
+            end
+        
             //  Run clk_div2
             clk_div2 <= clk_div2 + 1;
             
@@ -152,8 +183,36 @@ module memory_arbitrator(
         end
     end
     
-    //  Memory clock: do everything else
-    //  always @(posedge clk_div2) begin
+    //  Memory configuration
+    always @(posedge clk_div2) begin
+        if (reset) begin
+            mem_cre <= 0;
+            config_done <= 0;
+            config_counter <= 0;
+        end
+        else if (~config_done) begin
+            //  If the memory's bus configuration register has not yet been set, program it.
+            //  This is done by setting mem_cre high, putting the register value on the address line
+            //  and holding a "write" until the mem_wait line goes high.
+            config_counter <= config_counter + 1;
+            if (mem_wait && config_counter > 1)
+                config_done <= 1;
+            else begin
+                if (config_counter > 0)
+                    mem_cre <= 0;
+                else
+                    mem_cre <= 1;
+            end
+        end
+        else begin
+            //  Normal operation: mem_cre is low, let the always block below handle everything
+            config_counter <= 0;
+            config_done <= 1;
+            mem_cre <= 0;
+        end
+    end
+    
+    //  Memory data transfer (individual bytes are prepared at twice the memory clock rate)
     always @(posedge clk) begin
         if (reset) begin
             for (i = 0; i < 8; i = i + 1) begin
@@ -167,11 +226,19 @@ module memory_arbitrator(
             current_port <= 0;
             current_port_delayed <= 0;
             current_fifo_addr <= 0;
+            mem_ce <= 1;
+            
+            mem_addr_valid <= 0;
             current_delta <= 0;
             start_flag <= 1;
+            
+            start_flag_delayed <= 0;
         end
-        else begin
-            current_port_delayed <= current_port;
+        else if (config_done) begin
+            
+            start_flag_delayed <= start_flag;
+            if (clk_div2 == 0)
+                current_port_delayed <= current_port;
         
             //  Advance state if necessary
             if ((current_delta == 0) && (!start_flag)) begin
@@ -190,6 +257,8 @@ module memory_arbitrator(
                 write_read[current_port] <= 0;
                 read_write[current_port] <= 0;
                 start_flag <= 1;
+                mem_addr_valid <= 0;
+                mem_ce <= 0;
             end
             //  At beginning of cycle, load parameters and clear start flag
             else if (start_flag) begin
@@ -217,12 +286,14 @@ module memory_arbitrator(
                     read_write[current_port] <= 0;
                     write_read[current_port] <= 0;
                 end
-
+                mem_addr_valid <= 0;
+                mem_ce <= 1;
                 start_flag <= 0;
             end
             //  Once cycle is under way, perform read or write task
             else begin
-
+                mem_ce <= 1;
+            
                 if (current_direction == READING) begin
                     read_write[current_port] <= 1;
                     write_read[current_port] <= 0;
@@ -235,6 +306,10 @@ module memory_arbitrator(
                     current_fifo_addr <= current_fifo_addr + 1;
                     current_delta <= current_delta - 1;
                 end
+                if ((current_delta != 0) && start_flag_delayed)
+                    mem_addr_valid <= 1;
+                else
+                    mem_addr_valid <= 0;
             end
         end
     end

@@ -10,7 +10,7 @@ module usb_toplevel(
     //  FX2 connections
     usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full,
     //  Cell RAM connections
-    mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, 
+    mem_addr, mem_data, mem_ce, mem_oe, mem_we, mem_clk, mem_wait, mem_addr_valid, mem_cre, mem_lb, mem_ub,
     //  Audio converter connections
     slot_data_in, slot_data_out, custom_dirchan, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1,
     //  Control
@@ -37,10 +37,17 @@ module usb_toplevel(
     //  Cell RAM connection
     output [22:0] mem_addr;
     inout [15:0] mem_data;
+    output mem_ce;
     output mem_oe;
     output mem_we;
     output mem_clk;
+    //  The mem_wait signal is set to inout for simulation purposes where it is driven by the cellram module.
+    inout mem_wait;
+    //  input mem_wait;
     output mem_addr_valid;
+    output mem_cre;
+    output mem_lb;
+    output mem_ub;
     
     //  Audio converter (40-pin isolated bus)
     input [23:0] slot_data_in;
@@ -67,6 +74,13 @@ module usb_toplevel(
     
     
     /* Interconnect signals */
+   
+    //  Between memory arbitrator and off-chip RAM: many wires need to be made active low
+    wire mem_ce_neg = ~mem_ce;
+    wire mem_oe_neg = ~mem_oe;
+    wire mem_we_neg = ~mem_we;
+    wire mem_adv_neg = ~mem_addr_valid;
+    wire reset_neg = ~reset;
     
     //  Between FX2 interface and tracking FIFOs
     wire [7:0] ep2_port_data;
@@ -266,12 +280,35 @@ module usb_toplevel(
         .read_fifo_byte_counts({read_fifo_byte_count[7], read_fifo_byte_count[6], read_fifo_byte_count[5], read_fifo_byte_count[4], read_fifo_byte_count[3], read_fifo_byte_count[2], read_fifo_byte_count[1], read_fifo_byte_count[0]}),
         .mem_addr(mem_addr), 
         .mem_data(mem_data),
+        .mem_ce(mem_ce),
         .mem_oe(mem_oe), 
         .mem_we(mem_we), 
         .mem_clk(mem_clk), 
+        .mem_wait(mem_wait),
         .mem_addr_valid(mem_addr_valid), 
+        .mem_cre(mem_cre),
         .clk(clk), 
         .reset(reset)
+        );
+    
+    //  Always use both lower and upper bytes (active low signals)
+    assign mem_ub_neg = 0;
+    assign mem_lb_neg = 0;
+    
+    //  Memory (comment out for synthesis)
+    cellram buffer(
+        .clk(mem_clk), 
+        .ce(mem_ce_neg),
+        .we(mem_we_neg), 
+        .oe(mem_oe_neg),
+        .addr(mem_addr), 
+        .data(mem_data), 
+        .cre(mem_cre),
+        .adv(mem_adv_neg),
+        .mem_wait(mem_wait),
+        .lb(mem_lb_neg),
+        .ub(mem_ub_neg),
+        .reset(reset_neg)
         );
     
     //  Uncompleted modules follow
