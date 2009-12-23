@@ -114,29 +114,26 @@ module memory_arbitrator(
     wire [7:0] read_upper_byte;
     assign read_lower_byte = mem_read_data[7:0];
     assign read_upper_byte = mem_read_data[15:8];
-    assign mem_clk = clk_div2;
+    assign mem_clk = clk_div2;  //  clk_div2 ? clk : 0;
     assign write_clk = clk;
     assign read_clk = clk;
 
     //  Parameters
-    parameter READING = 1'b0;       //  READING cellram into FIFO (destination: EP6 or DAC)
-    parameter WRITING = 1'b1;       //  WRITING FIFO into cellram (source: EP2 or ADC)
+    parameter CONFIGURING = 3'b000;
+    parameter READ_SCAN = 3'b010;
+    parameter WRITE_SCAN = 3'b011;
+    parameter READING = 3'b100;     //  READING cellram into FIFO (destination: EP6 or DAC)
+    parameter WRITING = 3'b101;     //  WRITING FIFO into cellram (source: EP2 or ADC)    
     parameter NUM_PORTS = 4;
     parameter BCR_VALUE = 23'h081D0F;
     
     //  States
-    reg config_done;
-    reg [2:0] config_counter;       //  Allow up to 8 cycles for memory to finish writing configuration register
-    
-    reg current_direction;          //  READING or WRITING
+    reg state;
     reg [2:0] current_port;         //  Port index (0 to 7)
-    reg [2:0] current_port_delayed;
+    reg [2:0] delay_counter;       //  Allow up to 8 cycles for memory to finish writing configuration register
     reg [10:0] current_fifo_addr;
-    reg [10:0] fifo_addr_delayed;
     reg [10:0] current_delta;
-    reg start_flag;                 //  Single clk_div2 pulse at beginning of each cycle
-    reg start_flag_delayed;
-    
+
     //  Internal byte counter for data as it is written to RAM
     reg [31:0] write_mem_byte_count[7:0];
     
@@ -153,10 +150,19 @@ module memory_arbitrator(
     
     /*  Logic processes */
     
-    //  Main clock: handle resets and lower/upper bytes
+    //  Drive memory clock at half speed of primary clock, with 90 deg shift.
+    //  This ensures that at each positive edge of the memory clock, data set up at the positive
+    //  edge of the primary clock will be usable.
+    always @(negedge clk) begin
+        if (reset)
+            clk_div2 <= 1;
+        else
+            clk_div2 <= clk_div2 + 1;
+    end
+    
+    //  Alternate reading lower and upper bytes for external RAM
     always @(posedge clk) begin
         if (reset) begin
-            clk_div2 <= 1;
             write_lower_byte <= 0;
             write_upper_byte <= 0;
             write_read_delayed <= 0;
@@ -170,10 +176,7 @@ module memory_arbitrator(
                 read_write_delayed <= read_write[current_port];
                 fifo_addr_delayed <= current_fifo_addr;
             end
-        
-            //  Run clk_div2
-            clk_div2 <= clk_div2 + 1;
-            
+       
             //  Load lower/upper byte
             if (clk_div2 == 0)
                 write_lower_byte <= write_read_data[current_port_delayed];
@@ -182,37 +185,10 @@ module memory_arbitrator(
             
         end
     end
+
     
-    //  Memory configuration
-    always @(posedge clk_div2) begin
-        if (reset) begin
-            mem_cre <= 0;
-            config_done <= 0;
-            config_counter <= 0;
-        end
-        else if (~config_done) begin
-            //  If the memory's bus configuration register has not yet been set, program it.
-            //  This is done by setting mem_cre high, putting the register value on the address line
-            //  and holding a "write" until the mem_wait line goes high.
-            config_counter <= config_counter + 1;
-            if (mem_wait && config_counter > 1)
-                config_done <= 1;
-            else begin
-                if (config_counter > 0)
-                    mem_cre <= 0;
-                else
-                    mem_cre <= 1;
-            end
-        end
-        else begin
-            //  Normal operation: mem_cre is low, let the always block below handle everything
-            config_counter <= 0;
-            config_done <= 1;
-            mem_cre <= 0;
-        end
-    end
-    
-    //  Memory data transfer (individual bytes are prepared at twice the memory clock rate)
+    //  State machine with memory data transfer 
+    //  (individual bytes are prepared at twice the memory clock rate)
     always @(posedge clk) begin
         if (reset) begin
             for (i = 0; i < 8; i = i + 1) begin
@@ -222,23 +198,68 @@ module memory_arbitrator(
                 read_fifo_byte_count[i] <= 0;
                 write_mem_byte_count[i] <= 0;
             end
-            current_direction <= READING;
+            state <= CONFIGURING;
             current_port <= 0;
-            current_port_delayed <= 0;
             current_fifo_addr <= 0;
             mem_ce <= 1;
-            
             mem_addr_valid <= 0;
             current_delta <= 0;
-            start_flag <= 1;
-            
-            start_flag_delayed <= 0;
+            mem_cre <= 0;
+            delay_counter <= 0;
         end
-        else if (config_done) begin
-            
-            start_flag_delayed <= start_flag;
-            if (clk_div2 == 0)
-                current_port_delayed <= current_port;
+        else begin
+        
+            //  State machine with a twist:
+            //  - Only transition to a new state when clk_div2 is high.
+            //    This synchronizes operation with the external memory
+            //    and holds values steady for 3/4 of a clock cycle.
+            case (state)
+                CONFIGURING: begin
+                    //  If the memory's bus configuration register has not yet been set, program it.
+                    //  This is done by setting mem_cre high, putting the register value on the address line
+                    //  and holding a "write" until the mem_wait line goes high.
+                    if (clk_div2 == 1) begin
+                        //  Increment the delay counter so that we know how long we've been waiting
+                        delay_counter <= delay_counter + 1;
+    
+                        if (mem_wait && delay_counter > 1) begin
+                            //  Move on to the other states once mem_wait is asserted
+                            delay_counter <= 0;
+                            config_done <= 1;
+                            mem_cre <= 0;
+                            current_port <= 0;
+                            state <= READ_SCAN;
+                        end
+                        else begin
+                            //  Set the mem_cre line to enable configuration for the first clk_div2 cycle
+                            if (delay_counter > 0)
+                                mem_cre <= 0;
+                            else
+                                mem_cre <= 1;
+                        end
+                    end
+                end
+                
+                READ_SCAN: begin
+                    if (clk_div2 == 1) begin
+                    
+                    end
+                end
+                
+                WRITE_SCAN: begin
+                
+                end
+                
+                READING: begin
+                
+                    if (current_delta == 0)
+                end
+                
+                WRITING: begin
+                
+                end
+                
+            endcase
         
             //  Advance state if necessary
             if ((current_delta == 0) && (!start_flag)) begin
@@ -257,9 +278,9 @@ module memory_arbitrator(
                 write_read[current_port] <= 0;
                 read_write[current_port] <= 0;
                 start_flag <= 1;
-                mem_addr_valid <= 0;
                 mem_ce <= 0;
             end
+            
             //  At beginning of cycle, load parameters and clear start flag
             else if (start_flag) begin
                 
@@ -286,13 +307,17 @@ module memory_arbitrator(
                     read_write[current_port] <= 0;
                     write_read[current_port] <= 0;
                 end
-                mem_addr_valid <= 0;
-                mem_ce <= 1;
+                mem_ce <= 0;
                 start_flag <= 0;
             end
+            
             //  Once cycle is under way, perform read or write task
             else begin
                 mem_ce <= 1;
+                if (start_flag_delayed)
+                    mem_addr_valid <= 1;
+                if (mem_addr_valid && ~clk_div2)
+                    mem_addr_valid <= 0;
             
                 if (current_direction == READING) begin
                     read_write[current_port] <= 1;
@@ -306,10 +331,6 @@ module memory_arbitrator(
                     current_fifo_addr <= current_fifo_addr + 1;
                     current_delta <= current_delta - 1;
                 end
-                if ((current_delta != 0) && start_flag_delayed)
-                    mem_addr_valid <= 1;
-                else
-                    mem_addr_valid <= 0;
             end
         end
     end
