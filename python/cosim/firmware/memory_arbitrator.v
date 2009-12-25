@@ -119,30 +119,42 @@ module memory_arbitrator(
     assign read_clk = clk;
 
     //  Parameters
+    
+    //  Possible outer states
     parameter CONFIGURING = 3'b000;
     parameter READ_SCAN = 3'b010;
     parameter WRITE_SCAN = 3'b011;
     parameter READING = 3'b100;     //  READING cellram into FIFO (destination: EP6 or DAC)
-    parameter WRITING = 3'b101;     //  WRITING FIFO into cellram (source: EP2 or ADC)    
+    parameter WRITING = 3'b101;     //  WRITING FIFO into cellram (source: EP2 or ADC)  
+    
+    //  Possible cycle states
+    parameter INITIALIZING = 2'b00;
+    parameter WAITING = 2'b01;
+    parameter ACTIVE = 2'b10;
+    parameter DONE = 2'b11;
+      
     parameter NUM_PORTS = 4;
     parameter BCR_VALUE = 23'h081D0F;
+    parameter MIN_CHUNK = 4;        //  Minimum amount of data to read at a time
     
     //  States
-    reg state;
+    reg [2:0] state;                //  Outer state: configuring, read_scan, reading, write_scan, writing
+    reg [1:0] cycle_state;          //  Inner state: start, wait, active
     reg [2:0] current_port;         //  Port index (0 to 7)
-    reg [2:0] delay_counter;       //  Allow up to 8 cycles for memory to finish writing configuration register
+    reg [2:0] delay_counter;        //  Allow up to 8 cycles for memory to finish writing configuration register
     reg [10:0] current_fifo_addr;
     reg [10:0] current_delta;
 
     //  Internal byte counter for data as it is written to RAM
     reg [31:0] write_mem_byte_count[7:0];
     
-    //  Control memory
+    //  Delayed copy of read control for write FIFO
     reg write_read_delayed;
-    reg read_write_delayed;
-    assign mem_we = write_read[current_port];
+    
+    //  Control memory
+    assign mem_we = (state == WRITING);
     assign mem_data = mem_we ? mem_write_data : 16'hZZZZ;
-    assign mem_oe = ~write_read_delayed;
+    assign mem_oe = (state == READING);
     
     //  8M address space divided evenly into 8 sections of 1M each
     //  Address lines carry configuration register value during configuration
@@ -166,23 +178,17 @@ module memory_arbitrator(
             write_lower_byte <= 0;
             write_upper_byte <= 0;
             write_read_delayed <= 0;
-            read_write_delayed <= 0;
-            fifo_addr_delayed <= 0;
         end
         else begin
-            //  Update delayed signals
-            if (clk_div2 == 0) begin
-                write_read_delayed <= write_read[current_port];
-                read_write_delayed <= read_write[current_port];
-                fifo_addr_delayed <= current_fifo_addr;
-            end
-       
-            //  Load lower/upper byte
-            if (clk_div2 == 0)
-                write_lower_byte <= write_read_data[current_port_delayed];
-            else
-                write_upper_byte <= write_read_data[current_port_delayed];
+            write_read_delayed <= write_read[current_port];
             
+            //  Load lower/upper byte
+            if (write_read_delayed == 1) begin
+                if (clk_div2 == 0)
+                    write_lower_byte <= write_read_data[current_port];
+                else
+                    write_upper_byte <= write_read_data[current_port];
+            end
         end
     end
 
@@ -199,6 +205,7 @@ module memory_arbitrator(
                 write_mem_byte_count[i] <= 0;
             end
             state <= CONFIGURING;
+            cycle_state <= DONE;
             current_port <= 0;
             current_fifo_addr <= 0;
             mem_ce <= 1;
@@ -222,10 +229,9 @@ module memory_arbitrator(
                         //  Increment the delay counter so that we know how long we've been waiting
                         delay_counter <= delay_counter + 1;
     
-                        if (mem_wait && delay_counter > 1) begin
-                            //  Move on to the other states once mem_wait is asserted
+                        if (~mem_wait && delay_counter > 1) begin
+                            //  Move on to the other states once mem_wait is deasserted
                             delay_counter <= 0;
-                            config_done <= 1;
                             mem_cre <= 0;
                             current_port <= 0;
                             state <= READ_SCAN;
@@ -241,97 +247,154 @@ module memory_arbitrator(
                 end
                 
                 READ_SCAN: begin
-                    if (clk_div2 == 1) begin
-                    
+                    write_read[current_port] <= 0;
+                    read_write[current_port] <= 0;
+                    mem_ce <= 0;
+
+                    //  Compute delta from byte count lag between read side and write site.
+                    current_fifo_addr <= read_in_addr[current_port];
+                    current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
+
+                    if (current_delta > MIN_CHUNK) begin
+                        cycle_state <= INITIALIZING;
+                        state <= READING;
+                    end
+                    else if (clk_div2 == 1) begin
+                        if (current_port == (NUM_PORTS - 1)) begin
+                            current_port <= 0;
+                            state <= WRITE_SCAN;
+                        end
+                        else
+                            current_port <= current_port + 1;
                     end
                 end
                 
                 WRITE_SCAN: begin
-                
-                end
-                
-                READING: begin
-                
-                    if (current_delta == 0)
-                end
-                
-                WRITING: begin
-                
-                end
-                
-            endcase
-        
-            //  Advance state if necessary
-            if ((current_delta == 0) && (!start_flag)) begin
-                //  If the last port was reached, reset to port 0 and switch directions.
-                if (current_port == (NUM_PORTS - 1)) begin
-                    current_port <= 0;
-                    if (current_direction == READING)
-                        current_direction <= WRITING;
-                    else
-                        current_direction <= READING;
-                end
-                //  Otherwise go to the next port
-                else
-                    current_port <= current_port + 1;
+                    write_read[current_port] <= 0;
+                    read_write[current_port] <= 0;
+                    mem_ce <= 0;
                     
-                write_read[current_port] <= 0;
-                read_write[current_port] <= 0;
-                start_flag <= 1;
-                mem_ce <= 0;
-            end
-            
-            //  At beginning of cycle, load parameters and clear start flag
-            else if (start_flag) begin
-                
-                if (current_direction == WRITING) begin
                     //  Latch effective byte count at input.
                     write_mem_byte_count[current_port] <= write_fifo_byte_count[current_port];
-                    
                     current_fifo_addr <= write_out_addr[current_port];
                     //  Write only up to an even number of bytes (due to 16-bit memory word)
                     current_delta <= ((write_in_addr[current_port] - write_out_addr[current_port]) / 2) << 1;
-                    
-                    /*
-                    //  Start reads from write FIFOs ahead of time due to the 1-cycle latency in reading from a FIFO.
-                    write_read[current_port] <= 1;
-                    read_write[current_port] <= 0;
-                    */
-                end
-                else begin
-                    current_fifo_addr <= read_in_addr[current_port];
-                    
-                    //  Compute delta from byte count lag between read side and write site.
-                    current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
 
-                    read_write[current_port] <= 0;
-                    write_read[current_port] <= 0;
+                    if (clk_div2 == 1) begin
+                        if (current_delta > MIN_CHUNK) begin
+                            cycle_state <= INITIALIZING;
+                            state <= WRITING;
+                        end
+                        else if (current_port == (NUM_PORTS - 1)) begin
+                            current_port <= 0;
+                            state <= READ_SCAN;
+                        end
+                        else
+                            current_port <= current_port + 1;
+                    end
                 end
-                mem_ce <= 0;
-                start_flag <= 0;
-            end
-            
-            //  Once cycle is under way, perform read or write task
-            else begin
-                mem_ce <= 1;
-                if (start_flag_delayed)
-                    mem_addr_valid <= 1;
-                if (mem_addr_valid && ~clk_div2)
-                    mem_addr_valid <= 0;
-            
-                if (current_direction == READING) begin
-                    read_write[current_port] <= 1;
-                    write_read[current_port] <= 0;
+                
+                READING: begin
+                    case (cycle_state)
+                        INITIALIZING: begin
+                            mem_ce <= 1;
+                            //  Assert mem_addr_valid on first clk_div2 cycle, then wait
+                            if (clk_div2 == 1) begin
+                                if (~mem_addr_valid)
+                                    mem_addr_valid <= 1;
+                                else begin
+                                    mem_addr_valid <= 0;
+                                    cycle_state <= WAITING;
+                                end
+                            end
+                        end
+                        WAITING: begin
+                            mem_ce <= 1;
+                            //  Wait for mem_wait to be deasserted and then switch to active mode
+                            if (clk_div2 == 1)
+                                if (~mem_wait) begin
+                                    cycle_state <= ACTIVE;
+                                end
+                        end
+                        ACTIVE: begin
+                            if (current_delta == 0) begin
+                                mem_ce <= 0;
+                                //  You're done if you've read all the memory that you needed to.
+                                if (clk_div2 == 1)
+                                    cycle_state <= DONE;
+                            end
+                            else begin
+                                //  When data is valid, write to tracking FIFO
+                                mem_ce <= 1;
+                                read_write[current_port] <= 1;
+                                write_read[current_port] <= 0;
+                                current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
+                            end
+                        end
+                        DONE: begin
+                            mem_ce <= 0;
+                            current_port <= current_port + 1;
+                            state <= READ_SCAN; 
+                        end
+                    endcase
                 end
-
-                else begin
-                    read_write[current_port] <= 0;
-                    write_read[current_port] <= 1;
-                    //  Update counters
-                    current_fifo_addr <= current_fifo_addr + 1;
-                    current_delta <= current_delta - 1;
+                
+                WRITING: begin
+                    case (cycle_state)
+                        INITIALIZING: begin
+                            mem_ce <= 1;
+                            //  Assert mem_addr_valid on first clk_div2 cycle, then wait
+                            //  Also, assert write_read for one clk_div2 cycle to get the first two bytes
+                            if (clk_div2 == 1) begin
+                                if (~mem_addr_valid) begin
+                                    write_read[current_port] <= 1;
+                                    mem_addr_valid <= 1;
+                                end
+                                else begin
+                                    mem_addr_valid <= 0;
+                                    write_read[current_port] <= 0;
+                                    cycle_state <= WAITING;
+                                end
+                            end
+                        end
+                        WAITING: begin
+                            mem_ce <= 1;
+                            //  Wait for mem_wait to be deasserted and then switch to active mode
+                            if (~mem_wait)
+                                if (clk_div2 == 1) begin
+                                    read_write[current_port] <= 0;
+                                    write_read[current_port] <= 1;
+                                    cycle_state <= ACTIVE;
+                                end
+                        end
+                        ACTIVE: begin
+                            if (current_delta < 2) begin
+                                //  You're done if you've written all the memory that you needed to.
+                                mem_ce <= 0;
+                                write_read[current_port] <= 0;
+                                if (clk_div2 == 1)
+                                    cycle_state <= DONE;
+                            end
+                            else begin
+                                //  When data is valid, read from tracking FIFO
+                                mem_ce <= 1;
+                                read_write[current_port] <= 0;
+                                //  Allow for the delay in write_read control; avoid reading past end of FIFO
+                                if (current_delta >= 4)
+                                    write_read[current_port] <= 1;
+                                else
+                                    write_read[current_port] <= 0;
+                                current_delta <= write_in_addr[current_port] - write_out_addr[current_port];
+                            end
+                        end
+                        DONE: begin
+                            mem_ce <= 0;
+                            current_port <= current_port + 1;
+                            state <= WRITE_SCAN; 
+                        end
+                    endcase
                 end
-            end
+            endcase
         end
     end
 

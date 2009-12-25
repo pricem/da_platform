@@ -17,7 +17,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     inout [15:0] data;
     input reset;
     input cre;
-    output reg mem_wait;
+    output mem_wait;
     
     input adv;
     input lb;
@@ -27,7 +27,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     wire mem_we;
     wire mem_oe;
     reg [22:0] mem_addr;
-    reg [15:0] mem_data_in;
+    wire [15:0] mem_data_in;
     wire [15:0] mem_data_out;
     wire reset_neg = ~reset;
     
@@ -47,17 +47,24 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     reg [2:0] write_counter;
     reg [2:0] read_counter;
     
+    reg mem_wait_internal;
+    
     //  Assign data line if chip is enabled
     assign data = ce ? 16'hZZZZ : last_data;
     
     //  Assign active high memory control signals based on state
-    assign mem_we = (mode == WRITING);
-    assign mem_oe = (mode == READING);
+    assign mem_we = (mode == WRITING) && ~ce;
+    assign mem_oe = (mode == READING) && ~ce;
+
+    //  Assign mem_wait output depending on configuration
+    assign mem_wait = config[10] ? mem_wait_internal : ~mem_wait_internal;
+    
+    //  Assign data
+    assign mem_data_in = data;
 
     always @(posedge clk) begin
         if (~reset) begin
             mem_addr <= 23'h000000;
-            mem_data_in <= 16'hZZZZ;
             
             mode <= IDLE;
             
@@ -68,7 +75,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
             write_counter <= 0;
             read_counter <= 0;
             
-            mem_wait <= 1'bZ;
+            mem_wait_internal <= 1'bZ;
 
         end
         else if (~ce) begin
@@ -82,7 +89,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                         mode <= CONFIGURING;
                         config <= addr;
                         config_counter <= 0;
-                        mem_wait <= 0;
+                        mem_wait_internal <= 1;
                     end
                     else if (~adv) begin
                         //  Load address when adv ("address valid") is taken active low
@@ -90,10 +97,12 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                         //  Determine whether this is a read using the active low we line
                         if (we) begin
                             mode <= READING_INIT;
+                            mem_wait_internal <= 1;
                             read_counter <= 0;
                         end
                         else begin
                             mode <= WRITING_INIT;
+                            mem_wait_internal <= 1;
                             write_counter <= 0;
                         end
                     end
@@ -107,11 +116,11 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                     if (config_counter == 2) begin
                         config_counter <= 0;
                         mode <= IDLE;
-                        mem_wait <= 1;
+                        mem_wait_internal <= 0;
                     end
                     else begin
                         config_counter <= config_counter + 1;
-                        mem_wait <= 0;
+                        mem_wait_internal <= 1;
                     end
                 end
                 
@@ -119,11 +128,11 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                     if (read_counter == 2) begin
                         read_counter <= 0;
                         mode <= READING;
-                        mem_wait <= 1;
+                        mem_wait_internal <= 0;
                     end
                     else begin
                         read_counter <= read_counter + 1;
-                        mem_wait <= 0;
+                        mem_wait_internal <= 1;
                     end
                 end
                 
@@ -131,11 +140,11 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                     if (write_counter == 2) begin
                         write_counter <= 0;
                         mode <= WRITING;
-                        mem_wait <= 1;
+                        mem_wait_internal <= 0;
                     end
                     else begin
                         write_counter <= write_counter + 1;
-                        mem_wait <= 0;
+                        mem_wait_internal <= 1;
                     end
                 end
                 
@@ -146,7 +155,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                 
                 WRITING: begin
                     mem_addr <= mem_addr + 1;
-                    mem_data_in <= data;
+                    //  Data is directly connected; separate register not needed
                 end
             
             endcase
@@ -154,7 +163,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
         end
         else begin
             //  Reset the state if the chip is not enabled
-            mem_wait <= 1'bZ;
+            mem_wait_internal <= 1'bZ;
             mode <= IDLE;
             config_counter <= 0;
             read_counter <= 0;

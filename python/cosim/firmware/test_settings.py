@@ -5,7 +5,7 @@ CLK_PERIOD = 8           #  100 - 150 MHz
 IFCLK_PERIOD = 20        #  48 MHz
 
 MESSAGES_EP2 = ['\xff\x01\x00\x07abcdefg',
-            '\xff\x00\x00\x05abcde',
+            '\xff\x00\x00\x06abcdef',
             '\xff\x02\x00\x11abcdefghijk',
             '\xff\x03\x00\x08abcdefgh']
 MESSAGES_EP4 = ['\xff\x00\x00\x04ABCD',
@@ -13,7 +13,7 @@ MESSAGES_EP4 = ['\xff\x00\x00\x04ABCD',
             '\xff\x01\x00\x02AB',
             '\xff\x02\x00\x03ABC']  
 CHUNK_SIZE = 16
-CHUNK_PERIOD = 32   #   Cycles of the 48 MHz IFCLK
+CHUNK_PERIOD = 24   #   Cycles of the 48 MHz IFCLK
 
 USE_TRACE = True
 USE_UNITTEST = False
