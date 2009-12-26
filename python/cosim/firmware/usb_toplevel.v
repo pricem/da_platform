@@ -113,7 +113,7 @@ module usb_toplevel(
     wire [7:0] read_write_data[7:0];
     wire read_fifo_clk;
     wire [7:0] read_write;
-    wire [31:0] write_fifo_byte_count[7:0];
+    reg [31:0] write_fifo_byte_count[7:0];
     wire [31:0] read_fifo_byte_count[7:0];
     
     //  Between tracking FIFOs and converter interfaces
@@ -138,9 +138,26 @@ module usb_toplevel(
         end
     endgenerate
     
-    //  Assign byte counters for now
+    //  Assign byte counters to keep track of number of samples since reset
     generate for (i = 0; i < 4; i = i + 1) begin:counters
-            assign write_fifo_byte_count[i] = 0;
+            //  FIFOs between EP2 and memory arbitrator for DACs
+            always @(posedge ep2_port_clk) begin
+                if (reset)
+                    write_fifo_byte_count[i] <= 0;
+                else begin
+                    if (ep2_port_write[i])
+                        write_fifo_byte_count[i] <= write_fifo_byte_count[i] + 1;
+                end
+            end
+            //  FIFOs between ADC converter interfaces and memory arbitrator
+            always @(posedge slot_adc_fifo_clk[i]) begin
+                if (reset)
+                    write_fifo_byte_count[i + 4] <= 0;
+                else begin
+                    if (slot_adc_fifo_write[i])
+                        write_fifo_byte_count[i + 4] <= write_fifo_byte_count[i + 4] + 1;
+                end
+            end
         end
     endgenerate
     
