@@ -384,7 +384,7 @@ module memory_arbitrator(
                                     write_read[current_port] <= 1;
                                 else
                                     write_read[current_port] <= 0;
-                                current_delta <= write_in_addr[current_port] - write_out_addr[current_port];
+                                current_delta <= current_delta - 1;
                             end
                         end
                         DONE: begin
