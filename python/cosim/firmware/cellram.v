@@ -41,7 +41,6 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     reg [2:0] mode;
     
     reg [22:0] config;
-    reg [15:0] last_data;
     reg [1:0] config_counter;
 
     reg [2:0] write_counter;
@@ -50,7 +49,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     reg mem_wait_internal;
     
     //  Assign data line if chip is enabled
-    assign data = ce ? 16'hZZZZ : last_data;
+    assign data = (ce || oe) ? 16'hZZZZ : mem_data_out;
     
     //  Assign active high memory control signals based on state
     assign mem_we = (mode == WRITING) && ~ce;
@@ -69,8 +68,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
             mode <= IDLE;
             
             config <= 23'h009D1F;
-            last_data <= 16'hZZZZ;
-            
+
             config_counter <= 0;
             write_counter <= 0;
             read_counter <= 0;
@@ -129,6 +127,9 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                         read_counter <= 0;
                         mode <= READING;
                         mem_wait_internal <= 0;
+                        
+                        //  Advance the address one cycle early to get the subsequent bytes on time
+                        mem_addr <= mem_addr + 1;
                     end
                     else begin
                         read_counter <= read_counter + 1;
@@ -150,7 +151,6 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                 
                 READING: begin
                     mem_addr <= mem_addr + 1;
-                    last_data <= mem_data_out;
                 end
                 
                 WRITING: begin

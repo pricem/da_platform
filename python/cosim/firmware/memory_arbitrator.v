@@ -84,7 +84,7 @@ module memory_arbitrator(
     wire [7:0] write_read_data [7:0];
     wire [10:0] read_in_addr [7:0];
     wire [10:0] read_out_addr [7:0];
-    reg [7:0] read_write_data [7:0];
+    wire [7:0] read_write_data [7:0];
     wire [31:0] write_fifo_byte_count [7:0];
     reg [31:0] read_fifo_byte_count [7:0];
     generate for (g = 0; g < 8; g = g + 1) begin:fifos
@@ -109,11 +109,12 @@ module memory_arbitrator(
     reg [7:0] write_lower_byte;
     reg [7:0] write_upper_byte;
     assign mem_write_data = {write_upper_byte, write_lower_byte};
-    wire [15:0] mem_read_data;
+    wire [15:0] mem_read_data = mem_data;
     wire [7:0] read_lower_byte;
     wire [7:0] read_upper_byte;
     assign read_lower_byte = mem_read_data[7:0];
     assign read_upper_byte = mem_read_data[15:8];
+    reg [7:0] mem_read_byte;
     assign mem_clk = clk_div2;  //  clk_div2 ? clk : 0;
     assign write_clk = clk;
     assign read_clk = clk;
@@ -158,7 +159,13 @@ module memory_arbitrator(
     
     //  8M address space divided evenly into 8 sections of 1M each
     //  Address lines carry configuration register value during configuration
-    assign mem_addr = mem_cre ? BCR_VALUE : (current_port << 10) + (fifo_addr >> 1);
+    assign mem_addr = mem_cre ? BCR_VALUE : (current_port << 10) + (current_fifo_addr >> 1);
+    
+    //  Assign data to write port of read-side tracking FIFOs
+    generate for (g = 0; g < 8; g = g + 1) begin:read_datas
+            assign read_write_data[g] = (current_port == g) ? mem_read_byte : 8'hZZ;
+        end
+    endgenerate
     
     /*  Logic processes */
     
@@ -192,6 +199,20 @@ module memory_arbitrator(
         end
     end
 
+    //  Assign byte counters to keep track of number of samples since reset
+    generate for (i = 0; i < 8; i = i + 1) begin:counters
+            //  Applies to all read-side FIFOs
+            //  (4 between RAM and DAC interfaces, then 4 between RAM and EP6)
+            always @(posedge read_clk) begin
+                if (reset)
+                    read_fifo_byte_count[i] <= 0;
+                else begin
+                    if (read_write[i])
+                        read_fifo_byte_count[i] <= read_fifo_byte_count[i] + 1;
+                end
+            end
+        end
+    endgenerate
     
     //  State machine with memory data transfer 
     //  (individual bytes are prepared at twice the memory clock rate)
@@ -199,7 +220,6 @@ module memory_arbitrator(
         if (reset) begin
             for (i = 0; i < 8; i = i + 1) begin
                 write_read[i] <= 0;
-                read_write_data[i] <= 0;
                 read_write[i] <= 0;
                 read_fifo_byte_count[i] <= 0;
                 write_mem_byte_count[i] <= 0;
@@ -213,6 +233,7 @@ module memory_arbitrator(
             current_delta <= 0;
             mem_cre <= 0;
             delay_counter <= 0;
+            mem_read_byte <= 0;
         end
         else begin
         
@@ -274,9 +295,6 @@ module memory_arbitrator(
                     read_write[current_port] <= 0;
                     mem_ce <= 0;
                     
-                    //  Latch effective byte count at input.
-                    write_mem_byte_count[current_port] <= write_fifo_byte_count[current_port];
-                    current_fifo_addr <= write_out_addr[current_port];
                     //  Write only up to an even number of bytes (due to 16-bit memory word)
                     current_delta <= ((write_in_addr[current_port] - write_out_addr[current_port]) / 2) << 1;
 
@@ -284,6 +302,9 @@ module memory_arbitrator(
                         if (current_delta > MIN_CHUNK) begin
                             cycle_state <= INITIALIZING;
                             state <= WRITING;
+                            //  Latch effective byte count at input.
+                            write_mem_byte_count[current_port] <= write_mem_byte_count[current_port] + current_delta;
+                            current_fifo_addr <= write_out_addr[current_port];
                         end
                         else if (current_port == (NUM_PORTS - 1)) begin
                             current_port <= 0;
@@ -295,6 +316,7 @@ module memory_arbitrator(
                 end
                 
                 READING: begin
+                    mem_read_byte <= clk_div2 ? read_upper_byte : read_lower_byte;
                     case (cycle_state)
                         INITIALIZING: begin
                             mem_ce <= 1;
@@ -313,25 +335,31 @@ module memory_arbitrator(
                             //  Wait for mem_wait to be deasserted and then switch to active mode
                             if (clk_div2 == 1)
                                 if (~mem_wait) begin
+                                    read_write[current_port] <= 1;
                                     cycle_state <= ACTIVE;
                                 end
                         end
                         ACTIVE: begin
-                            if (current_delta == 0) begin
+                            //  Account for 3-cycle lag in current_delta
+                            if (current_delta < 4) begin
                                 mem_ce <= 0;
+                                if (current_delta < 3)
+                                    read_write[current_port] <= 0;
                                 //  You're done if you've read all the memory that you needed to.
-                                if (clk_div2 == 1)
+                                if (clk_div2 == 1) begin
+                                    read_write[current_port] <= 0;
                                     cycle_state <= DONE;
+                                end
                             end
                             else begin
                                 //  When data is valid, write to tracking FIFO
                                 mem_ce <= 1;
                                 read_write[current_port] <= 1;
-                                write_read[current_port] <= 0;
                                 current_delta <= write_mem_byte_count[current_port] - read_fifo_byte_count[current_port];
                             end
                         end
                         DONE: begin
+                            read_write[current_port] <= 0;
                             mem_ce <= 0;
                             current_port <= current_port + 1;
                             state <= READ_SCAN; 

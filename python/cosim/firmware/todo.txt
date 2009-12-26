@@ -1,0 +1,8 @@
+Todo list
+
+Make and test general simultaneous reads/writes with memory arbitrator
+Check operation of FX2 interface (note that FX2 model on laptop may not use all endpoints)
+Add converter interface module for PMOD-DA2 and determine if anything architectural needs changing
+Add ability for memory arbitrator to reinitialize reads/writes at the end of a cell RAM row
+Add configurable behavior to cell RAM
+
