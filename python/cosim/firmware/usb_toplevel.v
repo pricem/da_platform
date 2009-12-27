@@ -138,6 +138,11 @@ module usb_toplevel(
         end
     endgenerate
     
+    //  Testing for PMOD DA2 module
+    wire [3:0] pmod_io;
+    wire pmod_clksel = 1;               //  24.576 MHz
+    wire [3:0] pmod_clkexp = 4'b0111;   //  Divide by 2^7 = 128: 192 kHz
+    
     //  Assign byte counters to keep track of number of samples since reset
     generate for (i = 0; i < 4; i = i + 1) begin:counters
             //  FIFOs between EP2 and memory arbitrator for DACs
@@ -251,18 +256,36 @@ module usb_toplevel(
     
     //  Converters
     generate for (i = 0; i < 4; i = i + 1) begin:dacs
-        dummy_dac dac_i (
-            .fifo_clk(slot_dac_fifo_clk[i]),
-            .fifo_data(slot_dac_fifo_data[i]),
-            .fifo_read(slot_dac_fifo_read[i]),
-            .fifo_addr_in(read_in_addr[i]),
-            .fifo_addr_out(read_out_addr[i]),
-            .slot_data(slot_data_out[((i + 1) * 6 - 1):(i * 6)]),
-            .direction(directions[i]),
-            .channels(channels[i]),
-            .clk(clk), 
-            .reset(reset)
-            );
+            if (i == 0) begin
+                dac_pmod dac_i (
+                    .fifo_clk(slot_dac_fifo_clk[i]),
+                    .fifo_data(slot_dac_fifo_data[i]),
+                    .fifo_read(slot_dac_fifo_read[i]),
+                    .fifo_addr_in(read_in_addr[i]),
+                    .fifo_addr_out(read_out_addr[i]),
+                    .pmod_io(pmod_io),
+                    .custom_clk0(custom_clk0), 
+                    .custom_clk1(custom_clk1),
+                    .clksel(pmod_clksel), 
+                    .clkexp(pmod_clkexp),
+                    .clk(clk), 
+                    .reset(reset)
+                    );
+            end
+            else begin
+                dummy_dac dac_i (
+                    .fifo_clk(slot_dac_fifo_clk[i]),
+                    .fifo_data(slot_dac_fifo_data[i]),
+                    .fifo_read(slot_dac_fifo_read[i]),
+                    .fifo_addr_in(read_in_addr[i]),
+                    .fifo_addr_out(read_out_addr[i]),
+                    .slot_data(slot_data_out[((i + 1) * 6 - 1):(i * 6)]),
+                    .direction(directions[i]),
+                    .channels(channels[i]),
+                    .clk(clk), 
+                    .reset(reset)
+                    );
+            end
         end
     endgenerate
     generate for (i = 0; i < 4; i = i + 1) begin:adcs
