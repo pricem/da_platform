@@ -1,0 +1,6 @@
+Another file with notes
+
+30-pin connector interface:
+Index       Description                     Clock (if any)
+[29: ]
+

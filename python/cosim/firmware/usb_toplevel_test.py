@@ -3,6 +3,7 @@ from myhdl import *
 
 from fx2_framework import virtual_fx2
 from usb_toplevel import usb_toplevel
+from converterboard import ConverterBoard
 from test_settings import *
 
 def usb_toplevel_test():
@@ -54,22 +55,18 @@ def usb_toplevel_test():
 
     """ Local logic processes """
 
+    #   Maintain an active low reset signal for FX2
     @always_comb
     def update_signals():
         reset_neg.next = not reset
         
+    #   Run the 100 - 150 MHz primary clock 
+    #   This will be generated using a DCM multiplying the Nexys2's 50 MHz clock
     @always(delay(CLK_PERIOD/2))
     def update_clk():
         clk.next = not clk
         
-    @always(delay(CLK0_PERIOD/2))
-    def update_clk0():
-        custom_clk0.next = not custom_clk0
-        
-    @always(delay(CLK1_PERIOD/2))
-    def update_clk1():
-        custom_clk1.next = not custom_clk1
-    
+    #   Run a few cycles of reset, then run the simulation for the specified time
     @instance
     def stimulus():
     
@@ -86,9 +83,15 @@ def usb_toplevel_test():
             
     """ Logic module instances """
     
+    #   FX2 processor on Nexys2 board (which is connected to USB bus from computer)
     fx2 = virtual_fx2(usb_ifclk, reset_neg, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full)
     
+    #   Firmware on FPGA
     doobie = usb_toplevel(usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_addr, mem_data_in, mem_data_driven, mem_data_out, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data_in, slot_data_out, custom_dirchan, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1, reset, clk)
+    
+    #   Simulated converter board
+    conv = ConverterBoard().myhdl_module(slot_data_in, slot_data_out, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_clk1, custom_dirchan, custom_srclk, custom_clksel, reset)
 
     return instances()
+
 
