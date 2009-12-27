@@ -1,8 +1,23 @@
 Todo list
 
 Make and test general simultaneous reads/writes with memory arbitrator
+-   Update fake generic DAC and ADC modules to actually consume / produce data
+
 Check operation of FX2 interface (note that FX2 model on laptop may not use all endpoints)
+
 Add converter interface module for PMOD-DA2 and determine if anything architectural needs changing
+-   Base module to handle adjustable bit rates and justification and serialize data?
+
 Add ability for memory arbitrator to reinitialize reads/writes at the end of a cell RAM row
+-   Keep track of current cell RAM address; when it reaches a multiple of 128, update the start
+    address and return to initializing cycle state
+
 Add configurable behavior to cell RAM
+
+
+Make memory arbitrator capable of handling reads/writes down to 1 byte[?]
+-   Properly handle upper/lower byte issues
+-   Reduce min_chunk to 1 and adjust timings for correctness
+-   Is this really necessary?  (If you stop playing audio, do you care if it stops 1 sample short?)
+    Yes, but defer to later
 

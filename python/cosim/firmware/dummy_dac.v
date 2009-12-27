@@ -9,7 +9,7 @@ module dummy_dac(
     clk, reset
     );
     
-    output reg fifo_clk;
+    output fifo_clk;
     input [7:0] fifo_data;
     output reg fifo_read;
     input [10:0] fifo_addr_in;
@@ -26,25 +26,57 @@ module dummy_dac(
     reg [5:0] data_out;
     reg [7:0] clk_counter;
     reg [1:0] msg_counter;
-    reg fifo_clk_last;
+    wire [1:0] msg_counter_delayed;
+    reg sample_clk;
+    reg sample_bit_clk;
+    reg sample_clk_last;
 
-    //  Keep reset around so you can cycle FIFO clock at reset
+    //  Audio samples
+    reg [31:0] sample;
+
+    //  Keep reset around so you can cycle the sample clock at reset
     reg reset_last;
+    
+    //  Delay fifo_read signal for proper signal capture
+    wire fifo_read_delayed;
+    delay_reg fifo_read_delay(
+        .clk(clk),
+        .din(fifo_read),
+        .dout(fifo_read_delayed),
+        .reset(reset)
+        );
+    
+    //  Run FIFO at full speed (could be changed for lower power consumption)
+    assign fifo_clk = clk;
     
     //  Tristate outputs
     assign slot_data = (direction == 0) ? data_out : 6'hZZ;
     
+    //  Delay message counter for loading samples
+    delay_reg #(
+        .NUM_BITS(2), 
+        .NUM_CYCLES(2)
+        ) 
+        msg_delay(
+        .clk(clk),
+        .din(msg_counter),
+        .dout(msg_counter_delayed),
+        .reset(reset)
+        );
+
     always @(posedge clk) begin
         if (reset) begin
             clk_counter <= 0;
             msg_counter <= 0;
-            fifo_clk_last <= 0;
+            sample_clk_last <= 0;
+            sample_bit_clk <= 0;
+            sample <= 0;
             
             //  Cycle FIFO clock at reset
             if (reset_last)
-                fifo_clk <= 0;
+                sample_clk <= 0;
             else
-                fifo_clk <= 1;
+                sample_clk <= 1;
             data_out <= 0;
             reset_last <= 1;
         end
@@ -55,11 +87,20 @@ module dummy_dac(
             
             //  Trigger the FIFO clock once in a while
             if (clk_counter == 127)
-                fifo_clk <= fifo_clk + 1;
+                sample_clk <= sample_clk + 1;
+            if (clk_counter % 16 == 15)
+                sample_bit_clk <= sample_bit_clk + 1;
             
-            //  When the FIFO clock is triggered, send 4 bytes of data to the FIFO.
-            fifo_clk_last <= fifo_clk;
-            if (((fifo_clk == 1) && (fifo_clk_last == 0)) || (msg_counter != 0)) begin
+            //  Left/right data
+            data_out[0] <= sample[(clk_counter / 16)];
+            //  LRCK
+            data_out[1] <= sample_clk;
+            //  BCK
+            data_out[2] <= sample_bit_clk;
+            
+            //  When the FIFO clock is triggered, read 4 bytes of data from the FIFO.
+            sample_clk_last <= sample_clk;
+            if (((sample_clk == 1) && (sample_clk_last == 0)) || (msg_counter != 0)) begin
                 msg_counter <= msg_counter + 1;
                 fifo_read <= 1;
             end
@@ -67,8 +108,14 @@ module dummy_dac(
                 fifo_read <= 0;
             
             //  Copy the data over when possible.
-            if (fifo_read)
-                data_out <= fifo_data[5:0];
+            if (fifo_read_delayed) begin
+                case (msg_counter_delayed)
+                    0: sample[7:0] <= fifo_data;
+                    1: sample[15:8] <= fifo_data;
+                    2: sample[23:16] <= fifo_data;
+                    3: sample[31:24] <= fifo_data;
+                endcase
+            end
 
         end
     end

@@ -79,7 +79,7 @@ def usb_toplevel_test():
         reset.next = False
         yield usb_ifclk.negedge
     
-        for i in range(100):
+        for i in range(SIM_LENGTH):
             yield usb_ifclk.negedge
             
         raise StopSimulation
