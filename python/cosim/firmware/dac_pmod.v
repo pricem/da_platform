@@ -82,7 +82,7 @@ module dac_pmod(
         );
 
     //  Run sample clock based on configuration
-    always @(posedge clk_selected or reset) begin
+    always @(posedge clk_selected or posedge reset) begin
         if (reset) begin
             clk_counter <= 0;
             bit_clk_counter <= 0;

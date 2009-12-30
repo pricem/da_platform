@@ -200,15 +200,15 @@ module memory_arbitrator(
     end
 
     //  Assign byte counters to keep track of number of samples since reset
-    generate for (i = 0; i < 8; i = i + 1) begin:counters
+    generate for (g = 0; g < 8; g = g + 1) begin:counters
             //  Applies to all read-side FIFOs
             //  (4 between RAM and DAC interfaces, then 4 between RAM and EP6)
             always @(posedge read_clk) begin
                 if (reset)
-                    read_fifo_byte_count[i] <= 0;
+                    read_fifo_byte_count[g] <= 0;
                 else begin
-                    if (read_write[i])
-                        read_fifo_byte_count[i] <= read_fifo_byte_count[i] + 1;
+                    if (read_write[g])
+                        read_fifo_byte_count[g] <= read_fifo_byte_count[g] + 1;
                 end
             end
         end
@@ -221,7 +221,6 @@ module memory_arbitrator(
             for (i = 0; i < 8; i = i + 1) begin
                 write_read[i] <= 0;
                 read_write[i] <= 0;
-                read_fifo_byte_count[i] <= 0;
                 write_mem_byte_count[i] <= 0;
             end
             state <= CONFIGURING;

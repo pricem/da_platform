@@ -11,18 +11,17 @@ module delay_reg(clk, din, dout, reset);
     
     reg [(NUM_BITS - 1):0] data [(NUM_CYCLES - 1):0];
     
-    genvar i;
+    integer i;
     
     assign dout = data[NUM_CYCLES - 1];
     
-    generate for (i = 1; i < NUM_CYCLES; i = i + 1) 
-        always @(posedge clk) begin:stages
+    always @(posedge clk) begin
+        for (i = 1; i < NUM_CYCLES; i = i + 1)
             if (reset)
                 data[i] <= 0;
             else
                 data[i] <= data[i - 1];
-        end
-    endgenerate
+    end
     always @(posedge clk) begin:loading
         if (reset)
             data[0] <= 0;
