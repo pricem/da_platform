@@ -2,18 +2,35 @@ Todo list
 
 Make and test general simultaneous reads/writes with memory arbitrator
 -   Update fake generic DAC and ADC modules to actually consume / produce data
-
-Check operation of FX2 interface (note that FX2 model on laptop may not use all endpoints)
+-   Write Python test jigs for: converter board, each DAC module, PMOD-DA2
+-   Write proper bit matching, format, and timing into MyHDL test framework and make unit tests
 
 Add converter interface module for PMOD-DA2 and determine if anything architectural needs changing
 -   Base module to handle adjustable bit rates and justification and serialize data?
+
+Check operation of FX2 interface in simulation (note that FX2 model on laptop may not use all endpoints)
+
+Update FX2 firmware to use all endpoints
+-   Determine proper algorithm for using only 3 flags with 4 endpoints
+-   Come up with a test for the FX2 firmware using simple software and FPGA firmware
+
+Make simple Linux sound card driver framework
+-   Alternatively, make a simple program for playing audio files that writes to EP2
+-   Figure out API for configuration settings, both in SPI
+
+Test simple sound card using PMOD DAC
+
+Figure out configuration
+-   Document all settings/adjustments that can be made and sent over EP4 or internally performed
+-   When a setting changes, what changes are needed in the firmware in addition to writing converter registers?
+
+Begin documenting this architecture
 
 Add ability for memory arbitrator to reinitialize reads/writes at the end of a cell RAM row
 -   Keep track of current cell RAM address; when it reaches a multiple of 128, update the start
     address and return to initializing cycle state
 
 Add configurable behavior to cell RAM
-
 
 Make memory arbitrator capable of handling reads/writes down to 1 byte[?]
 -   Properly handle upper/lower byte issues
