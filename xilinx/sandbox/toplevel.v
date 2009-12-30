@@ -87,6 +87,11 @@ assign led_upper[3:0] = led[7:4];
 wire reset;
 assign reset = buttons[0];
 
+//  Set clock to 100 MHz (twice the 50 MHz clock)
+clock_manager clkm(.CLKIN_IN(clk0), 
+                   .RST_IN(reset), 
+                   .CLKX2_OUT(clk));
+
 //  Logic module instances
 //	sandbox1 sandbox(led, switches);
 
@@ -104,6 +109,10 @@ wire dac_done;
 wire usb_data_out = usb_data;
 wire usb_data_in;
 assign usb_data = usb_slwr ? 8'hZZ : usb_data_in;
+
+wire [23:0] slot_data = {fx2[20], fx2[22], fx2[16], fx2[18], fx2[12], fx2[14], fx2[23], fx2[21], fx2[19], fx2[17], fx2[15], fx2[13], fx2[8], fx2[10], fx2[4], fx2[6], fx2[0], fx2[2], fx2[11], fx2[9], fx2[7], fx2[5], fx2[3], fx2[1]};
+wire [23:0] slot_data_out = slot_data;
+wire [23:0] slot_data_in;
 
 //  USB module 
 usb_toplevel dut(
@@ -124,10 +133,9 @@ usb_toplevel dut(
         .mem_we(mem_we),
         .mem_clk(mem_clk),
         .mem_addr_valid(mem_adv),
-        .slot0_data({fx2[11], fx2[9], fx2[7], fx2[5], fx2[3], fx2[1]}),
-        .slot1_data({fx2[8], fx2[10], fx2[4], fx2[6], fx2[0], fx2[2]}),
-        .slot2_data({fx2[23], fx2[21], fx2[19], fx2[17], fx2[15], fx2[13]}),
-        .slot3_data({fx2[20], fx2[22], fx2[16], fx2[18], fx2[12], fx2[14]}),
+        .slot_data_in(slot_data_in),
+        .slot_data_out(slot_data_out),
+        .custom_dirchan(fx2[39]),
         .spi_adc_cs(fx2[24]),
         .spi_adc_mclk(fx2[26]),
         .spi_adc_mdi(fx2[34]),
@@ -145,44 +153,6 @@ usb_toplevel dut(
         .clk(clk),
         .reset(reset)
 );
-  
-
-// Instantiate DAC
-DA2RefComp dac_interface(
-    .CLK(clk0),
-    .RST(reset),
-    .D1(pmod_a[1]),
-    .D2(pmod_a[2]),
-    .CLK_OUT(pmod_a[3]),
-    .nSYNC(pmod_a[0]),
-    .DATA1(dac_data1),
-    .DATA2(dac_data2),
-    .START(dac_start),
-    .DONE(dac_done)
-    );
-
-always @(posedge clk0) begin
-
-    if (reset)
-        //  Handle resets
-        data_index <= 2'b0;
-    else
-        //  Take data when available
-        if (usb_fifo0_active) begin
-            data[data_index] <= usb_fifo0_out;
-            data_index <= data_index + 1;
-        end
-        
-        //  Write to DAC after 4 bytes were read
-        if ((data_index == 0) && (dac_done == 1)) begin
-            dac_data1 <= {data[1], data[0][3:0]};
-            dac_data2 <= {data[3], data[2][3:0]};
-            dac_start <= 1;           
-            end
-        else
-            dac_start <= 0;
-end
-
 
 //  Assign unused ports.  (Replace with appropriate interfaces if needed.)
 /* Not commented since we have a usbtop module

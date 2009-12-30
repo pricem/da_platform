@@ -1,0 +1,22 @@
+# Date: Wed Dec 30 16:32:47 2009
+
+SET addpads = False
+SET asysymbol = True
+SET busformat = BusFormatSquareBracketNotRipped
+SET createndf = False
+SET designentry = Verilog
+SET device = xc3s500e
+SET devicefamily = spartan3e
+SET flowvendor = Other
+SET formalverification = False
+SET foundationsym = False
+SET implementationfiletype = Ngc
+SET package = fg320
+SET removerpms = False
+SET simulationfiles = Behavioral
+SET speedgrade = -5
+SET verilogsim = True
+SET vhdlsim = False
+SET workingdirectory = ./tmp/
+
+# CRC: c429ab64

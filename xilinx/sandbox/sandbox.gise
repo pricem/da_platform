@@ -43,7 +43,6 @@
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_PCF" xil_pn:name="nexys2_toplevel.pcf" xil_pn:subbranch="Map"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="nexys2_toplevel.prj"/>
     <file xil_pn:fileType="FILE_TRCE_MISC" xil_pn:name="nexys2_toplevel.ptwx"/>
-    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_STX" xil_pn:name="nexys2_toplevel.stx"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_REPORT" xil_pn:name="nexys2_toplevel.syr"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_TIMING_TXT_REPORT" xil_pn:name="nexys2_toplevel.twr" xil_pn:subbranch="Par"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_TIMING_XML_REPORT" xil_pn:name="nexys2_toplevel.twx" xil_pn:subbranch="Par"/>
@@ -113,12 +112,12 @@
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1258229200" xil_pn:name="TRAN_platgen" xil_pn:prop_ck="388935778426632061" xil_pn:start_ts="1258229200">
+    <transform xil_pn:end_ts="1260767467" xil_pn:name="TRAN_platgen" xil_pn:prop_ck="388935778426632061" xil_pn:start_ts="1260767467">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1260757606" xil_pn:in_ck="5759967522474182215" xil_pn:name="TRANEXT_xstsynthesize_spartan3e" xil_pn:prop_ck="-5482087376089198566" xil_pn:start_ts="1260757587">
-      <status xil_pn:value="SuccessfullyRun"/>
+    <transform xil_pn:end_ts="1262191153" xil_pn:in_ck="-3954984360523592534" xil_pn:name="TRANEXT_xstsynthesize_spartan3e" xil_pn:prop_ck="-5482087376089198566" xil_pn:start_ts="1262191139">
+      <status xil_pn:value="FailedRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
       <status xil_pn:value="OutOfDateForInputs"/>
@@ -131,7 +130,6 @@
       <outfile xil_pn:name="nexys2_toplevel.ngc"/>
       <outfile xil_pn:name="nexys2_toplevel.ngr"/>
       <outfile xil_pn:name="nexys2_toplevel.prj"/>
-      <outfile xil_pn:name="nexys2_toplevel.stx"/>
       <outfile xil_pn:name="nexys2_toplevel.syr"/>
       <outfile xil_pn:name="nexys2_toplevel.xst"/>
       <outfile xil_pn:name="nexys2_toplevel_stx.prj"/>
@@ -143,6 +141,7 @@
     <transform xil_pn:end_ts="1258229505" xil_pn:in_ck="4256375668221803199" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="-3881330743371213771" xil_pn:start_ts="1258229505">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForProperties"/>
       <outfile xil_pn:name="sandbox_xdb/cst.xbcd"/>
     </transform>
     <transform xil_pn:end_ts="1258229510" xil_pn:in_ck="5850336726423282584" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="5175623002592793014" xil_pn:start_ts="1258229505">
