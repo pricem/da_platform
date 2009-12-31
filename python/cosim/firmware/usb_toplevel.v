@@ -90,17 +90,19 @@ module usb_toplevel(
     wire [3:0] ep6_port_read;
     wire ep6_port_clk;
     
-    //  Between FX2 interface and command decoder (which in turn writes configuration memory)
-    wire [15:0] cmd_in_id;
+    //  Between FX2 interface and main controller
+    wire [7:0] cmd_in_id;
+    wire [15:0] cmd_in_length;
     wire [7:0] cmd_in_data;
     wire cmd_in_clk;
-    wire cmd_valid;
-    
-    //  Between FX2 interface and command encoder
-    wire cmd_new_command;
-    wire [7:0] cmd_data;
-    wire cmd_clk;
-    wire cmd_read;
+    wire cmd_in_ready;
+    wire cmd_in_read;
+    wire [7:0] cmd_out_id;
+    wire [15:0] cmd_out_length;
+    wire [7:0] cmd_out_data;
+    wire cmd_out_clk;
+    wire cmd_out_ready;
+    wire cmd_out_write;
     
     //  Between memory arbitrator and tracking FIFOs
     wire [10:0] write_in_addr[7:0];
@@ -159,6 +161,8 @@ module usb_toplevel(
     wire [3:0] direction;               //  Direction bit (0 = DAC, 1 = ADC) for each port
     wire [3:0] num_channels;            //  Number of channels bit (0 = 2-ch, 1 = 8-ch) for each port
     wire [3:0] clksel;                  //  Choice of clock (0 = 11.2896 MHz, 1 = 24.576 MHz) for each port
+    wire [7:0] hwcon [3:0];             //  Hardware configuration register
+    wire [31:0] hwcons;
     
     //  Other signals needed for SPI interface
     wire spi_mclk;
@@ -262,6 +266,27 @@ module usb_toplevel(
         .clk(spi_mclk), 
         .reset(reset)
         );
+        
+    //  Assign, serialize HWCON
+    generate for (i = 0; i < 4; i = i + 1) begin:hwcons
+            assign hwcon[i] = hwcons[((i + 1) * 8 - 1):(i * 8)];
+        end
+    endgenerate
+    reg [1:0] hwcon_index;
+    always @(posedge custom_srclk or posedge reset) begin
+        if (reset)
+            hwcon_index <= 0;
+        else begin
+            hwcon_index <= hwcon_index + 1;
+        end
+    end
+    serializer ser_hwcon(
+        .load_clk(custom_srclk), 
+        .in(hwcon[hwcon_index]), 
+        .out(custom_hwcon), 
+        .clk(spi_mclk), 
+        .reset(reset)
+        );
     
     //  FX2 interface (includes command decoder and port decoders)
     fx2_interface interface(
@@ -283,13 +308,17 @@ module usb_toplevel(
         .ep6_port_read(ep6_port_read), 
         .ep6_port_clk(ep6_port_clk), 
         .cmd_in_id(cmd_in_id),
+        .cmd_in_length(cmd_in_length),
         .cmd_in_data(cmd_in_data),
-        .cmd_valid(cmd_valid),
         .cmd_in_clk(cmd_in_clk),
-        .cmd_new_command(cmd_new_command), 
-        .cmd_data(cmd_data), 
-        .cmd_clk(cmd_clk), 
-        .cmd_read(cmd_read), 
+        .cmd_in_ready(cmd_in_ready), 
+        .cmd_in_read(cmd_in_read), 
+        .cmd_out_id(cmd_out_id),
+        .cmd_out_length(cmd_out_length),
+        .cmd_out_data(cmd_out_data),
+        .cmd_out_clk(cmd_out_clk),
+        .cmd_out_ready(cmd_out_ready), 
+        .cmd_out_write(cmd_out_write), 
         .reset(reset), 
         .clk(clk)
         );
@@ -432,6 +461,7 @@ module usb_toplevel(
     assign mem_lb_neg = 0;
     
     //  Memory (comment out for synthesis)
+    //  /*
     cellram buffer(
         .clk(mem_clk), 
         .ce(mem_ce_neg),
@@ -446,25 +476,50 @@ module usb_toplevel(
         .ub(mem_ub_neg),
         .reset(reset_neg)
         );
-    
-    //  Uncompleted modules follow
-    
-    /*
+    //  */
+
     //  Main controller
     controller controller(
-    
-        );
+        .ep4_cmd_id(cmd_in_id),
+        .ep4_cmd_length(cmd_in_length),
+        .ep4_data(cmd_in_data),
+        .ep4_clk(cmd_in_clk),
+        .ep4_ready(cmd_in_ready), 
+        .ep4_read(cmd_in_read), 
+        .ep8_cmd_id(cmd_out_id),
+        .ep8_cmd_length(cmd_out_length),
+        .ep8_data(cmd_out_data),
+        .ep8_clk(cmd_out_clk),
+        .ep8_ready(cmd_out_ready), 
+        .ep8_write(cmd_out_write), 
+        .cfg_clk(config_clk),
+        .cfg_addr(config_addr),
+        .cfg_data(config_data),
+        .cfg_write(config_write),
+        .cfg_read(config_read),
+        .direction(direction),
+        .num_channels(num_channels),
+        .hwcons(hwcons),
+        .clk(clk),
+        .reset(reset)
+        ); 
         
     //  Configuration memory
+    wire [7:0] config_data_out;
+    assign config_data = config_read ? config_data_out : 8'hZZ;
     bram_2k_8 config_mem (
         .clk(config_clk),
         .we(config_write), 
         .a(config_addr), 
-        .dpra(config_read_addr), 
+        .dpra(spi_config_addr), 
+        .spo(config_data_out),
         .di(config_data), 
-        .dpo(config_read_data)
+        .dpo(spi_config_data)
         );
         
+    //  Uncompleted modules follow
+    
+    /*
     //  SPI controller
     spi_controller spi(
     

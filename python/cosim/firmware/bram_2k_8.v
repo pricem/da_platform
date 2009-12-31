@@ -1,5 +1,5 @@
 //
-//  Dual-Port RAM with Asynchronous Read
+//  Dual-Port RAM
 //  From XST 11.3 manual page 142
 //
 

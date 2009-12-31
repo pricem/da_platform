@@ -1,8 +1,8 @@
 Todo for 12/31
 --------------
-Add deserializer for dir/chan, aovf; serializer for hwcon, chipselect to toplevel
-Make controller state machine
-Modify FX2 interface to work with controller
+DONE    Add deserializer for dir/chan, aovf; serializer for hwcon, chipselect to toplevel
+IN PROG Modify FX2 interface to work with controller
+IN PROG Make controller state machine
 Add SPI interface that reads/writes configuration memory
 Assign I/O module registers; finish documenting registers
 Return to working on test jigs

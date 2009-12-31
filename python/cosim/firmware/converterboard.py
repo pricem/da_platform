@@ -82,10 +82,11 @@ class ConverterBoard(object):
 
         """ Serializer/deserializer
             Several multibit signals are converted to serial form at 
-            8x the clock rate.  This 8x clock is provided in custom_srclk.
+            8x the clock rate.  The bit clock is spi_dac_mclk and new values 
+            are loaded at positive edges of custom_srclk (every 8 cycles).
         """
         #   Deserialize on the way in: SPI chip selects, clock selects
-        @always(custom_srclk.posedge)
+        @always(spi_dac_mclk.posedge)
         def deserialize():
             if reset:
                 srclk_count.next = 0
@@ -101,7 +102,7 @@ class ConverterBoard(object):
                     clksel[srclk_count._val._val].next = custom_clksel
         
         #   Serialize on the way out: ADC overflow bits, direction/channels
-        @always(custom_srclk.posedge)
+        @always(spi_dac_mclk.posedge)
         def serialize():
             if reset:
                 custom_dirchan.next = False
@@ -116,7 +117,7 @@ class ConverterBoard(object):
                 else:
                     custom_dirchan.next = chan[srclk_count._val._val - 4]
         
-        """ Converer blocks """
+        """ Converter blocks """
         converter_instances = [self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset) for i in range(4)]
         
         return instances()

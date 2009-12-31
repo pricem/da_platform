@@ -1,16 +1,9 @@
-[timestart] 750000
+[timestart] 0
 [size] 1280 953
 [pos] -1 -1
-*-20.794619 642500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.794619 250002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
-[treeopen] dut_usb_toplevel.dut.adcs[2].
-[treeopen] dut_usb_toplevel.dut.dacs[0].
-[treeopen] dut_usb_toplevel.dut.dacs[0].genblk5.
-[treeopen] dut_usb_toplevel.dut.dacs[1].
-[treeopen] dut_usb_toplevel.dut.dacs[1].genblk6.
-[treeopen] dut_usb_toplevel.dut.dacs[2].
-[treeopen] dut_usb_toplevel.dut.dacs[3].
 [treeopen] dut_usb_toplevel.dut.ports[0].fifos_dac_out_i.
 @200
 -FX2 bus
@@ -55,13 +48,12 @@ dut_usb_toplevel.dut.interface.ep2_port_write[3:0]
 @28
 dut_usb_toplevel.dut.interface.state_packet_status_ep4[2:0]
 @22
-dut_usb_toplevel.dut.interface.ep4_command_index[7:0]
-dut_usb_toplevel.dut.interface.ep4_command_length[15:0]
-dut_usb_toplevel.dut.interface.cmd_in_id[15:0]
-@28
-dut_usb_toplevel.dut.interface.cmd_valid
-@22
+dut_usb_toplevel.dut.interface.cmd_in_id[7:0]
+dut_usb_toplevel.dut.interface.cmd_in_length[15:0]
 dut_usb_toplevel.dut.interface.cmd_in_data[7:0]
+@28
+dut_usb_toplevel.dut.interface.cmd_in_ready
+dut_usb_toplevel.dut.interface.cmd_in_read
 @200
 -EP6
 @28
@@ -77,6 +69,13 @@ dut_usb_toplevel.dut.interface.ep6_destination_byte[10:0]
 -EP8
 @28
 dut_usb_toplevel.dut.interface.state_packet_status_ep8[2:0]
+@22
+dut_usb_toplevel.dut.interface.cmd_out_id[7:0]
+dut_usb_toplevel.dut.interface.cmd_out_length[15:0]
+dut_usb_toplevel.dut.interface.cmd_out_data[7:0]
+@28
+dut_usb_toplevel.dut.interface.cmd_out_ready
+dut_usb_toplevel.dut.interface.cmd_out_write
 @200
 -EP2->RAM DAC FIFOs
 @28
@@ -230,25 +229,9 @@ dut_usb_toplevel.dut.custom_srclk
 -DACs and RAM->DAC FIFOs
 -Port 0 (PMOD)
 @28
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.clk_selected
-@22
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.clkexp[3:0]
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.clk_counter[15:0]
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.bit_clk_counter[5:0]
-@28
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.sample_clk
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.sclk
 dut_usb_toplevel.dut.channels[3:0]
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.sync
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.dina
-dut_usb_toplevel.dut.dacs[0].genblk5.dac_i.dinb
 @200
 -Port 1
-@28
-dut_usb_toplevel.dut.dacs[1].genblk6.dac_i.bck
-dut_usb_toplevel.dut.dacs[1].genblk6.dac_i.lrck
-dut_usb_toplevel.dut.dacs[1].genblk6.dac_i.data
-@200
 -Port 2
 -Port 3
 -ADCs and ADC->RAM FIFOs
@@ -268,9 +251,8 @@ dut_usb_toplevel.dut.adcs[2].adc_i.sample_clk
 dut_usb_toplevel.dut.adcs[2].adc_i.msg_counter[1:0]
 dut_usb_toplevel.dut.adcs[2].adc_i.fifo_clk
 dut_usb_toplevel.dut.adcs[2].adc_i.fifo_write
-@23
-dut_usb_toplevel.dut.adcs[2].adc_i.fifo_data[7:0]
 @22
+dut_usb_toplevel.dut.adcs[2].adc_i.fifo_data[7:0]
 dut_usb_toplevel.dut.adcs[2].adc_i.fifo_addr_in[10:0]
 dut_usb_toplevel.dut.adcs[2].adc_i.fifo_addr_out[10:0]
 @200

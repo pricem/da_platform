@@ -16,9 +16,9 @@ module fx2_interface(
     //  Endpoint ports
     ep2_port_data, ep2_port_write, ep2_port_clk, ep6_port_addr_ins, ep6_port_addr_outs, ep6_port_datas, ep6_port_read, ep6_port_clk,
     //  Connection to command decoder
-    cmd_in_id, cmd_in_data, cmd_in_clk, cmd_valid,
+    cmd_in_id, cmd_in_length, cmd_in_data, cmd_in_clk, cmd_in_ready, cmd_in_read,
     //  Connection to command encoder
-    cmd_new_command, cmd_data, cmd_clk, cmd_read,
+    cmd_out_id, cmd_out_length, cmd_out_data, cmd_out_clk, cmd_out_ready, cmd_out_write,
     //  Control
     reset, clk);
     
@@ -49,16 +49,26 @@ module fx2_interface(
     output ep6_port_clk;
     
     //  Connection to command decoder (writes configuration RAM)
-    output [15:0] cmd_in_id;
+    //  This module drives cmd_in_clk with the USB clock.
+    //  The cmd_in_ready line will be asserted once the ID and length have been pulled and the data is about to be pulled.
+    //  Then the command decoder asserts cmd_in_read to read each byte of data.
+    output [7:0] cmd_in_id;
+    output [15:0] cmd_in_length;
     output [7:0] cmd_in_data;
     output cmd_in_clk;
-    output cmd_valid;
+    output cmd_in_ready;
+    input cmd_in_read;
     
     //  Connection to command encoder (reads configuration RAM)
-    input cmd_new_command;
-    input [7:0] cmd_data;
-    output cmd_clk;
-    output cmd_read;
+    //  Works much like the command decoder connection, except the encoder supplies the command ID and length and
+    //  cmd_out_ready is asserted once those have been written to the USB endpoint.  Then the encoder asserts
+    //  cmd_out_write while placing the appropriate data on the cmd_out_data lines.
+    input [7:0] cmd_out_id;
+    input [15:0] cmd_out_length;
+    input [7:0] cmd_out_data;
+    output cmd_out_clk;
+    output cmd_out_ready;
+    input cmd_out_write;
     
     input clk;
     input reset;
@@ -171,19 +181,19 @@ module fx2_interface(
     
     //  Assign command decoder outputs
     assign cmd_in_id = ep4_command_index;
-    //  assign cmd_in_data = cmd_valid ? usb_data_out : 8'b0;
+    assign cmd_in_length = ep4_command_length;
     assign cmd_in_data = usb_data_out;
-    assign cmd_valid = ((state_endpoint_index == EP4) && (state_packet_status[state_endpoint_index] == PACKET_DATA));
+    assign cmd_in_ready = ((state_endpoint_index == EP4) && (state_packet_status[state_endpoint_index] == PACKET_DATA));
     assign cmd_in_clk = usb_ifclk;
     
     //  Assign command encoder control lines
-    assign cmd_read = ((state_endpoint_index == EP8) && (state_packet_status[state_endpoint_index] == PACKET_DATA));
-    assign cmd_clk = usb_ifclk;
+    assign cmd_out_ready = ((state_endpoint_index == EP8) && (state_packet_status[state_endpoint_index] == PACKET_DATA));
+    assign cmd_out_clk = usb_ifclk;
     
     //  Tell the FX2 to always drive its outputs
     assign usb_sloe = 0;
     //  Tell the FX2 to read when the correct endpoint is selected and the FIFO is not empty
-    assign usb_slrd = ~(state_read && ~((state_endpoint_index == EP2) ? usb_ep2_empty : usb_ep4_empty) && state_packet_status[state_endpoint_index] != PACKET_DONE);
+    assign usb_slrd = ~(state_read && ~((state_endpoint_index == EP2) ? usb_ep2_empty : (usb_ep4_empty || (state_packet_status[state_endpoint_index] == PACKET_DATA && ~cmd_in_read))) && state_packet_status[state_endpoint_index] != PACKET_DONE);
     
     //  Use the currently selected endpoint
     assign usb_addr = state_endpoint_index;
@@ -240,8 +250,8 @@ module fx2_interface(
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
                         end
                         EP8: begin
-                            //  We are servicing EP8; this is currently not defined.  So, just move on to the next endpoint.
-                            state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                            //  We are servicing EP8. Nothing special.
+                            state_packet_status[state_endpoint_index] <= PACKET_HEADER_COMMAND;
                         end
                     endcase
                 end
@@ -277,8 +287,10 @@ module fx2_interface(
                             state_packet_status[state_endpoint_index] <= PACKET_HEADER_LENGTH_UPPER;
                         end
                         EP8: begin
-                            //  Commands to computer not yet supported
-                            state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                            //  Collect the command ID, move to next state.
+                            usb_slwr <= 0;
+                            usb_data_in <= cmd_out_id;
+                            state_packet_status[state_endpoint_index] <= PACKET_HEADER_LENGTH_UPPER;
                         end
                     endcase
                 end
@@ -309,8 +321,10 @@ module fx2_interface(
                             state_packet_status[state_endpoint_index] <= PACKET_HEADER_LENGTH_LOWER;
                         end
                         EP8: begin
-                            //  Commands to computer not yet supported
-                            state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                            //  Collect the upper byte of the length, move to next state.
+                            usb_slwr <= 0;
+                            usb_data_in <= cmd_out_length[15:8];
+                            state_packet_status[state_endpoint_index] <= PACKET_HEADER_LENGTH_LOWER;
                         end
                     endcase
                 end
@@ -343,8 +357,11 @@ module fx2_interface(
                             state_packet_status[state_endpoint_index] <= PACKET_DATA;
                         end
                         EP8: begin
-                            //  Commands to computer not yet supported
-                            state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                            //  Collect the command ID, move to next state.
+                            usb_slwr <= 0;
+                            usb_data_in <= cmd_out_length[7:0];
+                            cmd_out_ready <= 1;
+                            state_packet_status[state_endpoint_index] <= PACKET_DATA;
                         end
                     endcase
                 end
@@ -374,8 +391,7 @@ module fx2_interface(
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
                         end
                         EP8: begin
-                            //  Commands to computer not yet supported
-                            state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                            //  Start a counter for number of bytes written.
                         end
                     endcase
                 end

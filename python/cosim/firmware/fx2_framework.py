@@ -24,7 +24,7 @@ def virtual_fx2(
 
     """ Logic module instances """
 
-    usb_processor = fx2(verbose=True)
+    usb_processor = fx2(verbose=FX2_VERBOSITY)
     
     usb_port = usb_processor.SlaveFifo(usb_ifclk, reset_neg, usb_slwr_neg, usb_slrd_neg, usb_sloe_neg, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_full, usb_ep4_empty, usb_ep8_full)
     

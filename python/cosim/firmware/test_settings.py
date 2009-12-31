@@ -12,7 +12,7 @@ MESSAGES_EP2 = ['\xff\x02\x00\x0babcdefghijk',
                 '\xff\x01\x00\x07abcdefg',
             ]
 MESSAGES_EP4 = ['\xff\x00\x00\x04ABCD',
-                '\xff\x03\x00\x05ABCDE',
+                '\xff\x31\x00\x02\x01\x14',    #   Get register: port 1, address 0x14
                 '\xff\x01\x00\x02AB',
                 '\xff\x02\x00\x03ABC',
             ]  
@@ -21,4 +21,5 @@ CHUNK_PERIOD = 24   #   Cycles of the 48 MHz IFCLK
 
 USE_TRACE = True
 USE_UNITTEST = False
+FX2_VERBOSITY = False
 
