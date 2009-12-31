@@ -15,8 +15,14 @@ module bram_2k_8 (clk, clk2, we, a, dpra, di, spo, dpo, reset);
     output reg [7:0] dpo;
     reg [7:0] ram[2047:0];
     
+    //  Initialization
     integer i;
+    initial begin
+        for (i = 0; i < 2048; i = i + 1)
+            ram[i] <= 8'h00;
+    end
     
+    //  Operation
     always @(posedge clk) begin
         if (reset) begin
             spo <= 0;

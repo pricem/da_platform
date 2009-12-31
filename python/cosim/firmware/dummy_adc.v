@@ -9,7 +9,7 @@ module dummy_adc(
     clk, reset
     );
     
-    output reg fifo_clk;
+    output fifo_clk;
     output reg [7:0] fifo_data;
     output reg fifo_write;
     input [10:0] fifo_addr_in;
@@ -25,23 +25,30 @@ module dummy_adc(
     //  100 MHz input clk / 256 = 400 kHz
     reg [7:0] clk_counter;
     reg [1:0] msg_counter;
-    reg fifo_clk_last;
+    reg sample_clk;
+    reg sample_bit_clk;
+    reg sample_clk_last;
     wire [31:0] message = 32'hDEADBEEF;
     
     //  Keep reset around so you can cycle FIFO clock at reset
     reg reset_last;
     
+    //  Run FIFO at full speed (could be changed for lower power consumption)
+    assign fifo_clk = clk;
+    
     always @(posedge clk) begin
         if (reset) begin
             clk_counter <= 0;
             msg_counter <= 0;
-            fifo_clk_last <= 0;
+            sample_clk_last <= 0;
+            sample_bit_clk <= 0;
             //  Cycle FIFO clock at reset
             if (reset_last)
-                fifo_clk <= 0;
+                sample_clk <= 0;
             else
-                fifo_clk <= 1;
+                sample_clk <= 1;
             fifo_data <= 0;
+            fifo_write <= 0;
             reset_last <= 1;
         end
         else begin
@@ -50,11 +57,13 @@ module dummy_adc(
             
             //  Trigger the FIFO clock once in a while
             if (clk_counter == 127)
-                fifo_clk <= fifo_clk + 1;
+                sample_clk <= sample_clk + 1;
+            if (clk_counter % 8 == 7)
+                sample_bit_clk <= sample_bit_clk + 1;
             
             //  When the FIFO clock is triggered, send 4 bytes of data to the FIFO.
-            fifo_clk_last <= fifo_clk;
-            if (((fifo_clk == 1) && (fifo_clk_last == 0)) || (msg_counter != 0)) 
+            sample_clk_last <= sample_clk;
+            if (((sample_clk == 1) && (sample_clk_last == 0)) || (msg_counter != 0)) begin
                 if (direction == 1) begin
                     msg_counter <= msg_counter + 1;
                     fifo_write <= 1;
@@ -64,8 +73,8 @@ module dummy_adc(
                         2: fifo_data <= message[23:16];
                         3: fifo_data <= message[31:24];
                     endcase
-                    
                 end
+            end
             else begin
                 fifo_write <= 0;
                 fifo_data <= 0;

@@ -1,0 +1,75 @@
+List of control transfer types
+
+Program flow:
+    Software configuration
+    -> Converter register values
+    -> I/O module register values
+    -> HWCON values
+    
+
+Control transfers may be sent to or from the FPGA over USB.  Direction choices are:
+    - I: In, from the FPGA to the computer
+    - O: Out, from the computer to the FPGA
+    - I/O: Either direction
+
+Control transfers are each designated by a 1-byte code:
+    - The first bit determines whether action is requested:
+      Commands have codes starting with 0 (0x00 - 0x7F)
+      Status/informational packets start with 1 (0x80 - 0xFF)
+
+Packet format:
+    Byte 0: header byte (0xFF default)
+    Byte 1: transfer type (0x00 - 0xFF)
+    Bytes [3:2]: length N in bytes
+    Bytes 4 to N+3: data
+
+Meta commands (0x0x)
+Hex code    Desc                            Dir Data length     Data format
+            Select source                   I   1               ID of source
+            Get current source              I   0
+            Go to next source               I   0
+
+Seek commands (0x1x)
+Hex code    Desc                            Dir Data length     Data format
+            Seek to track                   I   1               Track
+            Seek prev track                 I   0
+            Seek next track                 I   0
+            Seek to disk/playlist/album     I   1               ID of disk/playlist/album
+            Seek prev playlist              I   0
+            Seek next playlist              I   0
+            Fast forward step               I   0
+            Fast rewind step                I   0
+            Seek to time                    I   5               Port, 32-bit time code
+            
+
+Power management commands (0x2x)
+Hex code    Desc                            Dir Data length     Data format                     Notes
+            Standby                         I/O 0                                               Implement later
+            Shutdown                        I/O 0                                               Implement later
+            Wakeup                          I/O 0                                               Implement later
+            
+
+Configuration commands (0x3x) - Note: only pertains to configuration needed for audio conversion.
+                                These values may be altered as consequences of driver settings (i.e. oversampling).
+Hex code    Desc                            Dir Data length     Data format
+            Configuration: get value        O   2               Port, address
+            Configuration: set value        O   4               Port, address, 16-bit value
+            Configuration: get all values   O   0               N/A
+            Set HWCON register              O   2               Port, 8-bit value
+            Read HWCON register             O   1               Port
+            Set I/O module register         O   4               Port, address, 16-bit value
+            Read I/O module register        O   1               Port
+            
+Synchronization commands (0x4x)
+Hex code    Desc                            Dir Data length     Data format
+            Set timebase                    O   5               Port, 32-bit time code
+            Flush buffers                   O   1               Port
+            
+Status/informational packets (0x8x)
+Hex code    Desc                            Dir Data length     Data format
+            Current time codes              I   5N              Port, 32-bit time code (may be repeated)            
+            Current audio source            I   1               ID of source
+            Current hardware register       I   4               Port, address, 16-bit value
+            Current HWCON register          I   2               Port, 8-bit value
+            Current I/O module register     I   4               Port, address, 16-bit value
+            

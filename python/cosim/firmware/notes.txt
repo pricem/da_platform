@@ -1,6 +1,87 @@
-Another file with notes
 
-30-pin connector interface:
+Protocol and design notes
+-------------------------
+
+Cell RAM configuration (BCR) value = 0b00010000001110100001111 = 0x081D0F
+
+Bit     Desc                    Value   Reason
+22:20   Reserved                000
+19:18   Register select         10      BCR
+17:16   Reserved                00
+15      Operating mode          0       Synchronous
+14      Initial latency         0       Variable latency
+13:11   Latency counter         011     4 clock latency to allow max speed
+10      WAIT polarity           1       WAIT active high
+9       Reserved                0
+8       WAIT configuration      1       One cycle before delay
+7:6     Reserved                00
+5:4     Drive strength          00      Full strength
+3       Burst wrap              1       Don't wrap
+2:0     Burst length            111     Continuous (arbitrary length) burst
+
+30-pin connector interface: 
+    for simplicity, all 6 data lines are driven the same direction
+    
 Index       Description                     Clock (if any)
-[29: ]
+29          A3.3V
+28          A5V
+27          A+15V
+26          D3.3V
+25          CLK
+24          DIR
+23          OVFR
+22          OVFL
+21          AMDO                            AMCLK
+20          AMDI                            AMCLK
+19          AMCLK
+18          AMCS (active low)               
+17:12       DATA[5:0]                       CLK
+11          DMCS (active low)
+10          DMCLK
+9           DMDI                            DMCLK
+8           DMDO                            DMCLK
+7           SRCLK
+6           HWCON                           SRCLK
+5           CHAN
+4           RESET (active low)
+3           DGND
+2           A+15V
+1:0         AGND
+
+All signals active high unless specified explicitly
+Signals that are active low:
+-   usb_sloe, usb_slrd, usb_slwr
+Most significant bit, and most significant index, first
+
+Clock frequencies:
+    nexys2_clk0: 50 MHz
+    clk: 100 - 150 MHz
+    mem_clk: 50 - 75 MHz (clk/2)
+    custom_clk0: 11.2896 MHz
+    custom_clk1: 24.576 MHz
+    spi_clk: 6 - 9 MHz (clk/16)
+
+Command packet format
+    Byte 0: header byte (0xFF default)
+    Byte 1: command (0x00 - 0xFF)
+    Bytes [3:2]: length N in bytes
+    Bytes 4 to N+3: data
+
+Data packet format
+    Byte 0: header byte (0xFF default)
+    Byte 1: port ID (0x00 - 0x03)
+    Bytes [3:2]: length N in bytes
+    Bytes 4 to N+3: data
+
+Configuration RAM
+    8-bit memory interface by 2k
+    Stores 
+
+
+Audio converter serial ports
+    DSD1792A: Max 10 MHz
+    PCM1804: No serial port
+    AD1934: Max 10 MHz
+    AD1974: Max 10 MHz
+    -> Frequency of serial port to be 1/16 the master (100-150 MHz) clock
 

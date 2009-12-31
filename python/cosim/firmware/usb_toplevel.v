@@ -336,7 +336,6 @@ module usb_toplevel(
     assign mem_lb_neg = 0;
     
     //  Memory (comment out for synthesis)
-    /*
     cellram buffer(
         .clk(mem_clk), 
         .ce(mem_ce_neg),
@@ -351,7 +350,6 @@ module usb_toplevel(
         .ub(mem_ub_neg),
         .reset(reset_neg)
         );
-    */
     
     //  Uncompleted modules follow
     //  Configuration controller (and memory)

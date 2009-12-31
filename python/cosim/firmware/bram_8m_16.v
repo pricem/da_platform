@@ -18,6 +18,14 @@ module bram_8m_16 (clk, we, oe, addr, din, dout, reset);
     
     assign dout = oe ? data_out : 16'hZZZZ;
     
+    //  Initialization
+    integer i;
+    initial begin
+        for (i = 0; i < 65536; i = i + 1)
+            ram[i] <= 16'h0000;
+    end
+    
+    //  Operation
     always @(posedge clk) begin
         if (reset)
             data_out <= 0;
