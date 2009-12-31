@@ -124,9 +124,19 @@ module usb_toplevel(
     wire [7:0] slot_dac_fifo_data[3:0];
     wire [7:0] slot_adc_fifo_data[3:0];
     
-    //  Between configuration memory and serial port controller
-    wire [10:0] config_read_addr;
-    wire [7:0] config_read_data;
+    //  Between configuration memory and SPI controller
+    wire [10:0] spi_config_addr;
+    wire [7:0] spi_config_data;
+    wire spi_config_read;
+    wire spi_config_write;
+    wire spi_config_clk;
+    
+    //  Between configuration memory and main controller
+    wire [10:0] config_addr;
+    wire [7:0] config_data;
+    wire config_read;
+    wire config_write;
+    wire config_clk;
     
     //  Between I/O connections and converter modules
     wire [5:0] slot_data [3:0];
@@ -142,6 +152,28 @@ module usb_toplevel(
     wire [3:0] pmod_io;
     wire pmod_clksel = 1;               //  24.576 MHz
     wire [3:0] pmod_clkexp = 4'b0111;   //  Divide by 2^7 = 128: 192 kHz
+    
+    //  Other signals needed for main controller
+    wire [7:0] aovf;                    //  ADC overflow bits (for parallel ADCs like the PCM4202)
+                                        //  Channel ordering (MSB first): R3, L3, R2, L2, R1, L1, R0, L0
+    wire [3:0] direction;               //  Direction bit (0 = DAC, 1 = ADC) for each port
+    wire [3:0] num_channels;            //  Number of channels bit (0 = 2-ch, 1 = 8-ch) for each port
+    wire [3:0] clksel;                  //  Choice of clock (0 = 11.2896 MHz, 1 = 24.576 MHz) for each port
+    
+    //  Other signals needed for SPI interface
+    wire spi_mclk;
+    assign spi_adc_mclk = spi_mclk;
+    assign spi_dac_mclk = spi_mclk;
+    wire spi_direction;                 //  Which type of device is active; 0 = DAC, 1 = ADC
+    wire [1:0] spi_port_id;             //  Which port is being used (0 to 3)
+    wire [3:0] spi_adcs;
+    wire [3:0] spi_dacs;
+    generate for (i = 0; i < 4; i = i + 1) begin:spi_ports
+            assign spi_adcs[i] = (spi_port_id == i) && (spi_direction == 1);
+            assign spi_dacs[i] = (spi_port_id == i) && (spi_direction == 0);
+        end
+    endgenerate
+
     
     //  Assign byte counters to keep track of number of samples since reset
     generate for (i = 0; i < 4; i = i + 1) begin:counters
@@ -166,7 +198,70 @@ module usb_toplevel(
         end
     endgenerate
     
+    //  Generate SPI clock (spi_mclk)
+    //  Divide main clock by 16 for now
+    reg [3:0] spi_mclk_count;
+    assign spi_mclk = (spi_mclk_count > 7);
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            spi_mclk_count <= 0;
+        else begin
+            spi_mclk_count <= spi_mclk_count + 1;
+        end
+    end
+    
+    //  Generate shift register clock (custom_srclk) based on SPI clock (spi_mclk)
+    reg [2:0] sr_count;
+    assign custom_srclk = (sr_count == 0);
+    always @(posedge spi_mclk or posedge reset) begin
+        if (reset)
+            sr_count <= 0;
+        else begin
+            sr_count <= sr_count + 1;
+        end
+    end
+    
+    
     /* Logic module instances */
+    
+    //  Deserialize on the way in: ADC overflow bits, direction/channels
+    deserializer deser_ovf(
+        .load_clk(custom_srclk), 
+        .in(custom_adc_ovf), 
+        .out(aovf), 
+        .clk(spi_mclk), 
+        .reset(reset)
+        );
+    deserializer deser_dirchan(
+        .load_clk(custom_srclk), 
+        .in(custom_dirchan), 
+        .out({num_channels, direction}), 
+        .clk(spi_mclk), 
+        .reset(reset)
+        );
+        
+    //  Serialize on the way out: SPI chip selects, clock selects
+    serializer ser_adc_cs(
+        .load_clk(custom_srclk), 
+        .in({4'b0, spi_adcs}), 
+        .out(spi_adc_cs), 
+        .clk(spi_mclk), 
+        .reset(reset)
+        );
+    serializer ser_dac_cs(
+        .load_clk(custom_srclk), 
+        .in({4'b0, spi_dacs}), 
+        .out(spi_dac_cs), 
+        .clk(spi_mclk), 
+        .reset(reset)
+        );
+    serializer ser_clksel(
+        .load_clk(custom_srclk), 
+        .in({4'b0, clksel}), 
+        .out(custom_clksel), 
+        .clk(spi_mclk), 
+        .reset(reset)
+        );
     
     //  FX2 interface (includes command decoder and port decoders)
     fx2_interface interface(
@@ -256,6 +351,7 @@ module usb_toplevel(
     
     //  Converters
     generate for (i = 0; i < 4; i = i + 1) begin:dacs
+            //  Substitute PMOD for first DAC port
             if (i == 0) begin
                 dac_pmod dac_i (
                     .fifo_clk(slot_dac_fifo_clk[i]),
@@ -352,11 +448,32 @@ module usb_toplevel(
         );
     
     //  Uncompleted modules follow
-    //  Configuration controller (and memory)
+    
+    /*
+    //  Main controller
+    controller controller(
+    
+        );
+        
+    //  Configuration memory
+    bram_2k_8 config_mem (
+        .clk(config_clk),
+        .we(config_write), 
+        .a(config_addr), 
+        .dpra(config_read_addr), 
+        .di(config_data), 
+        .dpo(config_read_data)
+        );
+        
+    //  SPI controller
+    spi_controller spi(
+    
+        );
+    */
+        
     //  Local button controller
     //  Monitor
-    
-    
+
     
 endmodule
 

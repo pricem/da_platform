@@ -1,3 +1,12 @@
+Todo for 12/31
+--------------
+Add deserializer for dir/chan, aovf; serializer for hwcon, chipselect to toplevel
+Make controller state machine
+Modify FX2 interface to work with controller
+Add SPI interface that reads/writes configuration memory
+Assign I/O module registers; finish documenting registers
+Return to working on test jigs
+
 Todo list
 
 Make and test general simultaneous reads/writes with memory arbitrator
@@ -9,6 +18,8 @@ Add converter interface module for PMOD-DA2 and determine if anything architectu
 -   Base module to handle adjustable bit rates and justification and serialize data?
 
 Check operation of FX2 interface in simulation (note that FX2 model on laptop may not use all endpoints)
+
+Parameterized instantiation of DAC/ADC modules using specified types
 
 Update FX2 firmware to use all endpoints
 -   Determine proper algorithm for using only 3 flags with 4 endpoints
@@ -37,4 +48,8 @@ Make memory arbitrator capable of handling reads/writes down to 1 byte[?]
 -   Reduce min_chunk to 1 and adjust timings for correctness
 -   Is this really necessary?  (If you stop playing audio, do you care if it stops 1 sample short?)
     Yes, but defer to later
+    
+Allow direction and channels to be byte values deserialized like AOVF, etc.
+    (or just replace by single "port type" value)
+
 

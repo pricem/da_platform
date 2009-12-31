@@ -94,11 +94,11 @@ class ConverterBoard(object):
                     amcs[i].next = False
                     clksel[i].next = False
             else:
-                srclk_count.next = srclk_count + 1
+                srclk_count.next = (srclk_count + 1) % 8
                 if (srclk_count < 4):
-                    dmcs[srclk_count].next = spi_dac_cs
-                    amcs[srclk_count].next = spi_adc_cs
-                    clksel[srclk_count].next = custom_clksel
+                    dmcs[srclk_count._val._val].next = spi_dac_cs
+                    amcs[srclk_count._val._val].next = spi_adc_cs
+                    clksel[srclk_count._val._val].next = custom_clksel
         
         #   Serialize on the way out: ADC overflow bits, direction/channels
         @always(custom_srclk.posedge)
@@ -108,11 +108,13 @@ class ConverterBoard(object):
                 custom_adc_ovf.next = False
             else:
                 if srclk_count % 2 == 0:
-                    custom_dirchan.next = direction[srclk_count / 2]
-                    custom_adc_ovf.next = aovfl[srclk_count / 2]
+                    custom_adc_ovf.next = aovfl[srclk_count._val._val / 2]
                 else:
-                    custom_dirchan.next = chan[srclk_count / 2]
-                    custom_adc_ovf.next = aovfr[srclk_count / 2]
+                    custom_adc_ovf.next = aovfr[srclk_count._val._val / 2]
+                if srclk_count < 4:
+                    custom_dirchan.next = direction[srclk_count._val._val]
+                else:
+                    custom_dirchan.next = chan[srclk_count._val._val - 4]
         
         """ Converer blocks """
         converter_instances = [self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset) for i in range(4)]

@@ -9,7 +9,7 @@ def usb_toplevel(
     ):
     
     module_name = 'usb_toplevel'
-    dependencies = [module_name, 'dut_' + module_name, 'tracking_fifo', 'memory_arbitrator', 'fx2_interface', 'bram_2k_8', 'dummy_dac', 'dummy_adc', 'bram_8m_16', 'cellram', 'delay_reg', 'dac_pmod']
+    dependencies = [module_name, 'dut_' + module_name, 'tracking_fifo', 'memory_arbitrator', 'fx2_interface', 'bram_2k_8', 'dummy_dac', 'dummy_adc', 'bram_8m_16', 'cellram', 'delay_reg', 'dac_pmod', 'controller', 'deserializer', 'serializer']
     cmd = "iverilog -o %s " % module_name + " ".join(["%s.v" % d for d in dependencies])
     os.system(cmd)
     
