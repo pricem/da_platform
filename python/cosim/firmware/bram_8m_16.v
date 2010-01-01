@@ -31,7 +31,7 @@ module bram_8m_16 (clk, we, oe, addr, din, dout, reset);
             data_out <= 0;
         else begin
             if (we) begin
-                $display("Wrote %s to big memory address %d at time %d.", din, addr, $time);
+                $display("Wrote 0x%h to big memory address %d at time %d.", din, addr, $time);
                 ram[addr[15:0]] <= din;
             end
             data_out <= ram[addr];

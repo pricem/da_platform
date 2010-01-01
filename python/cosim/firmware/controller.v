@@ -189,8 +189,13 @@ module controller(
             case (ep8_state)
                 IDLE: begin
                     if (state == REPLYING) begin
-                        ep8_state <= ACTIVE;
-                        write_byte_count <= 0;
+                        if (ep8_cmd_length > 0) begin
+                            ep8_state <= ACTIVE;
+                            write_byte_count <= 0;
+                        end
+                        else begin
+                            ep8_state <= DONE;
+                        end
                     end
                 end
                 

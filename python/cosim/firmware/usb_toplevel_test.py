@@ -66,6 +66,40 @@ def usb_toplevel_test():
     def update_clk():
         clk.next = not clk
         
+    #   Monitor the USB bus and print out a message at the end of each read or write.
+    endpoint_labels = {0: 'EP2', 1: 'EP4', 2: 'EP6', 3: 'EP8'}
+    @instance
+    def usb_monitor():
+        port = -1
+        msg = []
+        state = 'idle'
+        while 1:
+            yield usb_ifclk.posedge
+            if state == 'idle':
+                if not usb_slrd:
+                    port = usb_addr._val._val
+                    state = 'read'
+                    msg = [usb_data_out._val._val]
+                elif not usb_slwr:
+                    port = usb_addr._val._val
+                    state = 'write'
+                    msg = [usb_data_in._val._val]
+            elif state == 'read':
+                if not usb_slrd:
+                    msg.append(usb_data_out._val._val)
+                else:
+                    msg_str = ''.join(['%02X' % m for m in msg])
+                    print 'USB read of %d bytes from %s completed: 0x%s' % (len(msg), endpoint_labels[port], msg_str)
+                    state = 'idle'
+            elif state == 'write':
+                if not usb_slwr:
+                    msg.append(usb_data_in._val._val)
+                else:
+                    msg_str = ''.join(['%02X' % m for m in msg])
+                    print 'USB write of %d bytes to %s completed: 0x%s' % (len(msg), endpoint_labels[port], msg_str)
+                    state = 'idle'
+                
+            
     #   Run a few cycles of reset, then run the simulation for the specified time
     @instance
     def stimulus():

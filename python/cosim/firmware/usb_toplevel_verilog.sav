@@ -1,7 +1,7 @@
-[timestart] 859000
+[timestart] 0
 [size] 1280 617
 [pos] -1 -1
-*-18.000000 1060002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.000000 1060002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.dacs[0].
@@ -54,10 +54,6 @@ dut_usb_toplevel.dut.interface.state_packet_status_ep4[2:0]
 @22
 dut_usb_toplevel.dut.interface.ep4_command_index[7:0]
 dut_usb_toplevel.dut.interface.ep4_command_length[15:0]
-dut_usb_toplevel.dut.interface.cmd_in_id[15:0]
-@28
-dut_usb_toplevel.dut.interface.cmd_valid
-@22
 dut_usb_toplevel.dut.interface.cmd_in_data[7:0]
 @200
 -EP6
@@ -243,56 +239,10 @@ dut_usb_toplevel.dut.custom_dirchan
 dut_usb_toplevel.dut.custom_srclk
 @200
 -DACs and RAM->DAC FIFOs
-@28
-+Slot_0_data dut_usb_toplevel.dut.dacs[0].dac_i.slot_data[5:0]
-+Slot_1_data dut_usb_toplevel.dut.dacs[1].dac_i.slot_data[5:0]
-+Slot_2_data dut_usb_toplevel.dut.dacs[2].dac_i.slot_data[5:0]
-+Slot_3_data dut_usb_toplevel.dut.dacs[3].dac_i.slot_data[5:0]
-@200
 -Port 0
-@22
-dut_usb_toplevel.dut.dacs[0].dac_i.fifo_addr_in[10:0]
-dut_usb_toplevel.dut.dacs[0].dac_i.fifo_addr_out[10:0]
-@28
-dut_usb_toplevel.dut.dacs[0].dac_i.fifo_read
-dut_usb_toplevel.dut.dacs[0].dac_i.fifo_clk
-@200
 -Port 1
-@22
-dut_usb_toplevel.dut.dacs[1].dac_i.fifo_addr_in[10:0]
-dut_usb_toplevel.dut.dacs[1].dac_i.fifo_addr_out[10:0]
-@28
-dut_usb_toplevel.dut.dacs[0].dac_i.fifo_read
-dut_usb_toplevel.dut.dacs[0].dac_i.fifo_clk
-@200
 -Port 2
-@22
-dut_usb_toplevel.dut.dacs[2].dac_i.fifo_addr_in[10:0]
-dut_usb_toplevel.dut.dacs[2].dac_i.fifo_addr_out[10:0]
-@28
-dut_usb_toplevel.dut.dacs[2].dac_i.msg_counter[1:0]
-dut_usb_toplevel.dut.dacs[2].dac_i.msg_counter_delayed[1:0]
-@22
-dut_usb_toplevel.dut.dacs[2].dac_i.fifo_data[7:0]
-@23
-dut_usb_toplevel.dut.dacs[2].dac_i.data_out[5:0]
-@28
-dut_usb_toplevel.dut.dacs[2].dac_i.sample_bit_clk
-dut_usb_toplevel.dut.dacs[2].dac_i.sample_clk
-@22
-dut_usb_toplevel.dut.dacs[2].dac_i.sample[31:0]
-@28
-dut_usb_toplevel.dut.dacs[2].dac_i.fifo_read
-dut_usb_toplevel.dut.dacs[2].dac_i.fifo_clk
-@200
 -Port 3
-@22
-dut_usb_toplevel.dut.dacs[3].dac_i.fifo_addr_in[10:0]
-dut_usb_toplevel.dut.dacs[3].dac_i.fifo_addr_out[10:0]
-@28
-dut_usb_toplevel.dut.dacs[3].dac_i.fifo_read
-dut_usb_toplevel.dut.dacs[3].dac_i.fifo_clk
-@200
 -ADCs and ADC->RAM FIFOs
 -Port 0
 @28

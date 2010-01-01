@@ -33,7 +33,7 @@ module bram_2k_8 (clk, clk2, we, a, dpra, di, spo, dpo, reset);
         end
         else begin
             if (we) begin
-                $display("Wrote %c to address %d.", di, a);
+                //  $display("Wrote %c to address %d.", di, a);
                 ram[a] <= di;
             end
             spo <= ram[a];
