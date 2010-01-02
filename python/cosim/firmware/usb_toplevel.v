@@ -268,7 +268,7 @@ module usb_toplevel(
         );
         
     //  Assign, serialize HWCON
-    generate for (i = 0; i < 4; i = i + 1) begin:hwcons
+    generate for (i = 0; i < 4; i = i + 1) begin:hwcon_assign
             assign hwcon[i] = hwcons[((i + 1) * 8 - 1):(i * 8)];
         end
     endgenerate

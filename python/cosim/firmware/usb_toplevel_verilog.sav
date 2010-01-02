@@ -1,7 +1,7 @@
-[timestart] 8047300
+[timestart] 2010000
 [size] 1280 953
 [pos] -1 -1
-*-17.000000 8390002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.000000 2600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.dacs[0].
@@ -137,7 +137,7 @@ dut_usb_toplevel.dut.ports[3].fifos_dac_out_i.addr_in[10:0]
 dut_usb_toplevel.dut.ports[3].fifos_dac_out_i.addr_out[10:0]
 @200
 -RAM->EP6 ADC FIFOs
-@22
+@29
 dut_usb_toplevel.dut.ep6_port_read[3:0]
 @200
 -Port 0

@@ -26,6 +26,8 @@ module controller(
     //  `include "commands.v"
     //  So, I'll just copy in the supported commands.
     parameter CMD_CONFIG_GET_REG = 8'h31;
+    parameter CMD_CONFIG_SET_REG = 8'h32;
+    parameter CMD_DATA_REG = 8'h90;
     parameter CMD_ERROR_NOT_FOUND = 8'hF0;
     
     //  Maximum length of command data in bytes
@@ -88,9 +90,11 @@ module controller(
     parameter DONE = 2'b10;
     
     reg [1:0] config_state;         //  Configuration memory state
-    parameter SEARCHING = 2'b00;
-    parameter MATCHED = 2'b01;  
-    parameter FAILED = 2'b10;       //  All available configuration slots are in use and the desired register was not there.       
+    reg search_started;             //  Flag goes up after init->search transition
+    parameter INITIALIZING = 2'b00;
+    parameter SEARCHING = 2'b01;
+    parameter MATCHED = 2'b10;  
+    parameter FAILED = 2'b11;       //  All available configuration slots are in use and the desired register was not there.       
     reg [4:0] reg_index;            //  Index of the register currently being checked in configuration memory
     reg [7:0] reg_addr;             //  Address of the desired register to look up
 
@@ -98,6 +102,7 @@ module controller(
     reg [7:0] write_byte_count;     //  Number of bytes written to FX2 interface on EP8
     reg [(MAX_COMMAND_LENGTH * 8 - 1):0] cmd_in_data;
     reg [(MAX_COMMAND_LENGTH * 8 - 1):0] cmd_out_data;
+    wire [7:0] cmd_out_data_bytes [(MAX_COMMAND_LENGTH - 1):0];
     wire [(MAX_COMMAND_LENGTH * 8 - 1):0] cmd_in_next;
     reg [(MAX_COMMAND_LENGTH * 8 - 1):0] cmd_out_next;
     
@@ -109,6 +114,10 @@ module controller(
     reg [7:0] outgoing_command;     //  Data for FX2 interface when assembling EP8 packet
     reg [15:0] outgoing_length;
     
+    
+    //  Instruction-specific registers
+    reg register_read;
+    reg register_set;
     
     //  Configuration data
     reg [7:0] cfg_data_out;
@@ -130,6 +139,12 @@ module controller(
     //  Assign next value of cmd_in_data
     generate for (g = 0; g < MAX_COMMAND_LENGTH; g = g + 1) begin:latches
             assign cmd_in_next[((g + 1) * 8 - 1):(g * 8)] = (g == read_byte_count) ? ep4_data : cmd_in_data[((g + 1) * 8 - 1):(g * 8)];
+        end
+    endgenerate
+    
+    //  Break out bytes of cmd_out_data for writing
+    generate for (g = 0; g < MAX_COMMAND_LENGTH; g = g + 1) begin:breakouts
+            assign cmd_out_data_bytes[g] = cmd_out_data[((g + 1) * 8 - 1):(g * 8)];
         end
     endgenerate
     
@@ -188,9 +203,10 @@ module controller(
             case (ep8_state)
                 IDLE: begin
                     if (state == REPLYING) begin
-                        if (ep8_cmd_length > 0) begin
+                        //  If we have something to write, switch to "active."
+                        if (ep8_cmd_id > 0) begin
                             ep8_state <= ACTIVE;
-                            write_byte_count <= 0;
+                            write_byte_count <= ep8_cmd_length;
                         end
                         else begin
                             ep8_state <= DONE;
@@ -199,16 +215,23 @@ module controller(
                 end
                 
                 ACTIVE: begin
+                    //  Wait for a signal (ep8_ready) from the FX2 interface
                     if (ep8_ready) begin
-                        ep8_write <= 1;
-                        ep8_data <= cmd_out_data[0];
+                        if (ep8_cmd_length > 0) begin
+                            ep8_write <= 1;
+                            ep8_data <= cmd_out_data_bytes[ep8_cmd_length - 1];
+                        end
+                        else begin
+                            ep8_state <= DONE;
+                        end
                     end
+                    //  Once the FX2 interface is ready, write to the end of the specified length.
                     if (ep8_write) begin
-                        write_byte_count <= write_byte_count + 1;
-                        ep8_data <= cmd_out_data[write_byte_count + 1];
+                        write_byte_count <= write_byte_count - 1;
+                        ep8_data <= cmd_out_data_bytes[write_byte_count - 1];
                     end
-                    if (write_byte_count >= ep8_cmd_length - 1) begin
-                        ep8_write <= 0;
+                    if (write_byte_count <= 1) begin
+                        ep8_data <= cmd_out_data_bytes[write_byte_count - 1];
                         ep8_state <= DONE;
                     end
                 
@@ -217,8 +240,9 @@ module controller(
                 DONE: begin
                     //  Move back to IDLE, but only after the main state machine recognizes 
                     //  that the write has finished.
+                    ep8_write <= 0;
                     if (state != REPLYING) begin
-                        ep4_state <= IDLE;
+                        ep8_state <= IDLE;
                     end
                 end
             endcase
@@ -237,13 +261,17 @@ module controller(
             execution_count <= 0;
             cmd_out_next <= 0;
 
-            config_state <= SEARCHING;
+            config_state <= INITIALIZING;
+            search_started <= 0;
             cfg_data_out <= 0;
             cfg_addr <= 0;
             cfg_read <= 0;
             cfg_write <= 0;
             reg_addr <= 0;
             reg_index <= 0;
+            
+            register_set <= 0;
+            register_read <= 0;
 
         end
         else begin
@@ -274,19 +302,72 @@ module controller(
                                     //  Tell the configuration memory state machine to go look for our register
                                     cmd_port <= cmd_in_data[1:0];
                                     reg_addr <= cmd_in_data[15:8];
-                                    reg_index <= 0;
-                                    config_state <= SEARCHING;
+                                    config_state <= INITIALIZING;
                                 end
                                 else if (config_state == MATCHED) begin
-                                    //  Once the register is matched, read it.
-                                    execution_complete <= 1;
+                                    //  Once the register is matched, send it back.
+                                    if (register_read) begin
+                                        outgoing_command <= CMD_DATA_REG;
+                                        outgoing_length <= 2;
+                                        cmd_out_data <= 0;
+                                        cmd_out_data[7:0] <= cfg_data;
+                                        register_read <= 0;
+                                        execution_complete <= 1;
+                                    end
+                                    else begin
+                                        register_read <= 1;
+                                    end
                                 end
                                 else if (config_state == FAILED) begin
                                     outgoing_command <= CMD_ERROR_NOT_FOUND;
                                     outgoing_length <= 0;
                                     cmd_out_data <= 0;
-                                    
                                     execution_complete <= 1;
+                                end
+                            end
+                            
+                            CMD_CONFIG_SET_REG: begin
+                                if (execution_count == 0) begin
+                                    //  Tell the configuration memory state machine to go look for our register
+                                    cmd_port <= cmd_in_data[1:0];
+                                    reg_addr <= cmd_in_data[15:8];
+                                    config_state <= INITIALIZING;
+                                end
+                                else if (config_state == MATCHED) begin
+                                    //  Once the register is matched, write it.
+                                    cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1);
+                                    cfg_read <= 0;
+                                    cfg_write <= 1;
+                                    //  Write the last byte (LSB) of the command.
+                                    cfg_data_out <= cmd_in_data[31:24];
+                                    execution_complete <= 1;
+                                end
+                                else if (config_state == FAILED) begin
+                                    //  If the register wasn't found, go ahead and write the first unused slot with no response.
+                                    if (reg_index < MAX_NUM_REGISTERS) begin
+                                        if (register_set) begin
+                                            cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1);
+                                            //  Write the last byte (LSB) of the command.
+                                            cfg_data_out <= cmd_in_data[31:24];
+                                            execution_complete <= 1;
+                                            register_set <= 0;
+                                        end
+                                        else begin
+                                            cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1) + 1;
+                                            cfg_read <= 0;
+                                            cfg_write <= 1;
+                                            cfg_data_out[7] <= 1;
+                                            cfg_data_out[6:0] <= reg_addr[6:0];
+                                            register_set <= 1;
+                                        end
+                                    end
+                                    //  Otherwise, die.
+                                    else begin
+                                        outgoing_command <= CMD_ERROR_NOT_FOUND;
+                                        outgoing_length <= 0;
+                                        cmd_out_data <= 0;
+                                        execution_complete <= 1;
+                                    end
                                 end
                             end
                             
@@ -297,6 +378,10 @@ module controller(
                         endcase
                     end
                     else begin
+                        //  Clear accesses to configuration memory
+                        cfg_write <= 0;
+                        cfg_read <= 0;
+                        cfg_addr <= 0;
                         //  If stuff is done: move on, unless you have a command to write in response
                         if (outgoing_command > 0)
                             state <= REPLYING;
@@ -306,38 +391,52 @@ module controller(
                 end
 
                 REPLYING: begin
-                    //  Skip this step for now.
-                    //  if (ep8_state == DONE)
+                    //  Wait for the reply to go out and then reset the outgoing command.
+                    if ((ep8_state == DONE) && ep8_ready) begin
+                        outgoing_command <= 0;
+                        outgoing_length <= 0;
                         state <= WAITING;
+                    end
                 end
             endcase
-        
+            
             //  Configuration memory state machine
             //  Address = 0x400 + (port * 0x80) + (direction * 0x40) + (num_channels * 0x20) + 1  
             //      MSB is: used/unused flag, writable flag, 6-bit reg address
             //      LSB is the value
             if (state == EXECUTING) case (config_state)
-                SEARCHING: begin
+                INITIALIZING: begin
                     cfg_read <= 1;
+                    search_started <= 0;
+                    //  On the first cycle, set up the first read (of the address and the used/unused flag).
+                    reg_index <= 0;
+                    cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + 1;
+                    config_state <= SEARCHING;
+                end
+            
+                SEARCHING: begin
+                    search_started <= 1;
                     //  You found a match if the entry is set and has the proper address.
                     if ((cfg_data[5:0] == reg_addr) && (cfg_data[7] == 1)) begin
                         config_state <= MATCHED;
                         //  Now read the data from the register.
                         cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1);
                     end
-                    //  If no match was found, continue counting.
-                    else if (reg_index < MAX_NUM_REGISTERS) begin
+                    //  If no match was found and the current register is set, continue counting.
+                    else if (reg_index < MAX_NUM_REGISTERS && cfg_data[7] == 1) begin
                         reg_index <= reg_index + 1;
                         cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1) + 1;
                     end
-                    //  If you've tried all available slots already, give up
-                    else begin
+                    //  If you've tried all filled slots already, give up 
+                    //  (but leave reg_index where it was so a new entry can be written)
+                    else if (search_started) begin
                         config_state <= FAILED;
                     end
                 end
                 
                 MATCHED: begin
-                    //  Stay here until kicked out.
+                    //  Stay here until kicked out.  
+                    //  Let the other state machine manage the configuration memory.
                     config_state <= MATCHED;
                 end
                 
@@ -349,7 +448,7 @@ module controller(
             else begin
                 reg_index <= 0;
                 cfg_read <= 0;
-                config_state <= SEARCHING;
+                config_state <= INITIALIZING;
             end
         
         end

@@ -120,4 +120,11 @@ class ConverterBoard(object):
         """ Converter blocks """
         converter_instances = [self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset) for i in range(4)]
         
+        #   Break out traces for viewing
+        converter_0 = converter_instances[0]
+        converter_1 = converter_instances[1]
+        converter_2 = converter_instances[2]
+        converter_3 = converter_instances[3]
+        
         return instances()
+        

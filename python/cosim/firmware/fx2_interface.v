@@ -248,7 +248,7 @@ module fx2_interface(
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
                         end
                         EP6: begin
-                            if (state_ep6_active[ep6_port_index]) begin
+                            if ((state_ep6_active[ep6_port_index]) && ~usb_ep6_full) begin
                                 //  If the tracking FIFO for the current port has data, write a header byte and move on.
                                 usb_slwr <= 0;
                                 usb_data_in <= HEADER_BYTE;
@@ -263,7 +263,7 @@ module fx2_interface(
                         end
                         EP8: begin
                             //  We are servicing EP8. Do something only if there is a valid command waiting.
-                            if (cmd_out_id > 0) begin
+                            if ((cmd_out_id > 0) && ~usb_ep8_full) begin
                                 usb_slwr <= 0;
                                 usb_data_in <= HEADER_BYTE;
                                 state_packet_status[state_endpoint_index] <= PACKET_HEADER_COMMAND;
@@ -408,20 +408,28 @@ module fx2_interface(
                         EP6: begin
                             usb_slwr <= 0;
                             usb_data_in <= ep6_port_data[ep6_port_index];
+                            if (ep6_port_addr_out[ep6_port_index] >= ep6_destination_byte - 1) begin
+                                ep6_port_read[ep6_port_index] <= 0;
+                            end
                             if (ep6_port_addr_out[ep6_port_index] >= ep6_destination_byte) begin
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
-                                ep6_port_read[ep6_port_index] <= 0;
                             end
                         end
                         EP8: begin
                             //  Move on if the proper number of bytes were received or the write timed out.
-                            if ((ep8_byte_counter >= ep8_command_length - 1) || (ep8_cycle_counter >= EP8_WAIT_CYCLES) || (ep8_command_length == 0)) begin
+                            if ((ep8_byte_counter > ep8_command_length) || (ep8_cycle_counter >= EP8_WAIT_CYCLES) || (ep8_command_length == 0)) begin
                                 usb_slwr <= 1;
+                                
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
                             end
                             //  Increment byte counter and write data to FX2 if controller elects to write.
                             else if (cmd_out_write) begin
-                                usb_slwr <= 0;
+                                //  Add a cycle of lag so the controller can fetch its data.
+                                //  This means that ep8_byte_counter is actually 1 higher than the number of bytes written.
+                                if (ep8_byte_counter >= 1)
+                                    usb_slwr <= 0;
+                                else
+                                    usb_slwr <= 1;
                                 usb_data_in <= cmd_out_data;
                                 ep8_byte_counter <= ep8_byte_counter + 1;
                             end
