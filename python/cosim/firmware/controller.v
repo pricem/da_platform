@@ -155,15 +155,14 @@ module controller(
                     if (ep4_ready) begin
                         ep4_read <= 1;
                     end
-                    if (ep4_read) begin
-                        cmd_in_data <= cmd_in_next;
-                        read_byte_count <= read_byte_count + 1;
-                    end
-                    if (read_byte_count >= ep4_cmd_length - 1) begin
+                    if (read_byte_count >= ep4_cmd_length) begin
                         ep4_read <= 0;
                         ep4_state <= DONE;
                     end
-                    
+                    else if (ep4_read) begin
+                        cmd_in_data <= cmd_in_next;
+                        read_byte_count <= read_byte_count + 1;
+                    end
                 end
                 
                 DONE: begin

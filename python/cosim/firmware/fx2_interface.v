@@ -45,7 +45,7 @@ module fx2_interface(
     input [43:0] ep6_port_addr_ins;          //  EP6 tracking FIFO has address lines so FX2 interface knows when to start and stop reading
     input [43:0] ep6_port_addr_outs;
     input [31:0] ep6_port_datas;
-    output [3:0] ep6_port_read;
+    output reg [3:0] ep6_port_read;
     output ep6_port_clk;
     
     //  Connection to command decoder (writes configuration RAM)
@@ -95,7 +95,7 @@ module fx2_interface(
     parameter [7:0] UNSET_BYTE = 8'h76;
     
     //  Command stuff
-    parameter [7:0] COMMAND_NOP = 8'h38;
+    parameter [7:0] COMMAND_NOP = 8'h00;
 
 
     /*  Internal signals  */
@@ -167,7 +167,7 @@ module fx2_interface(
     assign state_data = ((state_endpoint_index == EP2) || (state_endpoint_index == EP6));
     assign state_command = ((state_endpoint_index == EP4) || (state_endpoint_index == EP8));
     generate for (g = 0; g < 4; g = g + 1) begin:ep6_states
-        assign state_ep6_active[g] = (ep6_port_addr_out[g] != ep6_port_addr_in[g]);
+            assign state_ep6_active[g] = (ep6_port_addr_out[g] != ep6_port_addr_in[g]);
         end
     endgenerate
     
@@ -176,7 +176,7 @@ module fx2_interface(
     //  assign ep2_port_data = ep2_port_write[ep2_port_index] ? usb_data_out : 8'b0;
     assign ep2_port_data = usb_data_out;
     generate for (g = 0; g < 4; g = g + 1) begin:ep2_ports
-        assign ep2_port_write[g] = ((ep2_port_index == g) && ((state_endpoint_index == EP2) && (state_packet_status[state_endpoint_index] == PACKET_DATA)));
+            assign ep2_port_write[g] = ((ep2_port_index == g) && ((state_endpoint_index == EP2) && (state_packet_status[state_endpoint_index] == PACKET_DATA)));
         end
     endgenerate
     
@@ -219,6 +219,7 @@ module fx2_interface(
             ep6_destination_byte <= 0;
             ep6_destination_length <= 0;
             ep6_port_index <= 0;
+            ep6_port_read <= 0;
 
             ep8_command_length <= 0;
             ep8_byte_counter <= 0;
@@ -253,9 +254,12 @@ module fx2_interface(
                                 usb_data_in <= HEADER_BYTE;
                                 state_packet_status[state_endpoint_index] <= PACKET_HEADER_COMMAND;
                             end
-                            else
+                            else begin
                                 //  Otherwise, call it a day and move on to the next endpoint.
+                                //  Also increment the port index so we check the next port next time.
+                                ep6_port_index <= ep6_port_index + 1;
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                            end
                         end
                         EP8: begin
                             //  We are servicing EP8. Do something only if there is a valid command waiting.
@@ -332,6 +336,8 @@ module fx2_interface(
                             //  Write the upper byte of the packet data length and move on.
                             usb_slwr <= 0;
                             usb_data_in <= ep6_destination_length[10:8];
+                            //  Set up a read from the appropriate tracking FIFO (2 cycles early).
+                            ep6_port_read[ep6_port_index] <= 1;
                             state_packet_status[state_endpoint_index] <= PACKET_HEADER_LENGTH_LOWER;
                         end
                         EP8: begin
@@ -367,7 +373,6 @@ module fx2_interface(
                         end
                         EP6: begin
                             //  Write the lower byte of the packet data length and start on data.
-                            usb_slwr <= 0;
                             usb_data_in <= ep6_destination_length[7:0];
                             state_packet_status[state_endpoint_index] <= PACKET_DATA;
                         end
@@ -403,8 +408,10 @@ module fx2_interface(
                         EP6: begin
                             usb_slwr <= 0;
                             usb_data_in <= ep6_port_data[ep6_port_index];
-                            if (ep6_port_addr_out[ep6_port_index] >= ep6_destination_byte)
+                            if (ep6_port_addr_out[ep6_port_index] >= ep6_destination_byte) begin
                                 state_packet_status[state_endpoint_index] <= PACKET_DONE;
+                                ep6_port_read[ep6_port_index] <= 0;
+                            end
                         end
                         EP8: begin
                             //  Move on if the proper number of bytes were received or the write timed out.

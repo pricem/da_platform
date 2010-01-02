@@ -304,6 +304,8 @@ module usb_toplevel(
         .ep2_port_data(ep2_port_data), 
         .ep2_port_write(ep2_port_write), 
         .ep2_port_clk(ep2_port_clk), 
+        .ep6_port_addr_ins({read_in_addr[7], read_in_addr[6], read_in_addr[5], read_in_addr[4]}),
+        .ep6_port_addr_outs({read_out_addr[7], read_out_addr[6], read_out_addr[5], read_out_addr[4]}),
         .ep6_port_datas({ep6_port_data[3], ep6_port_data[2], ep6_port_data[1], ep6_port_data[0]}), 
         .ep6_port_read(ep6_port_read), 
         .ep6_port_clk(ep6_port_clk), 
