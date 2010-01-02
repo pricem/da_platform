@@ -10,34 +10,40 @@ Target Device  : xc3s500e
 Target Package : fg320
 Target Speed   : -5
 Mapper Version : spartan3e -- $Revision: 1.51 $
-Mapped Date    : Sat Nov 14 15:11:54 2009
+Mapped Date    : Fri Jan  1 20:02:15 2010
 
 WARNING:LIT:243 - Logical network pmod_d<3> has no load.
-WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 84
+WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 78
    more times for the following (max. 5 shown):
-   mem_data<12>,
-   fx2<34>,
-   fx2<29>,
-   mem_data<13>,
-   fx2<35>
+   pmod_a<1>,
+   pmod_a<2>,
+   pmod_a<3>,
+   fx2<36>,
+   pmod_a<4>
    To see the details of these warning messages, please use the -detail switch.
 Mapping design into LUTs...
 Running directed packing...
-WARNING:Pack:266 - The function generator usb/LED_and00001 failed to merge with
-   F5 multiplexer usb/LED_mux0012<7>13_f5.  There is more than one F5MUX.  The
-   design will exhibit suboptimal timing.
 Running delay-based LUT packing...
 Running related packing...
 Updating timing models...
+WARNING:PhysDesignRules:372 - Gated clock. Clock net fx2_37_OBUF is sourced by a
+   combinatorial pin. This is not good design practice. Use the CE pin to
+   control the loading of data into the flip-flop.
 WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <clk1_IBUF> is incomplete. The signal
-   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_int0_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:368 - The signal <usb_slcs_OBUF> is incomplete. The
+   signal is not driven by any source pin in the design.
 WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 
 Design Summary
@@ -45,31 +51,34 @@ Design Summary
 
 Design Summary:
 Number of errors:      0
-Number of warnings:    8
+Number of warnings:   11
 Logic Utilization:
-  Number of Slice Flip Flops:           163 out of   9,312    1%
-  Number of 4 input LUTs:               133 out of   9,312    1%
+  Total Number Slice Registers:         655 out of   9,312    7%
+    Number used as Flip Flops:          654
+    Number used as Latches:               1
+  Number of 4 input LUTs:             1,065 out of   9,312   11%
 Logic Distribution:
-  Number of occupied Slices:            129 out of   4,656    2%
-    Number of Slices containing only related logic:     129 out of     129 100%
-    Number of Slices containing unrelated logic:          0 out of     129   0%
+  Number of occupied Slices:            830 out of   4,656   17%
+    Number of Slices containing only related logic:     830 out of     830 100%
+    Number of Slices containing unrelated logic:          0 out of     830   0%
       *See NOTES below for an explanation of the effects of unrelated logic.
-  Total Number of 4 input LUTs:         187 out of   9,312    2%
-    Number used as logic:               133
-    Number used as a route-thru:         54
+  Total Number of 4 input LUTs:       1,427 out of   9,312   15%
+    Number used as logic:             1,065
+    Number used as a route-thru:        362
 
   The Slice Logic Distribution report is not meaningful if the design is
   over-mapped for a non-slice resource or if Placement fails.
 
-  Number of bonded IOBs:                107 out of     232   46%
-    IOB Flip Flops:                      16
-  Number of BUFGMUXs:                     4 out of      24   16%
+  Number of bonded IOBs:                115 out of     232   49%
+  Number of RAMB16s:                     12 out of      20   60%
+  Number of BUFGMUXs:                     3 out of      24   12%
+  Number of DCMs:                         1 out of       4   25%
 
-Average Fanout of Non-Clock Nets:                2.59
+Average Fanout of Non-Clock Nets:                3.40
 
-Peak Memory Usage:  177 MB
-Total REAL time to MAP completion:  2 secs 
-Total CPU time to MAP completion:   2 secs 
+Peak Memory Usage:  186 MB
+Total REAL time to MAP completion:  4 secs 
+Total CPU time to MAP completion:   4 secs 
 
 NOTES:
 

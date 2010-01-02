@@ -55,14 +55,26 @@
       <association xil_pn:name="Implementation"/>
     </file>
     <file xil_pn:name="dac_pmod.v" xil_pn:type="FILE_VERILOG">
-      <association xil_pn:name="Implementation"/>
       <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
     </file>
     <file xil_pn:name="delay_reg.v" xil_pn:type="FILE_VERILOG">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+    </file>
+    <file xil_pn:name="clock_manager.v" xil_pn:type="FILE_VERILOG">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+    </file>
+    <file xil_pn:name="deserializer.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="Implementation"/>
       <association xil_pn:name="BehavioralSimulation"/>
     </file>
-    <file xil_pn:name="clock_manager.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="serializer.v" xil_pn:type="FILE_VERILOG">
+      <association xil_pn:name="Implementation"/>
+      <association xil_pn:name="BehavioralSimulation"/>
+    </file>
+    <file xil_pn:name="controller.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="Implementation"/>
       <association xil_pn:name="BehavioralSimulation"/>
     </file>

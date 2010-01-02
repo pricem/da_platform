@@ -5,17 +5,14 @@ Asterisk (*) preceding a constraint indicates it was not met.
   Constraint                                |    Check    | Worst Case |  Best Case | Timing |   Timing   
                                             |             |    Slack   | Achievable | Errors |    Score   
 ----------------------------------------------------------------------------------------------------------
-  Autotimespec constraint for clock net usb | SETUP       |         N/A|     3.978ns|     N/A|           0
-  _ifclk_BUFGP                              | HOLD        |     1.360ns|            |       0|           0
+  Autotimespec constraint for clock net clk | SETUP       |         N/A|     9.711ns|     N/A|           0
+                                            | HOLD        |     0.771ns|            |       0|           0
 ------------------------------------------------------------------------------------------------------
-  Autotimespec constraint for clock net usb | SETUP       |         N/A|     7.087ns|     N/A|           0
-  /usb_fifos0/ifclk_div<2>                  | HOLD        |     1.136ns|            |       0|           0
+  Autotimespec constraint for clock net usb | SETUP       |         N/A|     9.380ns|     N/A|           0
+  _ifclk_BUFGP                              | HOLD        |     0.828ns|            |       0|           0
 ------------------------------------------------------------------------------------------------------
-  Autotimespec constraint for clock net clk | SETUP       |         N/A|     3.458ns|     N/A|           0
-  0_BUFGP                                   | HOLD        |     0.808ns|            |       0|           0
-------------------------------------------------------------------------------------------------------
-  Autotimespec constraint for clock net dac | SETUP       |         N/A|     3.144ns|     N/A|           0
-  _interface/clk_counter<0>                 | HOLD        |     0.954ns|            |       0|           0
+  Autotimespec constraint for clock net dut | SETUP       |         N/A|     2.992ns|     N/A|           0
+  /spi_mclk_count<3>                        | HOLD        |     1.022ns|            |       0|           0
 ------------------------------------------------------------------------------------------------------
 
 

@@ -1,4 +1,4 @@
-//  A dummy module for a nonexistent DAC.
+//  A dummy module for a nonexistent 16-bit stereo DAC.
 
 module dummy_dac(
     //  FIFO connection
@@ -30,6 +30,11 @@ module dummy_dac(
     reg sample_clk;
     reg sample_bit_clk;
     reg sample_clk_last;
+
+    //  Wires to monitor output
+    wire data = data_out[0];
+    wire lrck = data_out[1];
+    wire bck = data_out[2];
 
     //  Audio samples
     reg [31:0] sample;
@@ -88,7 +93,7 @@ module dummy_dac(
             //  Trigger the FIFO clock once in a while
             if (clk_counter == 127)
                 sample_clk <= sample_clk + 1;
-            if (clk_counter % 16 == 15)
+            if (clk_counter % 8 == 7)
                 sample_bit_clk <= sample_bit_clk + 1;
             
             //  Left/right data

@@ -1,18 +1,27 @@
 //! **************************************************************************
-// Written by: Map L.33 on Sat Nov 14 15:11:56 2009
+// Written by: Map L.33 on Fri Jan 01 20:02:18 2010
 //! **************************************************************************
 
 SCHEMATIC START;
+COMP "mem_data<0>" LOCATE = SITE "L1" LEVEL 1;
+COMP "mem_data<1>" LOCATE = SITE "L4" LEVEL 1;
+COMP "mem_data<2>" LOCATE = SITE "L6" LEVEL 1;
+COMP "mem_data<3>" LOCATE = SITE "M4" LEVEL 1;
+COMP "mem_data<4>" LOCATE = SITE "N5" LEVEL 1;
 COMP "ps2_clk" LOCATE = SITE "R12" LEVEL 1;
+COMP "mem_data<5>" LOCATE = SITE "P1" LEVEL 1;
+COMP "mem_data<6>" LOCATE = SITE "P2" LEVEL 1;
+COMP "mem_data<7>" LOCATE = SITE "R2" LEVEL 1;
+COMP "mem_data<8>" LOCATE = SITE "L3" LEVEL 1;
+COMP "mem_data<9>" LOCATE = SITE "L5" LEVEL 1;
+COMP "mem_data<10>" LOCATE = SITE "M3" LEVEL 1;
+COMP "mem_data<11>" LOCATE = SITE "M6" LEVEL 1;
+COMP "mem_data<12>" LOCATE = SITE "L2" LEVEL 1;
+COMP "mem_data<13>" LOCATE = SITE "N4" LEVEL 1;
+COMP "mem_data<14>" LOCATE = SITE "R3" LEVEL 1;
+COMP "mem_data<15>" LOCATE = SITE "T1" LEVEL 1;
 COMP "buttons<0>" LOCATE = SITE "B18" LEVEL 1;
-COMP "buttons<1>" LOCATE = SITE "D18" LEVEL 1;
-COMP "buttons<2>" LOCATE = SITE "E18" LEVEL 1;
-COMP "buttons<3>" LOCATE = SITE "H13" LEVEL 1;
 COMP "ps2_data" LOCATE = SITE "P11" LEVEL 1;
-COMP "pmod_a<0>" LOCATE = SITE "L15" LEVEL 1;
-COMP "pmod_a<1>" LOCATE = SITE "K12" LEVEL 1;
-COMP "pmod_a<2>" LOCATE = SITE "L17" LEVEL 1;
-COMP "pmod_a<3>" LOCATE = SITE "M15" LEVEL 1;
 COMP "pmod_d<4>" LOCATE = SITE "K14" LEVEL 1;
 COMP "pmod_d<5>" LOCATE = SITE "K15" LEVEL 1;
 COMP "pmod_d<6>" LOCATE = SITE "J15" LEVEL 1;
@@ -49,7 +58,6 @@ COMP "usb_data<5>" LOCATE = SITE "R11" LEVEL 1;
 COMP "usb_data<6>" LOCATE = SITE "P10" LEVEL 1;
 COMP "usb_data<7>" LOCATE = SITE "R10" LEVEL 1;
 COMP "clk0" LOCATE = SITE "B8" LEVEL 1;
-COMP "clk1" LOCATE = SITE "U9" LEVEL 1;
 COMP "led_7seg_an<0>" LOCATE = SITE "F15" LEVEL 1;
 COMP "led_7seg_an<1>" LOCATE = SITE "C18" LEVEL 1;
 COMP "led_7seg_an<2>" LOCATE = SITE "H17" LEVEL 1;
@@ -100,19 +108,18 @@ COMP "mem_addr<8>" LOCATE = SITE "H6" LEVEL 1;
 COMP "mem_addr<9>" LOCATE = SITE "F1" LEVEL 1;
 COMP "mem_wait" LOCATE = SITE "F5" LEVEL 1;
 COMP "usb_pktend" LOCATE = SITE "V12" LEVEL 1;
-COMP "switches<0>" LOCATE = SITE "G18" LEVEL 1;
-COMP "switches<1>" LOCATE = SITE "H18" LEVEL 1;
-COMP "switches<2>" LOCATE = SITE "K18" LEVEL 1;
-COMP "switches<3>" LOCATE = SITE "K17" LEVEL 1;
-COMP "switches<4>" LOCATE = SITE "L14" LEVEL 1;
-COMP "switches<5>" LOCATE = SITE "L13" LEVEL 1;
-COMP "switches<6>" LOCATE = SITE "N17" LEVEL 1;
-COMP "switches<7>" LOCATE = SITE "R17" LEVEL 1;
+COMP "fx2<31>" LOCATE = SITE "A13" LEVEL 1;
+COMP "fx2<32>" LOCATE = SITE "B13" LEVEL 1;
+COMP "fx2<24>" LOCATE = SITE "E10" LEVEL 1;
+COMP "fx2<34>" LOCATE = SITE "A14" LEVEL 1;
+COMP "fx2<26>" LOCATE = SITE "C11" LEVEL 1;
+COMP "fx2<35>" LOCATE = SITE "C14" LEVEL 1;
+COMP "fx2<37>" LOCATE = SITE "B14" LEVEL 1;
+COMP "fx2<29>" LOCATE = SITE "E12" LEVEL 1;
 COMP "led_upper<0>" LOCATE = SITE "E17" LEVEL 1;
 COMP "led_upper<1>" LOCATE = SITE "P15" LEVEL 1;
 COMP "led_upper<2>" LOCATE = SITE "F4" LEVEL 1;
 COMP "led_upper<3>" LOCATE = SITE "R4" LEVEL 1;
-NET "clk0_BUFGP/IBUFG" BEL "clk0_BUFGP/BUFG.GCLKMUX" USELOCALCONNECT;
 NET "usb_ifclk_BUFGP/IBUFG" BEL "usb_ifclk_BUFGP/BUFG.GCLKMUX"
         USELOCALCONNECT;
 SCHEMATIC END;
