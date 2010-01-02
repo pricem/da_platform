@@ -65,7 +65,7 @@ settings_hwreg = [
                     'PLLPD': {'address': 0, 'bit_min': 0, 'bit_max': 0, 'description': 'PLL power down', 'choices': [(0b0, 'Normal'), (0b1, 'Power down')], 'help': 'Power down since there is an external clock'},
                     'CLKR': {'address': 0, 'bit_min': 1, 'bit_max': 2, 'description': 'CLK/Fs ratio', 'choices': [(0b00, '256x Fs'), (0b01, '384x Fs'), (0b10, '512x Fs'), (0b11, '768x Fs')], 'help': 'Use 256x for 44.1 kHz, 512x for 48/96/192 kHz'},
                     'CLKO': {'address': 0, 'bit_min': 3, 'bit_max': 4, 'description': 'Output clock type', 'choices': [(0b00, 'For crystal'), (0b01, '256x Fs'), (0b10, '512x Fs'), (0b11, 'Disabled')], 'help': 'Disable; pin is not connected'},
-                    'PLLI': {'address': 0, 'bit_min': 5, 'bit_max': 6, 'description': 'PLL input pin', 'choices': [(0b00, 'MCLKI'), (0b01, 'DLRCLK'), (0b10, 'AUXTDMBCLK'), 'help': 'Use DLRCLK if you insist on using the PLL'},
+                    'PLLI': {'address': 0, 'bit_min': 5, 'bit_max': 6, 'description': 'PLL input pin', 'choices': [(0b00, 'MCLKI'), (0b01, 'DLRCLK'), (0b10, 'AUXTDMBCLK')], 'help': 'Use DLRCLK if you insist on using the PLL'},
                     'CLKE': {'address': 0, 'bit_min': 7, 'bit_max': 7, 'description': 'Internal clock enable', 'choices': [(0b0, 'Disable (idle)'), (0b1, 'Enable (active)')], 'help': None},
                     #   PLL/Clock control 1
                     'DCLKS': {'address': 1, 'bit_min': 0, 'bit_max': 0, 'description': 'DAC clock source', 'choices': [(0b0, 'PLL'), (0b1, 'MCLK')], 'help': 'Select MCLK to use external clock'},
@@ -111,7 +111,7 @@ settings_hwreg = [
                     #   Aux TDM control 0
                     'TDWW': {'address': 15, 'bit_min': 0, 'bit_max': 1, 'description': 'TDM word width', 'choices': [(0b00, '24'), (0b01, '20'), (0b11, '16')], 'help': 'Selects DAC resolution in TDM mode'},
                     'TDDDL': {'address': 15, 'bit_min': 2, 'bit_max': 4, 'description': 'TDM data delay', 'choices': [(0b000, '1'), (0b001, '0'), (0b010, '8'), (0b011, '12'), (0b100, '16')], 'help': 'For timing tweaks'},
-                    'TDFMT': {'address': 15, 'bit_min': 5, 'bit_max': 6, 'description': 'TDM serial data format', 'choices': [(0b10, 'DAC aux mode'))], 'help': None},
+                    'TDFMT': {'address': 15, 'bit_min': 5, 'bit_max': 6, 'description': 'TDM serial data format', 'choices': [(0b10, 'DAC aux mode')], 'help': None},
                     'TDBAE': {'address': 15, 'bit_min': 7, 'bit_max': 7, 'description': 'TDM BCLK active edge', 'choices': [(0b0, 'Mid-cycle'), (0b1, 'End of cycle')], 'help': 'Not relevant'},
                     #   Aux TDM control 1
                     'TDLRF': {'address': 16, 'bit_min': 0, 'bit_max': 0, 'description': 'TDM LRCLK format', 'choices': [(0b0, '50/50 (auto)'), (0b1, 'Pulse (32 BCLK/ch)')], 'help': 'For timing tweaks'},
@@ -131,7 +131,7 @@ settings_hwreg = [
                     'PLLPD': {'address': 0, 'bit_min': 0, 'bit_max': 0, 'description': 'PLL power down', 'choices': [(0b0, 'Normal'), (0b1, 'Power down')], 'help': 'Power down since there is an external clock'},
                     'CLKR': {'address': 0, 'bit_min': 1, 'bit_max': 2, 'description': 'CLK/Fs ratio', 'choices': [(0b00, '256x Fs'), (0b01, '384x Fs'), (0b10, '512x Fs'), (0b11, '768x Fs')], 'help': 'Use 256x for 44.1 kHz, 512x for 48/96/192 kHz'},
                     'CLKO': {'address': 0, 'bit_min': 3, 'bit_max': 4, 'description': 'Output clock type', 'choices': [(0b00, 'For crystal'), (0b01, '256x Fs'), (0b10, '512x Fs'), (0b11, 'Disabled')], 'help': 'Disable; pin is not connected'},
-                    'PLLI': {'address': 0, 'bit_min': 5, 'bit_max': 6, 'description': 'PLL input pin', 'choices': [(0b00, 'MCLKI'), (0b01, 'DLRCLK'), (0b10, 'AUXTDMBCLK'), 'help': 'Use DLRCLK if you insist on using the PLL'},
+                    'PLLI': {'address': 0, 'bit_min': 5, 'bit_max': 6, 'description': 'PLL input pin', 'choices': [(0b00, 'MCLKI'), (0b01, 'DLRCLK'), (0b10, 'AUXTDMBCLK')], 'help': 'Use DLRCLK if you insist on using the PLL'},
                     'CLKE': {'address': 0, 'bit_min': 7, 'bit_max': 7, 'description': 'Internal clock enable', 'choices': [(0b0, 'Disable (idle)'), (0b1, 'Enable (active)')], 'help': None},
                     #   PLL/Clock control 1
                     'DCLKS': {'address': 1, 'bit_min': 0, 'bit_max': 0, 'description': 'ADC clock source', 'choices': [(0b0, 'PLL'), (0b1, 'MCLK')], 'help': 'Select MCLK to use external clock'},
@@ -178,7 +178,7 @@ settings_hwreg = [
         
         
 """ Settings for HWCON registers. """
-settings_hwreg = [
+settings_hwcon = [
 #   PCM4202
         {'target': 'PCM4202 2-channel ADC',
          'registers': {
