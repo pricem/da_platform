@@ -68,6 +68,7 @@ def usb_toplevel_test():
         
     #   Monitor the USB bus and print out a message at the end of each read or write.
     endpoint_labels = {0: 'EP2', 1: 'EP4', 2: 'EP6', 3: 'EP8'}
+    transfer_labels = {0: 'BULK   ', 1: 'CONTROL', 2: 'BULK   ', 3: 'CONTROL'}
     @instance
     def usb_monitor():
         port = -1
@@ -89,14 +90,14 @@ def usb_toplevel_test():
                     msg.append(usb_data_out._val._val)
                 else:
                     msg_str = ''.join(['%02X' % m for m in msg])
-                    print 'USB read of %d bytes from %s completed: 0x%s' % (len(msg), endpoint_labels[port], msg_str)
+                    print '%s read  of %6d bytes from %s completed: 0x%s' % (transfer_labels[port], len(msg), endpoint_labels[port], msg_str)
                     state = 'idle'
             elif state == 'write':
                 if not usb_slwr:
                     msg.append(usb_data_in._val._val)
                 else:
                     msg_str = ''.join(['%02X' % m for m in msg])
-                    print 'USB write of %d bytes to %s completed: 0x%s' % (len(msg), endpoint_labels[port], msg_str)
+                    print '%s write of %6d bytes to %s completed: 0x%s' % (transfer_labels[port], len(msg), endpoint_labels[port], msg_str)
                     state = 'idle'
                 
             

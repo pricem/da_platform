@@ -172,12 +172,6 @@ module usb_toplevel(
     wire [1:0] spi_port_id;             //  Which port is being used (0 to 3)
     wire [3:0] spi_adcs;
     wire [3:0] spi_dacs;
-    generate for (i = 0; i < 4; i = i + 1) begin:spi_ports
-            assign spi_adcs[i] = (spi_port_id == i) && (spi_direction == 1);
-            assign spi_dacs[i] = (spi_port_id == i) && (spi_direction == 0);
-        end
-    endgenerate
-
     
     //  Assign byte counters to keep track of number of samples since reset
     generate for (i = 0; i < 4; i = i + 1) begin:counters
@@ -201,18 +195,6 @@ module usb_toplevel(
             end
         end
     endgenerate
-    
-    //  Generate SPI clock (spi_mclk)
-    //  Divide main clock by 16 for now
-    reg [3:0] spi_mclk_count;
-    assign spi_mclk = (spi_mclk_count > 7);
-    always @(posedge clk or posedge reset) begin
-        if (reset)
-            spi_mclk_count <= 0;
-        else begin
-            spi_mclk_count <= spi_mclk_count + 1;
-        end
-    end
     
     //  Generate shift register clock (custom_srclk) based on SPI clock (spi_mclk)
     reg [2:0] sr_count;
@@ -247,14 +229,14 @@ module usb_toplevel(
     //  Serialize on the way out: SPI chip selects, clock selects
     serializer ser_adc_cs(
         .load_clk(custom_srclk), 
-        .in({4'b0, spi_adcs}), 
+        .in({4'b0, ~spi_adcs}),     //  Active low
         .out(spi_adc_cs), 
         .clk(spi_mclk), 
         .reset(reset)
         );
     serializer ser_dac_cs(
         .load_clk(custom_srclk), 
-        .in({4'b0, spi_dacs}), 
+        .in({4'b0, ~spi_dacs}),     //  Active low
         .out(spi_dac_cs), 
         .clk(spi_mclk), 
         .reset(reset)
@@ -511,23 +493,39 @@ module usb_toplevel(
     assign config_data = config_read ? config_data_out : 8'hZZ;
     bram_2k_8 config_mem (
         .clk(config_clk),
+        .clk2(spi_config_clk),
         .we(config_write), 
+        .we2(spi_config_write),
         .a(config_addr), 
         .dpra(spi_config_addr), 
         .spo(config_data_out),
         .di(config_data), 
+        .di2(spi_config_data),
         .dpo(spi_config_data)
         );
-        
-    //  Uncompleted modules follow
-    
-    /*
+
     //  SPI controller
     spi_controller spi(
-    
+        .config_clk(spi_config_clk), 
+        .config_addr(spi_config_addr), 
+        .config_read(spi_config_read), 
+        .config_write(spi_config_write), 
+        .config_data(spi_config_data),
+        .direction(direction),
+        .num_channels(num_channels),
+        .spi_mclk(spi_mclk), 
+        .spi_adc_cs(spi_adcs),
+        .spi_adc_mdi(spi_adc_mdi), 
+        .spi_adc_mdo(spi_adc_mdo), 
+        .spi_dac_cs(spi_dacs), 
+        .spi_dac_mdi(spi_dac_mdi), 
+        .spi_dac_mdo(spi_dac_mdo),
+        .clk(clk), 
+        .reset(reset)
         );
-    */
-        
+
+    //  Uncompleted modules follow
+    
     //  Local button controller
     //  Monitor
 

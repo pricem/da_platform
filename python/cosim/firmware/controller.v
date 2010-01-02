@@ -108,7 +108,7 @@ module controller(
     
     reg [7:0] current_command;      //  ID of command currently being read or executed
     reg execution_complete;         
-    reg [1:0] cmd_port;             //  The port that the current command pertains to, if applicable
+    wire [1:0] cmd_port;             //  The port that the current command pertains to, if applicable
     reg [3:0] execution_count;      //  Number of cycles since command execution began (if you want to use it)
     
     reg [7:0] outgoing_command;     //  Data for FX2 interface when assembling EP8 packet
@@ -147,6 +147,12 @@ module controller(
             assign cmd_out_data_bytes[g] = cmd_out_data[((g + 1) * 8 - 1):(g * 8)];
         end
     endgenerate
+    
+    //  Assign command port to come from the LSB of the data.
+    //  This is always the case for commands that pertain to a particular port.
+    //  It could be registered for more flexibility, but an additional delay would have to be
+    //  introduced into the state machines.
+    assign cmd_port = cmd_in_data[1:0];
     
     //  EP4 machine: writes into command_in buffer
     always @(posedge ep4_clk or posedge reset) begin
@@ -297,10 +303,11 @@ module controller(
                     if (~execution_complete) begin
                         //  Do stuff based on command descriptions (see commands.txt)
                         case (current_command)
+                        
+                            //  Get the value for the specified register address from configuration memory
                             CMD_CONFIG_GET_REG: begin
                                 if (execution_count == 0) begin
                                     //  Tell the configuration memory state machine to go look for our register
-                                    cmd_port <= cmd_in_data[1:0];
                                     reg_addr <= cmd_in_data[15:8];
                                     config_state <= INITIALIZING;
                                 end
@@ -326,10 +333,10 @@ module controller(
                                 end
                             end
                             
+                            //  Set a register value in configuration memory, or create an entry if none exists for that address
                             CMD_CONFIG_SET_REG: begin
                                 if (execution_count == 0) begin
                                     //  Tell the configuration memory state machine to go look for our register
-                                    cmd_port <= cmd_in_data[1:0];
                                     reg_addr <= cmd_in_data[15:8];
                                     config_state <= INITIALIZING;
                                 end
@@ -416,21 +423,24 @@ module controller(
             
                 SEARCHING: begin
                     search_started <= 1;
-                    //  You found a match if the entry is set and has the proper address.
-                    if ((cfg_data[5:0] == reg_addr) && (cfg_data[7] == 1)) begin
-                        config_state <= MATCHED;
-                        //  Now read the data from the register.
-                        cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1);
-                    end
-                    //  If no match was found and the current register is set, continue counting.
-                    else if (reg_index < MAX_NUM_REGISTERS && cfg_data[7] == 1) begin
-                        reg_index <= reg_index + 1;
-                        cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1) + 1;
-                    end
-                    //  If you've tried all filled slots already, give up 
-                    //  (but leave reg_index where it was so a new entry can be written)
-                    else if (search_started) begin
-                        config_state <= FAILED;
+                    if (search_started) begin
+                        //  You found a match if the entry is set and has the proper address.
+                        if ((cfg_data[5:0] == reg_addr[5:0]) && (cfg_data[7] == 1)) begin
+                            config_state <= MATCHED;
+                            //  Now read the data from the register.
+                            cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + (reg_index << 1);
+                        end
+                        //  If no match was found and the current register is set, continue counting.
+                        else if (reg_index < MAX_NUM_REGISTERS && cfg_data[7] == 1) begin
+                            reg_index <= reg_index + 1;
+                            search_started <= 0;
+                            cfg_addr <= 11'h400 + (cmd_port << 7) + (direction[cmd_port] << 6) + (num_channels[cmd_port] << 5) + ((reg_index + 1) << 1) + 1;
+                        end
+                        //  If you've tried all filled slots already, give up 
+                        //  (but leave reg_index where it was so a new entry can be written)
+                        else begin
+                            config_state <= FAILED;
+                        end
                     end
                 end
                 

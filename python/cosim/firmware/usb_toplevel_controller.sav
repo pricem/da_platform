@@ -1,7 +1,7 @@
-[timestart] 5165100
+[timestart] 2445540
 [size] 1280 953
 [pos] -1 -1
-*-16.000000 5276002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.000000 2479250 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 @200
@@ -44,7 +44,6 @@ dut_usb_toplevel.dut.controller.cmd_in_data[63:0]
 @200
 -EP8 port
 @28
-dut_usb_toplevel.dut.controller.ep8_clk
 dut_usb_toplevel.dut.controller.ep8_state[1:0]
 @22
 dut_usb_toplevel.dut.controller.ep8_cmd_id[7:0]
@@ -68,6 +67,7 @@ dut_usb_toplevel.dut.controller.execution_count[3:0]
 @28
 dut_usb_toplevel.dut.controller.register_set
 dut_usb_toplevel.dut.controller.cmd_port[1:0]
+dut_usb_toplevel.dut.controller.search_started
 @22
 dut_usb_toplevel.dut.controller.reg_addr[7:0]
 @28
@@ -75,7 +75,7 @@ dut_usb_toplevel.dut.controller.config_state[1:0]
 dut_usb_toplevel.dut.config_clk
 @22
 dut_usb_toplevel.dut.config_addr[10:0]
-dut_usb_toplevel.dut.config_data[7:0]
+dut_usb_toplevel.dut.controller.cfg_data[7:0]
 @28
 dut_usb_toplevel.dut.config_read
 dut_usb_toplevel.dut.config_write

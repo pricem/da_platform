@@ -1,0 +1,58 @@
+[timestart] 0
+[size] 1280 953
+[pos] -1 -1
+*-22.000000 4324002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] dut_usb_toplevel.
+[treeopen] dut_usb_toplevel.dut.
+@200
+-Config memory interface
+@28
+dut_usb_toplevel.dut.spi.config_clk
+@22
+dut_usb_toplevel.dut.spi.reg_index[3:0]
+@28
+dut_usb_toplevel.dut.spi.port_index[1:0]
+@22
+dut_usb_toplevel.dut.spi.config_addr[10:0]
+dut_usb_toplevel.dut.spi.config_data[7:0]
+@28
+dut_usb_toplevel.dut.spi.config_read
+dut_usb_toplevel.dut.spi.config_write
+@200
+-SPI bus
+@28
+dut_usb_toplevel.dut.spi.spi_mclk
+dut_usb_toplevel.dut.spi.spi_dac_cs[3:0]
+dut_usb_toplevel.dut.spi.spi_dac_mdi
+dut_usb_toplevel.dut.spi.spi_dac_mdo
+dut_usb_toplevel.dut.spi.spi_adc_cs[3:0]
+dut_usb_toplevel.dut.spi.spi_adc_mdi
+dut_usb_toplevel.dut.spi.spi_adc_mdo
+@200
+-SPI states
+@28
+dut_usb_toplevel.dut.spi.spi_state[2:0]
+@22
+dut_usb_toplevel.dut.spi.spi_global_addr[7:0]
+dut_usb_toplevel.dut.spi.spi_addr[7:0]
+@28
+dut_usb_toplevel.dut.spi.spi_bit_out
+@22
+dut_usb_toplevel.dut.spi.spi_data_in[7:0]
+dut_usb_toplevel.dut.spi.spi_data_out[7:0]
+@28
+dut_usb_toplevel.dut.spi.spi_direction
+dut_usb_toplevel.dut.spi.spi_format_id[1:0]
+dut_usb_toplevel.dut.spi.spi_bit_counter[2:0]
+@200
+-Main states
+@28
+dut_usb_toplevel.dut.spi.clk
+dut_usb_toplevel.dut.spi.state[2:0]
+dut_usb_toplevel.dut.spi.read_state[2:0]
+dut_usb_toplevel.dut.spi.write_state[2:0]
+@200
+-Other
+@28
+dut_usb_toplevel.dut.spi.num_channels[3:0]
+dut_usb_toplevel.dut.spi.direction[3:0]

@@ -54,7 +54,7 @@ module tracking_fifo(clk_in, data_in, write_in, clk_out, data_out, read_out, add
     end
     
     // RAM for holding data: read asynchronously
-    bram_2k_8 ram(.clk(clk_in), .clk2(clk_out), .we(write_in), .a(addr_in), .dpra(addr_out), 
+    bram_2k_8 ram(.clk(clk_in), .clk2(clk_out), .we(write_in), .we2(0), .a(addr_in), .dpra(addr_out), 
                   .di(data_in), .spo(mem_data_read), .dpo(mem_data_out), .reset(reset));
 
 endmodule
