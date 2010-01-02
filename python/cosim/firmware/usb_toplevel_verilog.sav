@@ -1,7 +1,7 @@
-[timestart] 0
-[size] 1280 617
+[timestart] 8047300
+[size] 1280 953
 [pos] -1 -1
-*-20.000000 1060002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.000000 8390002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.dacs[0].
@@ -58,6 +58,7 @@ dut_usb_toplevel.dut.interface.cmd_in_data[7:0]
 @200
 -EP6
 @28
+dut_usb_toplevel.dut.interface.ep6_port_index[1:0]
 dut_usb_toplevel.dut.interface.state_ep6_active_port0
 dut_usb_toplevel.dut.interface.state_ep6_active_port1
 dut_usb_toplevel.dut.interface.state_ep6_active_port2

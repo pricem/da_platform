@@ -1,7 +1,7 @@
 [timestart] 0
-[size] 1280 617
+[size] 1280 953
 [pos] -1 -1
-*-22.000000 1551900 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-22.000000 2865700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 @200
@@ -50,7 +50,6 @@ dut_usb_toplevel.dut.controller.ep8_cmd_id[7:0]
 dut_usb_toplevel.dut.controller.ep8_cmd_length[15:0]
 @28
 dut_usb_toplevel.dut.controller.ep8_ready
-dut_usb_toplevel.dut.controller.ep8_write
 @22
 dut_usb_toplevel.dut.controller.ep8_data[7:0]
 dut_usb_toplevel.dut.controller.write_byte_count[7:0]
