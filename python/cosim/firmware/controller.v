@@ -203,6 +203,7 @@ module controller(
             ep8_write <= 0;
             ep8_state <= IDLE;
             write_byte_count <= 0;
+            ep8_data <= 0;
             cmd_out_data <= 0;
         end
         else begin
@@ -237,7 +238,7 @@ module controller(
                         ep8_data <= cmd_out_data_bytes[write_byte_count - 1];
                     end
                     if (write_byte_count <= 1) begin
-                        ep8_data <= cmd_out_data_bytes[write_byte_count - 1];
+                        ep8_data <= cmd_out_data_bytes[0];
                         ep8_state <= DONE;
                     end
                 

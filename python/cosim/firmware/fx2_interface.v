@@ -225,6 +225,7 @@ module fx2_interface(
             ep8_byte_counter <= 0;
             ep8_cycle_counter <= 0;
 
+            usb_data_in <= 0;
             usb_slwr <= 1;
         end
         else begin
