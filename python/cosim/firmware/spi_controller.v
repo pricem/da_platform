@@ -130,6 +130,7 @@ module spi_controller(
             port_index <= 0;
             reg_index <= 0;
             
+            config_addr <= 0;
             config_read <= 0;
             config_write <= 0;
             
