@@ -1,9 +1,12 @@
-[timestart] 2445540
+[timestart] 1430000
 [size] 1280 953
 [pos] -1 -1
-*-14.000000 2479250 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.000000 6150000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
+[treeopen] dut_usb_toplevel.dut.dacs[3].
+[treeopen] dut_usb_toplevel.dut.dacs[3].genblk7.
+[treeopen] dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.
 @200
 -Controller
 @28
@@ -79,3 +82,25 @@ dut_usb_toplevel.dut.controller.cfg_data[7:0]
 @28
 dut_usb_toplevel.dut.config_read
 dut_usb_toplevel.dut.config_write
+@200
+-IO modules
+@28
+dut_usb_toplevel.dut.controller.cfg_clk
+dut_usb_toplevel.dut.controller.cfg_io_read[7:0]
+dut_usb_toplevel.dut.controller.cfg_io_write[7:0]
+@22
+dut_usb_toplevel.dut.controller.cfg_io_data[7:0]
+@200
+-DAC 3
+@28
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.config_clk
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.config_addr[1:0]
+@22
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.config_data[7:0]
+@28
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.config_read
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.config_write
+@200
+-HWCON
+@22
+dut_usb_toplevel.dut.controller.hwcons[31:0]

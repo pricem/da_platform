@@ -58,8 +58,8 @@ Hex code    Desc                            Dir Data length     Data format
 0x33        Configuration: get everything   O   0               N/A
 0x34        Set HWCON register              O   2               Port, 8-bit value
 0x35        Read HWCON register             O   1               Port
-0x36        Set I/O module register         O   4               Port, address, 16-bit value
-0x37        Read I/O module register        O   1               Port
+0x36        Set I/O module register         O   3               Port, address, 8-bit value
+0x37        Read I/O module register        O   2               Port, address
 0x38        Enable SPI controller           O   0               N/A
 0x39        Disable SPI controller          O   0               N/A
             
@@ -74,5 +74,5 @@ Hex code    Desc                            Dir Data length     Data format
 0x81        Current audio source            I   1               ID of source
 0x82        Current hardware register       I   4               Port, address, 16-bit value
 0x83        Current HWCON register          I   2               Port, 8-bit value
-0x84        Current I/O module register     I   4               Port, address, 16-bit value
+0x84        Current I/O module register     I   3               Port, address, 8-bit value
             

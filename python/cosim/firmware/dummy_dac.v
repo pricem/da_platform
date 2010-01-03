@@ -1,13 +1,23 @@
 //  A dummy module for a nonexistent 16-bit stereo DAC.
 
 module dummy_dac(
+    //  Register programming
+    config_clk, config_write, config_read, config_addr, config_data,
     //  FIFO connection
     fifo_clk, fifo_data, fifo_read, fifo_addr_in, fifo_addr_out,
+    //  Other internal connections
+    custom_clk0, custom_clk1,
     //  FX2 data port
     slot_data, direction, channels,
     //  Control
     clk, reset
     );
+
+    input config_clk;
+    input config_write;
+    input config_read;
+    input [1:0] config_addr;
+    inout [7:0] config_data;
     
     output fifo_clk;
     input [7:0] fifo_data;
@@ -15,12 +25,34 @@ module dummy_dac(
     input [10:0] fifo_addr_in;
     input [10:0] fifo_addr_out;
     
+    input custom_clk0;
+    input custom_clk1;
+    
     output [5:0] slot_data;
     input direction;
     input channels;
     
     input clk;
     input reset;
+       
+    integer i;
+    
+    //  Configuration registers
+    reg [7:0] config [3:0];
+    reg [7:0] config_data_out;
+    always @(posedge config_clk or posedge reset) begin
+        if (reset) begin
+            for (i = 0; i < 4; i = i + 1)
+                config[i] <= 0;
+        end
+        else begin
+            config_data_out <= config[config_addr];
+            if (config_write) begin
+                config[config_addr] <= config_data;
+            end
+        end
+    end
+    assign config_data = config_read ? config_data_out : 8'hZZ;
     
     //  100 MHz input clk / 256 = 400 kHz
     reg [5:0] data_out;

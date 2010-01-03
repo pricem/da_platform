@@ -12,6 +12,8 @@ module controller(
     ep8_clk, ep8_cmd_id, ep8_cmd_length, ep8_ready, ep8_write, ep8_data,
     //  Configuration memory
     cfg_clk, cfg_addr, cfg_data, cfg_write, cfg_read,
+    //  I/O module configuration
+    cfg_io_clk, cfg_io_write, cfg_io_read, cfg_io_addr, cfg_io_data,
     //  Monitoring inputs
     direction, num_channels,
     //  Outputs 
@@ -27,7 +29,13 @@ module controller(
     //  So, I'll just copy in the supported commands.
     parameter CMD_CONFIG_GET_REG = 8'h31;
     parameter CMD_CONFIG_SET_REG = 8'h32;
+    parameter CMD_CONFIG_GET_HWCON = 8'h33;
+    parameter CMD_CONFIG_SET_HWCON = 8'h34;
+    parameter CMD_CONFIG_GET_IOREG = 8'h35;
+    parameter CMD_CONFIG_SET_IOREG = 8'h36;
     parameter CMD_DATA_REG = 8'h90;
+    parameter CMD_DATA_HWCON = 8'h91;
+    parameter CMD_DATA_IOREG = 8'h92;
     parameter CMD_ERROR_NOT_FOUND = 8'hF0;
     
     //  Maximum length of command data in bytes
@@ -61,6 +69,13 @@ module controller(
     inout [7:0] cfg_data;
     output reg cfg_write;
     output reg cfg_read;
+    
+    //  I/O module configuration: writes to simple registers.  4 8-bit registers per module are allocated.
+    output cfg_io_clk;
+    output [7:0] cfg_io_write;          //  Vectors: entries 7:4 are for ADC ports 3:0, entries 3:0 are for DAC ports 3:0
+    output [7:0] cfg_io_read;
+    output reg [1:0] cfg_io_addr;
+    inout [7:0] cfg_io_data;
     
     //  Other inputs for monitoring
     input [3:0] direction;
@@ -98,6 +113,12 @@ module controller(
     reg [4:0] reg_index;            //  Index of the register currently being checked in configuration memory
     reg [7:0] reg_addr;             //  Address of the desired register to look up
 
+    reg [1:0] cfg_io_port;
+    reg cfg_io_direction;
+    reg cfg_io_active;           //  Asserted high if a register should be written
+    reg [7:0] cfg_io_data_out;
+    wire [2:0] cfg_io_index;
+
     reg [7:0] read_byte_count;      //  Number of bytes read from FX2 interface on EP4
     reg [7:0] write_byte_count;     //  Number of bytes written to FX2 interface on EP8
     reg [(MAX_COMMAND_LENGTH * 8 - 1):0] cmd_in_data;
@@ -108,7 +129,7 @@ module controller(
     
     reg [7:0] current_command;      //  ID of command currently being read or executed
     reg execution_complete;         
-    wire [1:0] cmd_port;             //  The port that the current command pertains to, if applicable
+    wire [1:0] cmd_port;            //  The port that the current command pertains to, if applicable
     reg [3:0] execution_count;      //  Number of cycles since command execution began (if you want to use it)
     
     reg [7:0] outgoing_command;     //  Data for FX2 interface when assembling EP8 packet
@@ -131,6 +152,16 @@ module controller(
             assign hwcons[((g + 1) * 8 - 1):(g * 8)] = hwcon[g];
         end
     endgenerate
+    
+    //  Assign IO module programming lines
+    assign cfg_io_index = {cfg_io_direction, cfg_io_port};
+    assign cfg_io_clk = clk;
+    generate for (g = 0; g < 8; g = g + 1) begin:config_io
+            assign cfg_io_write[g] = (cfg_io_index == g) && cfg_io_active;
+            assign cfg_io_read[g] = (cfg_io_index == g) && ~cfg_io_active;
+        end
+    endgenerate
+    assign cfg_io_data = cfg_io_active ? cfg_io_data_out : 8'hZZ;
     
     //  Assign outputs
     assign ep8_cmd_id = outgoing_command;
@@ -236,12 +267,14 @@ module controller(
                     if (ep8_write) begin
                         write_byte_count <= write_byte_count - 1;
                         ep8_data <= cmd_out_data_bytes[write_byte_count - 1];
+                        if (write_byte_count <= 1) begin
+                            ep8_data <= cmd_out_data_bytes[0];
+                            ep8_state <= DONE;
+                        end
                     end
-                    if (write_byte_count <= 1) begin
-                        ep8_data <= cmd_out_data_bytes[0];
+                    else if (ep8_cmd_length == 0) begin
                         ep8_state <= DONE;
                     end
-                
                 end
                 
                 DONE: begin
@@ -276,6 +309,15 @@ module controller(
             cfg_write <= 0;
             reg_addr <= 0;
             reg_index <= 0;
+
+            for (i = 0; i < 4; i = i + 1)
+                hwcon[i] <= 0;
+
+            cfg_io_port <= 0;
+            cfg_io_direction <= 0;
+            cfg_io_active <= 0;
+            cfg_io_data_out <= 0;
+            cfg_io_addr <= 0;
             
             register_set <= 0;
             register_read <= 0;
@@ -300,6 +342,7 @@ module controller(
                 end
                 
                 EXECUTING: begin
+                    //  This counter can be used when the command follows a known sequence of actions per clock.
                     execution_count <= execution_count + 1;
                     if (~execution_complete) begin
                         //  Do stuff based on command descriptions (see commands.txt)
@@ -379,6 +422,58 @@ module controller(
                                 end
                             end
                             
+                            CMD_CONFIG_GET_IOREG: begin
+                                //  Perform a read from the I/O module register specified
+                                if (execution_count == 0) begin
+                                    cfg_io_port <= cmd_in_data[1:0];
+                                    cfg_io_addr <= cmd_in_data[9:8];
+                                    cfg_io_direction <= direction[cmd_in_data[1:0]];
+                                    cfg_io_active <= 0;
+                                end
+                                else begin
+                                    outgoing_command <= CMD_DATA_IOREG;
+                                    outgoing_length <= 3;
+                                    cmd_out_data <= 0;
+                                    cmd_out_data[17:16] <= cfg_io_port;
+                                    cmd_out_data[9:8] <= cfg_io_addr;
+                                    cmd_out_data[7:0] <= cfg_io_data;
+                                    execution_complete <= 1;
+                                end
+                            end
+                            
+                            CMD_CONFIG_SET_IOREG: begin
+                                //  Set the I/O module register specified
+                                if (execution_count == 0) begin
+                                    cfg_io_port <= cmd_in_data[1:0];
+                                    cfg_io_addr <= cmd_in_data[9:8];
+                                    cfg_io_data_out <= cmd_in_data[23:16];
+                                    cfg_io_direction <= direction[cmd_in_data[1:0]];
+                                    cfg_io_active <= 1;
+                                end
+                                else begin
+                                    cfg_io_active <= 0;
+                                    cmd_out_data <= 0;
+                                    execution_complete <= 1;
+                                end
+                            end
+                            
+                            CMD_CONFIG_GET_HWCON: begin
+                                //  Get the specified HWCON register.
+                                cmd_out_data <= 0;
+                                cmd_out_data[9:8] <= cmd_in_data[1:0];
+                                cmd_out_data[7:0] <= hwcon[cmd_in_data[1:0]];
+                                outgoing_command <= CMD_DATA_HWCON;
+                                outgoing_length <= 2;
+                                execution_complete <= 1;
+                            end
+                            
+                            CMD_CONFIG_SET_HWCON: begin
+                                //  Set the specified HWCON register.
+                                hwcon[cmd_in_data[1:0]] <= cmd_in_data[15:8];
+                                cmd_out_data <= 0;
+                                execution_complete <= 1;
+                            end
+                            
                             default: begin
                                 //  Unrecognized command?  No biggie, just move on.
                                 execution_complete <= 1;
@@ -412,7 +507,8 @@ module controller(
             //  Address = 0x400 + (port * 0x80) + (direction * 0x40) + (num_channels * 0x20) + 1  
             //      MSB is: used/unused flag, writable flag, 6-bit reg address
             //      LSB is the value
-            if (state == EXECUTING) case (config_state)
+            if ((state == EXECUTING) && ((current_command == CMD_CONFIG_GET_REG) || (current_command == CMD_CONFIG_SET_REG)))
+            case (config_state)
                 INITIALIZING: begin
                     cfg_read <= 1;
                     search_started <= 0;

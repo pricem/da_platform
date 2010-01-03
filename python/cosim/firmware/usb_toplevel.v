@@ -126,6 +126,13 @@ module usb_toplevel(
     wire [7:0] slot_dac_fifo_data[3:0];
     wire [7:0] slot_adc_fifo_data[3:0];
     
+    //  Between controller and converter interfaces
+    wire [1:0] io_config_addr;
+    wire [7:0] io_config_data;
+    wire [7:0] io_config_write;
+    wire [7:0] io_config_read;
+    wire io_config_clk;
+    
     //  Between configuration memory and SPI controller
     wire [10:0] spi_config_addr;
     wire [7:0] spi_config_data;
@@ -383,11 +390,18 @@ module usb_toplevel(
             end
             else begin
                 dummy_dac dac_i (
+                    .config_clk(io_config_clk), 
+                    .config_write(io_config_write[i]),
+                    .config_read(io_config_read[i]), 
+                    .config_addr(io_config_addr), 
+                    .config_data(io_config_data),
                     .fifo_clk(slot_dac_fifo_clk[i]),
                     .fifo_data(slot_dac_fifo_data[i]),
                     .fifo_read(slot_dac_fifo_read[i]),
                     .fifo_addr_in(read_in_addr[i]),
                     .fifo_addr_out(read_out_addr[i]),
+                    .custom_clk0(custom_clk0),
+                    .custom_clk1(custom_clk1),
                     .slot_data(slot_data_out[((i + 1) * 6 - 1):(i * 6)]),
                     .direction(directions[i]),
                     .channels(channels[i]),
@@ -399,11 +413,18 @@ module usb_toplevel(
     endgenerate
     generate for (i = 0; i < 4; i = i + 1) begin:adcs
         dummy_adc adc_i (
+            .config_clk(io_config_clk), 
+            .config_write(io_config_write[i + 4]),
+            .config_read(io_config_read[i + 4]), 
+            .config_addr(io_config_addr), 
+            .config_data(io_config_data),
             .fifo_clk(slot_adc_fifo_clk[i]),
             .fifo_data(slot_adc_fifo_data[i]),
             .fifo_write(slot_adc_fifo_write[i]),
             .fifo_addr_in(write_in_addr[i + 4]),
             .fifo_addr_out(write_out_addr[i + 4]),
+            .custom_clk0(custom_clk0),
+            .custom_clk1(custom_clk1),
             .slot_data(slot_data_in[((i + 1) * 6 - 1):(i * 6)]),
             .direction(directions[i]),
             .channels(channels[i]),
@@ -481,6 +502,11 @@ module usb_toplevel(
         .cfg_data(config_data),
         .cfg_write(config_write),
         .cfg_read(config_read),
+        .cfg_io_clk(io_config_clk), 
+        .cfg_io_write(io_config_write), 
+        .cfg_io_read(io_config_read), 
+        .cfg_io_addr(io_config_addr), 
+        .cfg_io_data(io_config_data),
         .direction(direction),
         .num_channels(num_channels),
         .hwcons(hwcons),

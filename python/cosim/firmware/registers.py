@@ -177,7 +177,9 @@ settings_hwreg = [
     ]
         
         
-""" Settings for HWCON registers. """
+""" Settings for HWCON registers. 
+    These are used for converters with simple parallel control interfaces.
+"""
 settings_hwcon = [
 #   PCM4202
         {'target': 'PCM4202 2-channel ADC',
@@ -228,17 +230,16 @@ settings_ioreg = [
 #   AD1934
         {'target': 'AD1934 8-channel DAC',
          'registers': {
-                #   A valuable quantity
+                #   Clock/rate control
                 'CLKT': {'address': 0, 'bit_min': 0, 'bit_max': 0, 'description': 'Clock domain', 'choices': [(0b0, '44.1 kHz'), (0b1, '48 kHz')]},
-                #   From hardware configuration
                 'CLKR': {'address': 0, 'bit_min': 1, 'bit_max': 2},     #   (2) 0-3 = 256, 384, 512, 768x Fs (Note 44.1*256 = 11.2896, 48*512 = 24.576)
                 'FS': {'address': 0, 'bit_min': 3, 'bit_max': 4},       #   (2) 0 = 1x, 1 = 2x, 2 = 4x base rate
-                
+                #   Format control 0
                 'DDL': {'address': 1, 'bit_min': 0, 'bit_max': 2},      #   (3) 0 = 1, 1 = 0, 2 = 8, 3 = 12, 4 = 16 cycles of data delay
                 'FMT': {'address': 1, 'bit_min': 3, 'bit_max': 4},      #   (2) 00 = stereo, 01 = TDM, 10 = AUX, 11 = Dual TDM[?]
                 'BAE': {'address': 1, 'bit_min': 5, 'bit_max': 5},      #   (1) 0 = mid-cycle 1 = end-cycle BCLK active edge
                 'WW': {'address': 1, 'bit_min': 6, 'bit_max': 7},       #   (2) 0-2 = 24, 20, 16-bit word width
-                
+                #   Format control 1
                 'BFR': {'address': 2, 'bit_min': 0, 'bit_max': 1},      #   (2) 0-3 = 64, 128, 256, 512 BCLK/frame (for 2-16 ch)
                 'LRP': {'address': 2, 'bit_min': 2, 'bit_max': 2},      #   (1) 0 = left low, 1 = left high LRCLK format
                 'LRM': {'address': 2, 'bit_min': 3, 'bit_max': 3},      #   (1) 0 = slave, 1 = master LRCLK
@@ -248,21 +249,20 @@ settings_ioreg = [
                 
             }
         },
-            
+        
 #   AD1974 
         {'target': 'AD1974 8-channel ADC',
          'registers': {
-                #   A valuable quantity
+                #   Clock/rate control
                 'CLKT': {'address': 0, 'bit_min': 0, 'bit_max': 0, 'description': 'Clock domain', 'choices': [(0b0, '44.1 kHz'), (0b1, '48 kHz')]},
-                #   From hardware configuration
                 'CLKR': {'address': 0, 'bit_min': 1, 'bit_max': 2},     #   (2) 0-3 = 256, 384, 512, 768x Fs (Note 44.1*256 = 11.2896, 48*512 = 24.576)
                 'FS': {'address': 0, 'bit_min': 6, 'bit_max': 7},       #   (2) 0 = 1x, 1 = 2x, 2 = 4x base rate
-                
+                #   Format control 0
                 'DDL': {'address': 1, 'bit_min': 0, 'bit_max': 2},      #   (3) 0 = 1, 1 = 0, 2 = 8, 3 = 12, 4 = 16 cycles of data delay
                 'FMT': {'address': 1, 'bit_min': 3, 'bit_max': 4},      #   (2) 00 = stereo, 01 = TDM, 10 = AUX, 11 = Dual TDM[?]
                 'BAE': {'address': 1, 'bit_min': 5, 'bit_max': 5},      #   (1) 0 = mid-cycle 1 = end-cycle BCLK active edge
                 'WW': {'address': 1, 'bit_min': 6, 'bit_max': 7},       #   (2) 0-2 = 24, 20, 16-bit word width
-                
+                #   Format control 1
                 'BFR': {'address': 2, 'bit_min': 0, 'bit_max': 1},      #   (2) 0-3 = 64, 128, 256, 512 BCLK/frame (for 2-16 ch)
                 'LRP': {'address': 2, 'bit_min': 2, 'bit_max': 2},      #   (1) 0 = left low, 1 = left high LRCLK format
                 'LRM': {'address': 2, 'bit_min': 3, 'bit_max': 3},      #   (1) 0 = slave, 1 = master LRCLK
