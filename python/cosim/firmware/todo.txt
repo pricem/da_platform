@@ -1,14 +1,7 @@
 Todo (descending order of priority)
 --------------
 
-Get byte counters working
-
 IN PROG Make controller state machine
--   Add occasional in/out byte count monitoring messages
-
-Add converter interface module for PMOD-DA2 
--   Determine if anything architectural needs changing
--   Base module should handle adjustable bit rates and provide correct output format
 
 Improve test framework; use to find and fix more bugs
 -   Write Python test jigs for: converter board, PMOD-DA2 (later: all converter modules)
@@ -74,3 +67,6 @@ DONE Add deserializer for dir/chan, aovf; serializer for hwcon, chipselect to to
 DONE Modify FX2 interface to work with controller
 DONE Document all settings/adjustments that can be made and sent over EP4 or internally performed
 DONE Update fake generic DAC and ADC modules to actually consume / produce data
+DONE Get byte counters working
+DONE Add occasional in/out byte count monitoring messages
+DONE Add converter interface module for PMOD-DA2

@@ -42,32 +42,12 @@ module dac_pmod(
     
     genvar g;
     
-    //  Clock management
-    wire clksel = 1'b1;
-    wire [3:0] clkexp = 4'b0111;
-    wire clk_selected = clksel ? custom_clk1 : custom_clk0;
-    reg [15:0] clk_counter;
-    reg [5:0] bit_clk_counter;
-    reg [1:0] msg_counter;
-    wire [1:0] msg_counter_delayed;
-    reg sample_clk;
-    reg sample_clk_last;
-    reg sample_bit_clk;
 
     //  Audio samples read from tracking FIFO in 16-bit LR format
     reg [31:0] sample;
 
     //  Keep reset around so you can cycle the sample clock at reset
     reg reset_last;
-    
-    //  Delay fifo_read signal for proper signal capture
-    wire fifo_read_delayed;
-    delay_reg fifo_read_delay(
-        .clk(clk),
-        .din(fifo_read),
-        .dout(fifo_read_delayed),
-        .reset(reset)
-        );
     
     //  Wires for monitoring
     wire sync = pmod_io[0];
@@ -87,9 +67,36 @@ module dac_pmod(
     endgenerate
     ioreg config(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
     
+    //  I/O register definitions (see registers.py)
+    wire clksel = config[0][0];             //  0 = 11.2896 MHz, 1 = 24.576 MHz
+    wire [1:0] clkm = config[0][2:1];       //  0 = 44.1/48, 1 = 88.2/96, 2 = 192 
+    wire [3:0] clkexp = clksel ? (9 - clkm) : (8 - clkm);   //  Base rate is 1/256 of clk0 and 1/512 of clk1
+    wire res = config[0][3];                //  0 = 16-bit data, 1 = 24-bit data
+    parameter RES_16BIT = 1'b0;
+    parameter RES_24BIT = 1'b1;
+    
+    //  Clock management
+    wire clk_selected = clksel ? custom_clk1 : custom_clk0;
+    reg [15:0] clk_counter;
+    reg [5:0] bit_clk_counter;
+    reg [2:0] msg_counter;
+    wire [2:0] msg_counter_delayed;
+    reg sample_clk;
+    reg sample_clk_last;
+    reg sample_bit_clk;
+
+    //  Delay fifo_read signal for proper signal capture
+    wire fifo_read_delayed;
+    delay_reg fifo_read_delay(
+        .clk(clk),
+        .din(fifo_read),
+        .dout(fifo_read_delayed),
+        .reset(reset)
+        );
+
     //  Delay message counter for loading samples
     delay_reg #(
-        .NUM_BITS(2), 
+        .NUM_BITS(3), 
         .NUM_CYCLES(2)
         ) 
         msg_delay(
@@ -155,25 +162,53 @@ module dac_pmod(
             sample_clk_last <= 0;
         end
         else begin
-
-            //  When the FIFO clock is triggered, read 4 bytes of data from the FIFO.
             sample_clk_last <= sample_clk;
-            if (((sample_clk == 1) && (sample_clk_last == 0)) || (msg_counter != 0)) begin
-                msg_counter <= msg_counter + 1;
-                fifo_read <= 1;
-            end
-            else
-                fifo_read <= 0;
-            
-            //  Copy the data over when possible.
-            if (fifo_read_delayed) begin
-                case (msg_counter_delayed)
-                    0: sample[7:0] <= fifo_data;
-                    1: sample[15:8] <= fifo_data;
-                    2: sample[23:16] <= fifo_data;
-                    3: sample[31:24] <= fifo_data;
-                endcase
-            end
+            case (res)
+                RES_16BIT: begin
+                    //  When the FIFO clock is triggered, read 4 bytes of data from the FIFO.
+                    if (((sample_clk == 1) && (sample_clk_last == 0)) || (msg_counter != 0)) begin
+                        if (msg_counter == 3)
+                            msg_counter <= 0;
+                        else
+                            msg_counter <= msg_counter + 1;
+                        fifo_read <= 1;
+                    end
+                    else
+                        fifo_read <= 0;
+                    //  Copy the data over when possible.
+                    if (fifo_read_delayed) begin
+                        case (msg_counter_delayed)
+                            0: sample[7:0] <= fifo_data;
+                            1: sample[15:8] <= fifo_data;
+                            2: sample[23:16] <= fifo_data;
+                            3: sample[31:24] <= fifo_data;
+                        endcase
+                    end
+                end
+                
+                RES_24BIT: begin
+                    //  When the FIFO clock is triggered, read 4 bytes of data from the FIFO.
+                    if (((sample_clk == 1) && (sample_clk_last == 0)) || (msg_counter != 0)) begin
+                        if (msg_counter == 5)
+                            msg_counter <= 0;
+                        else
+                            msg_counter <= msg_counter + 1;
+                        fifo_read <= 1;
+                    end
+                    else
+                        fifo_read <= 0;
+                    //  Copy the data over when possible.
+                    if (fifo_read_delayed) begin
+                        case (msg_counter_delayed)
+                            0: sample[7:0] <= fifo_data;
+                            1: sample[15:8] <= fifo_data;
+                            4: sample[23:16] <= fifo_data;
+                            5: sample[31:24] <= fifo_data;
+                        endcase
+                    end
+                end
+
+            endcase
 
         end
     end

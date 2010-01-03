@@ -198,6 +198,16 @@ settings_hwcon = [
     relevant with DACs because the I/O modules generate the clock and audio data signals.
 """
 settings_ioreg = [
+#   PMOD
+        {'target': 'PMOD-DA2 2-channel DAC',
+         'registers':
+            {
+                'CLKT': {'address': 0, 'bit_min': 0, 'bit_max': 0, 'description': 'Clock domain', 'choices': [(0b0, '44.1 kHz'), (0b1, '48 kHz')]},
+                'CLKM': {'address': 0, 'bit_min': 1, 'bit_max': 2, 'description': 'Fs multiplier', 'choices': [(0b00, '1x (44.1/48 kHz)'), (0b01, '2x (88.2/96 kHz)'), (0b10, '4x (192 kHz)')]},
+                'RES': {'address': 0, 'bit_min': 3, 'bit_max': 3, 'description': 'Resolution', 'choices': [(0b0, '16-bit'), (0b1, '24-bit')], 'help': None},
+            }
+        },
+
 #   DSD1792A
         {'target': 'DSD1792A 2-channel DAC',
          'registers':

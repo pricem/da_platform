@@ -36,6 +36,9 @@ MESSAGES_EP4 = ['\xff\x00\x00\x04ABCD',             #   Invalid command should b
                 '\xff\x31\x00\x02\x01\x54',         #   Get register: port 1, address 0x14 (should return error)
                 '\xff\x32\x00\x04\x01\x54\x00\x35', #   Write register (port 1 address 0x14) value 0x35
                 '\xff\x32\x00\x04\x01\x47\x00\x46', #   Write register (port 1 address 0x07) value 0x46
+                
+                '\xff\x36\x00\x03\x00\x00\x0d'      #   Set PMOD DAC on port 0 to do 24-bit 192 kHz.
+                
                 '\xff\x31\x00\x02\x01\x54',         #   Get register: port 1, address 0x14 (should return 0x35)
                 '\xff\x31\x00\x02\x01\x47',         #   Get register: port 1, address 0x07 (should return 0x46)
                 '\xff\x32\x00\x04\x02\x47\x00\x64', #   Write register (port 2 address 0x07) value 0x64
