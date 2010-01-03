@@ -1,6 +1,8 @@
 Todo (descending order of priority)
 --------------
 
+Get byte counters working
+
 IN PROG Make controller state machine
 -   Add occasional in/out byte count monitoring messages
 
@@ -15,9 +17,21 @@ Improve test framework; use to find and fix more bugs
 -   Exercise serializer/deserializer issues
 -   Use real audio signals and register programming sequences; run longer; use multiple channels simultaneously
 
+Fix synthesis issues like clock speed, trimming
+
 Update FX2 firmware to use all endpoints
--   Determine proper algorithm for using only 3 flags with 4 endpoints
+-   Determine + document proper algorithm for using only 3 flags with 4 endpoints
 -   Come up with a test for the FX2 firmware using simple software and FPGA firmware (echo EP2->EP6, EP4->EP8, measure accuracy/bitrate?)
+
+Update memory arbitrator
+-   Allow larger deltas than size of tracking FIFOs (wait for read side FIFO to have nearly caught up)
+-   Add ability for memory arbitrator to reinitialize reads/writes at the end of a cell RAM row
+-   Keep track of current cell RAM address; when it reaches a multiple of 128, update the start
+    address and return to initializing cycle state
+
+Improve cell RAM model
+-   Move to Python (it's external); will avoid needing to change code for synthesis
+-   Add configurable behavior a la datasheet
 
 Test simple sound card using PMOD-DA2
 -   Write simple program to stream setup commands followed by audio data
@@ -25,27 +39,23 @@ Test simple sound card using PMOD-DA2
 
 
 Make register control software
--   Can be anything, but preferably a daemon that talks to a simple Python UI
+-   Can be anything, but may be a good time to start a C++ daemon that talks to a simple Python UI
 -   When a setting changes, what changes are needed in the firmware in addition to writing converter registers?
     (Implement constraints)
 
 Make converter interface modules
--   Parameterized instantiation of DAC/ADC modules using specified types
+-   Parameterized instantiation (or parameterized enables; depends on logic resources) of DAC/ADC modules using specified types
 -   Look into merging control specifications so a single module handles all converters (extend differently for DAC, ADC)
 
 Begin documenting this architecture
-
-Add ability for memory arbitrator to reinitialize reads/writes at the end of a cell RAM row
--   Keep track of current cell RAM address; when it reaches a multiple of 128, update the start
-    address and return to initializing cycle state
-
-Add configurable behavior to cell RAM
 
 Make memory arbitrator capable of handling reads/writes down to 1 byte[?]
 -   Properly handle upper/lower byte issues
 -   Reduce min_chunk to 1 and adjust timings for correctness
 -   Is this really necessary?  (If you stop playing audio, do you care if it stops 1 sample short?)
     Yes, but defer to later
+
+Reorganize repository, put code in one place
 
 Allow direction and channels to be byte values deserialized like AOVF, etc.
     (or just replace by single "port type" value)

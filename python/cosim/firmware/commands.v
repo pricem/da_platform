@@ -37,11 +37,12 @@ parameter CMD_CONFIG_GET_IOREG = 8'h35;
 parameter CMD_CONFIG_SET_IOREG = 8'h36;
 
 //  Synchronization commands
-parameter CMD_SYNC_SET_TIMEBASE = 8'h40;
-parameter CMD_SYNC_FLUSH = 8'h41;
+parameter CMD_SYNC_GET_TIMEBASE = 8'h40;
+parameter CMD_SYNC_SET_TIMEBASE = 8'h41;
+parameter CMD_SYNC_FLUSH = 8'h42;
 
 //  Status with respect to timing and data rates
-parameter CMD_STATUS_TIMECODES = 8'h81;
+parameter CMD_STATUS_TIMEBASE = 8'h81;
 
 //  Register read values
 parameter CMD_DATA_REG = 8'h90;

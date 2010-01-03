@@ -159,8 +159,6 @@ module usb_toplevel(
     
     //  Testing for PMOD DA2 module
     wire [3:0] pmod_io;
-    wire pmod_clksel = 1;               //  24.576 MHz
-    wire [3:0] pmod_clkexp = 4'b0111;   //  Divide by 2^7 = 128: 192 kHz
     
     //  Other signals needed for main controller
     wire [7:0] aovf;                    //  ADC overflow bits (for parallel ADCs like the PCM4202)
@@ -372,8 +370,13 @@ module usb_toplevel(
     //  Converters
     generate for (i = 0; i < 4; i = i + 1) begin:dacs
             //  Substitute PMOD for first DAC port
-            if (i == 0) begin
+            if (i == 0)
                 dac_pmod dac_i (
+                    .config_clk(io_config_clk), 
+                    .config_write(io_config_write[i]),
+                    .config_read(io_config_read[i]), 
+                    .config_addr(io_config_addr), 
+                    .config_data(io_config_data),
                     .fifo_clk(slot_dac_fifo_clk[i]),
                     .fifo_data(slot_dac_fifo_data[i]),
                     .fifo_read(slot_dac_fifo_read[i]),
@@ -382,13 +385,12 @@ module usb_toplevel(
                     .pmod_io(pmod_io),
                     .custom_clk0(custom_clk0), 
                     .custom_clk1(custom_clk1),
-                    .clksel(pmod_clksel), 
-                    .clkexp(pmod_clkexp),
+                    .write_fifo_byte_count(write_fifo_byte_count[i]),
+                    .read_fifo_byte_count(read_fifo_byte_count[i]),
                     .clk(clk), 
                     .reset(reset)
                     );
-            end
-            else begin
+            else 
                 dummy_dac dac_i (
                     .config_clk(io_config_clk), 
                     .config_write(io_config_write[i]),
@@ -401,6 +403,8 @@ module usb_toplevel(
                     .fifo_addr_in(read_in_addr[i]),
                     .fifo_addr_out(read_out_addr[i]),
                     .custom_clk0(custom_clk0),
+                    .write_fifo_byte_count(write_fifo_byte_count[i]),
+                    .read_fifo_byte_count(read_fifo_byte_count[i]),
                     .custom_clk1(custom_clk1),
                     .slot_data(slot_data_out[((i + 1) * 6 - 1):(i * 6)]),
                     .direction(directions[i]),
@@ -408,7 +412,6 @@ module usb_toplevel(
                     .clk(clk), 
                     .reset(reset)
                     );
-            end
         end
     endgenerate
     generate for (i = 0; i < 4; i = i + 1) begin:adcs
@@ -425,6 +428,8 @@ module usb_toplevel(
             .fifo_addr_out(write_out_addr[i + 4]),
             .custom_clk0(custom_clk0),
             .custom_clk1(custom_clk1),
+            .write_fifo_byte_count(write_fifo_byte_count[i + 4]),
+            .read_fifo_byte_count(read_fifo_byte_count[i + 4]),
             .slot_data(slot_data_in[((i + 1) * 6 - 1):(i * 6)]),
             .direction(directions[i]),
             .channels(channels[i]),
@@ -510,6 +515,8 @@ module usb_toplevel(
         .direction(direction),
         .num_channels(num_channels),
         .hwcons(hwcons),
+        .write_fifo_byte_counts({write_fifo_byte_count[7], write_fifo_byte_count[6], write_fifo_byte_count[5], write_fifo_byte_count[4], write_fifo_byte_count[3], write_fifo_byte_count[2], write_fifo_byte_count[1], write_fifo_byte_count[0]}),
+        .read_fifo_byte_counts({read_fifo_byte_count[7], read_fifo_byte_count[6], read_fifo_byte_count[5], read_fifo_byte_count[4], read_fifo_byte_count[3], read_fifo_byte_count[2], read_fifo_byte_count[1], read_fifo_byte_count[0]}),
         .clk(clk),
         .reset(reset)
         ); 

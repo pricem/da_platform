@@ -1,18 +1,24 @@
 //  Interface from a tracking FIFO to the Digilent PMOD-DA2 module.
 
 module dac_pmod(
+    //  Register programming
+    config_clk, config_write, config_read, config_addr, config_data,
     //  FIFO connection
     fifo_clk, fifo_data, fifo_read, fifo_addr_in, fifo_addr_out,
-    //  PMOD connector
-    pmod_io,
     //  Clocks
-    custom_clk0, custom_clk1,
-    //  Parallel settings
-    clksel, clkexp,
+    custom_clk0, custom_clk1, write_fifo_byte_count, read_fifo_byte_count,
+    //  PMOD connector (instead of isolated FX2 bus)
+    pmod_io,
     //  Control
     clk, reset
     );
-    
+
+    input config_clk;
+    input config_write;
+    input config_read;
+    input [1:0] config_addr;
+    inout [7:0] config_data;
+
     output fifo_clk;
     input [7:0] fifo_data;
     output reg fifo_read;
@@ -28,14 +34,17 @@ module dac_pmod(
     
     input custom_clk0;
     input custom_clk1;
-    
-    input clksel;
-    input [3:0] clkexp;
+    input [31:0] write_fifo_byte_count;
+    input [31:0] read_fifo_byte_count;
     
     input clk;
     input reset;
     
+    genvar g;
+    
     //  Clock management
+    wire clksel = 1'b1;
+    wire [3:0] clkexp = 4'b0111;
     wire clk_selected = clksel ? custom_clk1 : custom_clk0;
     reg [15:0] clk_counter;
     reg [5:0] bit_clk_counter;
@@ -68,6 +77,15 @@ module dac_pmod(
     
     //  Run FIFO at full speed (could be changed for lower power consumption)
     assign fifo_clk = clk;
+    
+    //  Include configuration registers
+    wire [31:0] registers;
+    wire [7:0] config [3:0];
+    generate for (g = 0; g < 4; g = g + 1) begin
+            assign config[g] = registers[((g + 1) * 8 - 1):(g * 8)];
+        end
+    endgenerate
+    ioreg config(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
     
     //  Delay message counter for loading samples
     delay_reg #(

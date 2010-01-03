@@ -19,7 +19,7 @@ module controller(
     //  Outputs 
     hwcons,
     //  Crapload of other stuff
-    //  [TBD]
+    write_fifo_byte_counts, read_fifo_byte_counts,
     //  System-wide control
     clk, reset
     );
@@ -33,16 +33,23 @@ module controller(
     parameter CMD_CONFIG_SET_HWCON = 8'h34;
     parameter CMD_CONFIG_GET_IOREG = 8'h35;
     parameter CMD_CONFIG_SET_IOREG = 8'h36;
+    parameter CMD_SYNC_GET_TIMEBASE = 8'h40;
+    parameter CMD_SYNC_SET_TIMEBASE = 8'h41;
+    parameter CMD_STATUS_TIMEBASE = 8'h81;
     parameter CMD_DATA_REG = 8'h90;
     parameter CMD_DATA_HWCON = 8'h91;
     parameter CMD_DATA_IOREG = 8'h92;
     parameter CMD_ERROR_NOT_FOUND = 8'hF0;
+
     
     //  Maximum length of command data in bytes
     parameter MAX_COMMAND_LENGTH = 8;
     
     //  Maximum number of registers per device
     parameter MAX_NUM_REGISTERS = 16;
+    
+    //  How frequently to send timebase status updates.
+    parameter TIMEBASE_STATUS_DELAY = 256;
     
     //  EP4 port: The FX2 interface drives the clock but this controller 
     //  (running at a faster rate) polls and reads it as necessary
@@ -83,6 +90,10 @@ module controller(
     
     //  Hardware configuration: An 8-bit register for each port
     output [31:0] hwcons;
+    
+    //  FIFO byte counters (timebases) to be monitored
+    input [255:0] write_fifo_byte_counts;
+    input [255:0] read_fifo_byte_counts;
     
     //  Control stuff
     input clk;
@@ -135,10 +146,21 @@ module controller(
     reg [7:0] outgoing_command;     //  Data for FX2 interface when assembling EP8 packet
     reg [15:0] outgoing_length;
     
+    //  Interrupt support: assert interrupt flag and set interrupt_command to command code.
+    //  The specified command will be executed at the next opportunity.  Parameters for the command
+    //  should be defined locally.
+    reg interrupt;
+    reg [7:0] interrupt_command;
     
     //  Instruction-specific registers
     reg register_read;
     reg register_set;
+    
+    reg [15:0] status_clk_counter;
+    reg [1:0] status_port;
+    reg status_buffer_side;
+    reg status_direction;
+    wire [2:0] status_fifo_index;
     
     //  Configuration data
     reg [7:0] cfg_data_out;
@@ -184,6 +206,18 @@ module controller(
     //  It could be registered for more flexibility, but an additional delay would have to be
     //  introduced into the state machines.
     assign cmd_port = cmd_in_data[1:0];
+    
+    //  Break out FIFO byte counts
+    wire [31:0] write_fifo_byte_count [7:0];
+    wire [31:0] read_fifo_byte_count [7:0];
+    generate for (g = 0; g < 8; g = g + 1) begin:fifos
+            assign write_fifo_byte_count[g] = write_fifo_byte_counts[((g + 1) * 32 - 1):(g * 32)];
+            assign read_fifo_byte_count[g] = read_fifo_byte_counts[((g + 1) * 32 - 1):(g * 32)];
+        end
+    endgenerate
+    
+    //  Assign timebase status interrupt FIFO index
+    assign status_fifo_index = {status_direction, status_port};
     
     //  EP4 machine: writes into command_in buffer
     always @(posedge ep4_clk or posedge reset) begin
@@ -321,14 +355,49 @@ module controller(
             
             register_set <= 0;
             register_read <= 0;
-
+            
+            interrupt <= 0;
+            interrupt_command <= 0;
+            
+            status_clk_counter <= 0;
+            status_buffer_side <= 0;
+            status_port <= 0;
+            status_direction <= 0;
         end
         else begin
+            //  Force status updates once in a while
+            if (status_clk_counter < TIMEBASE_STATUS_DELAY)
+                status_clk_counter <= status_clk_counter + 1;
+            else begin
+                interrupt <= 1;
+                interrupt_command <= CMD_SYNC_GET_TIMEBASE;
+                
+                if (status_port == 3) begin
+                    if (status_direction == 1)
+                        status_buffer_side <= status_buffer_side + 1;
+                    status_direction <= status_direction + 1;
+                end
+                status_port <= status_port + 1;
+                status_clk_counter <= 0;
+            end
+        
             //  Primary state machine
             case (state)
                 WAITING: begin
-                    //  Don't wait, just go to EP4 for the next command.
-                    state <= READING;
+                    //  Wait for ep8_ready to turn off, in case we are still writing a reply.
+                    if (~ep8_ready) begin
+                        //  Check for interrupts.
+                        if (interrupt && (interrupt_command != 0)) begin
+                            interrupt <= 0;
+                            current_command <= interrupt_command;
+                            execution_complete <= 0;
+                            execution_count <= 0;
+                            state <= EXECUTING;
+                        end
+                        else
+                            //  Don't wait, just go to EP4 for the next command.
+                            state <= READING;
+                    end
                 end
                 
                 READING: begin
@@ -471,6 +540,24 @@ module controller(
                                 //  Set the specified HWCON register.
                                 hwcon[cmd_in_data[1:0]] <= cmd_in_data[15:8];
                                 cmd_out_data <= 0;
+                                execution_complete <= 1;
+                            end
+                            
+                            CMD_SYNC_GET_TIMEBASE: begin
+                                //  Send back a packet with the desired time code.
+                                outgoing_command <= CMD_STATUS_TIMEBASE;
+                                outgoing_length <= 7;
+                                
+                                cmd_out_data <= 0;
+                                cmd_out_data[49:48] <= status_port;
+                                cmd_out_data[40] <= status_direction;
+                                cmd_out_data[32] <= status_buffer_side;
+                                //  status_buffer_side: 0 = write side, 1 = read side
+                                if (status_buffer_side)
+                                    cmd_out_data[31:0] <= write_fifo_byte_count[status_fifo_index];
+                                else
+                                    cmd_out_data[31:0] <= read_fifo_byte_count[status_fifo_index];
+                                
                                 execution_complete <= 1;
                             end
                             

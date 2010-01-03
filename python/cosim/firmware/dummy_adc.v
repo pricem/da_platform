@@ -6,7 +6,7 @@ module dummy_adc(
     //  FIFO connection
     fifo_clk, fifo_data, fifo_write, fifo_addr_in, fifo_addr_out,
     //  Other internal connections
-    custom_clk0, custom_clk1,
+    custom_clk0, custom_clk1, write_fifo_byte_count, read_fifo_byte_count,
     //  FX2 data port
     slot_data, direction, channels,
     //  Control
@@ -27,6 +27,8 @@ module dummy_adc(
         
     input custom_clk0;
     input custom_clk1;
+    input [31:0] write_fifo_byte_count;
+    input [31:0] read_fifo_byte_count;
     
     input [5:0] slot_data;
     input direction;
@@ -36,23 +38,7 @@ module dummy_adc(
     input reset;
     
     integer i;
-    
-    //  Configuration registers
-    reg [7:0] config [3:0];
-    reg [7:0] config_data_out;
-    always @(posedge config_clk or posedge reset) begin
-        if (reset) begin
-            for (i = 0; i < 4; i = i + 1)
-                config[i] <= 0;
-        end
-        else begin
-            config_data_out <= config[config_addr];
-            if (config_write) begin
-                config[config_addr] <= config_data;
-            end
-        end
-    end
-    assign config_data = config_read ? config_data_out : 8'hZZ;
+    genvar g;
     
     //  100 MHz input clk / 256 = 400 kHz
     reg [7:0] clk_counter;
@@ -67,6 +53,15 @@ module dummy_adc(
     
     //  Run FIFO at full speed (could be changed for lower power consumption)
     assign fifo_clk = clk;
+    
+    //  Include configuration registers
+    wire [31:0] registers;
+    wire [7:0] config [3:0];
+    generate for (g = 0; g < 4; g = g + 1) begin
+            assign config[g] = registers[((g + 1) * 8 - 1):(g * 8)];
+        end
+    endgenerate
+    ioreg config(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
     
     always @(posedge clk) begin
         if (reset) begin

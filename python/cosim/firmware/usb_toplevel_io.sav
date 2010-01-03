@@ -1,0 +1,94 @@
+[timestart] 0
+[size] 1280 953
+[pos] -1 -1
+*-22.000000 4212002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] dut_usb_toplevel.
+[treeopen] dut_usb_toplevel.dut.
+[treeopen] dut_usb_toplevel.dut.adcs[0].
+[treeopen] dut_usb_toplevel.dut.adcs[0].adc_i.
+[treeopen] dut_usb_toplevel.dut.adcs[1].
+[treeopen] dut_usb_toplevel.dut.adcs[1].adc_i.
+[treeopen] dut_usb_toplevel.dut.adcs[2].
+[treeopen] dut_usb_toplevel.dut.adcs[2].adc_i.
+[treeopen] dut_usb_toplevel.dut.adcs[3].
+[treeopen] dut_usb_toplevel.dut.dacs[0].
+[treeopen] dut_usb_toplevel.dut.dacs[0].genblk6.
+[treeopen] dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.
+[treeopen] dut_usb_toplevel.dut.dacs[1].
+[treeopen] dut_usb_toplevel.dut.dacs[1].genblk7.
+[treeopen] dut_usb_toplevel.dut.dacs[2].
+[treeopen] dut_usb_toplevel.dut.dacs[2].genblk7.
+[treeopen] dut_usb_toplevel.dut.dacs[2].genblk7.dac_i.
+[treeopen] dut_usb_toplevel.dut.dacs[3].
+[treeopen] dut_usb_toplevel.dut.dacs[3].genblk7.
+[treeopen] dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.
+@200
+-DAC 0
+-DAC 0 (PMOD)
+@28
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.clk_selected
+@22
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.clk_counter[15:0]
+@28
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.sclk
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.sync
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.dina
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.dinb
+@22
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.read_fifo_byte_count[31:0]
+@28
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.config_clk
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.config_addr[1:0]
+@22
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.config_data[7:0]
+@28
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.config_read
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.config_write
+@200
+-DAC 1
+@28
+dut_usb_toplevel.dut.dacs[1].genblk7.dac_i.bck
+dut_usb_toplevel.dut.dacs[1].genblk7.dac_i.lrck
+dut_usb_toplevel.dut.dacs[1].genblk7.dac_i.data
+@22
+dut_usb_toplevel.dut.dacs[1].genblk7.dac_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.dacs[1].genblk7.dac_i.read_fifo_byte_count[31:0]
+@200
+-DAC 2
+@28
+dut_usb_toplevel.dut.dacs[2].genblk7.dac_i.bck
+dut_usb_toplevel.dut.dacs[2].genblk7.dac_i.lrck
+dut_usb_toplevel.dut.dacs[2].genblk7.dac_i.data
+@22
+dut_usb_toplevel.dut.dacs[2].genblk7.dac_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.dacs[2].genblk7.dac_i.read_fifo_byte_count[31:0]
+@200
+-DAC 3
+@28
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.bck
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.lrck
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.data
+@22
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.dacs[3].genblk7.dac_i.read_fifo_byte_count[31:0]
+@200
+-ADC 0
+@22
+dut_usb_toplevel.dut.adcs[0].adc_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.adcs[0].adc_i.read_fifo_byte_count[31:0]
+@200
+-ADC 1
+@22
+dut_usb_toplevel.dut.adcs[1].adc_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.adcs[1].adc_i.read_fifo_byte_count[31:0]
+@200
+-ADC 2
+@22
+dut_usb_toplevel.dut.adcs[2].adc_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.adcs[2].adc_i.read_fifo_byte_count[31:0]
+@200
+-ADC 3
+@22
+dut_usb_toplevel.dut.adcs[3].adc_i.write_fifo_byte_count[31:0]
+dut_usb_toplevel.dut.adcs[3].adc_i.read_fifo_byte_count[31:0]

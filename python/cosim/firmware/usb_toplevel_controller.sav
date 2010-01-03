@@ -1,7 +1,7 @@
 [timestart] 0
 [size] 1280 953
 [pos] -1 -1
-*-21.000000 3010000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.000000 13330000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.dacs[3].
@@ -20,6 +20,15 @@ dut_usb_toplevel.dut.controller.num_channels[3:0]
 @22
 dut_usb_toplevel.dut.controller.outgoing_command[7:0]
 dut_usb_toplevel.dut.controller.outgoing_length[15:0]
+@200
+-Interrupts
+@28
+dut_usb_toplevel.dut.controller.status_port[1:0]
+dut_usb_toplevel.dut.controller.status_direction
+dut_usb_toplevel.dut.controller.status_buffer_side
+dut_usb_toplevel.dut.controller.interrupt
+@22
+dut_usb_toplevel.dut.controller.interrupt_command[7:0]
 @200
 -FX2 interface
 @28
