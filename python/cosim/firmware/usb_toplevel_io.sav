@@ -1,7 +1,7 @@
 [timestart] 0
 [size] 1280 953
 [pos] -1 -1
-*-22.000000 5530000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.000000 11308002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.adcs[0].
@@ -27,12 +27,15 @@
 -DAC 0 (PMOD)
 @28
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.clk_selected
-@10023
+@10022
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.clk_counter[15:0]
 @22
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.sample[31:0]
 @28
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.sclk
+@22
+dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.bit_clk_counter[5:0]
+@28
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.sync
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.dina
 dut_usb_toplevel.dut.dacs[0].genblk6.dac_i.dinb

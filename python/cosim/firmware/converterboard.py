@@ -11,6 +11,7 @@ from adc_pcm4202 import ADC2
 from dac_dsd1792 import DAC2
 from dac_ad1934 import DAC8
 from adc_ad1974 import ADC8
+from dac_pmod import DAC_PMOD
 
 class ConverterBoard(object):
     def __init__(self, *args, **kwargs):
@@ -21,10 +22,13 @@ class ConverterBoard(object):
         #   Rule for assigning converters by (dir, chan) pair
         converter_rule = {(0, 0): DAC2, (0, 1): DAC8, (1, 0): ADC2, (1, 1): ADC8}
         
-        #   Build list of converter objects
+        #   Build list of converter objects (exception: port 0 uses PMOD-DA2)
         self.converters = []
         for i in range(4):
-            self.converters.append(converter_rule[(self.converter_dirs[i], self.converter_chans[i])]())
+            if i == 0:
+                self.converters.append(DAC_PMOD())
+            else:
+                self.converters.append(converter_rule[(self.converter_dirs[i], self.converter_chans[i])]())
         
     def myhdl_module(self, 
         #   Array of 4 6-pin bidirectional data buses.  In Verilog (and reality) this is a single bus.
@@ -36,6 +40,8 @@ class ConverterBoard(object):
         spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo,
         #   Hardware ADC configuration
         custom_adc_hwcon, custom_adc_ovf,
+        #   PMOD connectors
+        pmod,
         #   Other interesting signal lines
         custom_clk0, custom_clk1, custom_dirchan, custom_srclk, custom_clksel, reset 
         ):
@@ -59,6 +65,12 @@ class ConverterBoard(object):
         
         #   Counter for shift register clock
         srclk_count = Signal(intbv(0)[3:])
+        
+        #   PMOD breakout signals
+        pmod_clk = Signal(False)
+        pmod_sync = Signal(False)
+        pmod_dina = Signal(False)
+        pmod_dinb = Signal(False)
         
         """ Clock drivers """
         #   clk0: 11.2896 MHz (controlled in test_settings)
@@ -117,14 +129,30 @@ class ConverterBoard(object):
                 else:
                     custom_dirchan.next = chan[srclk_count._val._val - 4]
         
+        """ Monitoring """
+        #   Break up the PMOD connection for the PMOD DAC.
+        @always_comb
+        def pmod_breakout():
+            pmod_clk.next = pmod[3]
+            pmod_dinb.next = pmod[2]
+            pmod_dina.next = pmod[1]
+            pmod_sync.next = pmod[0]
+        
+        converter_instances = []
         """ Converter blocks """
-        converter_instances = [self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset) for i in range(4)]
+        for i in range(4):
+            if isinstance(self.converters[i], DAC_PMOD):
+                converter_instances.append(self.converters[i].myhdl_module(pmod_clk, pmod_sync, pmod_dina, pmod_dinb))
+            else:
+                converter_instances.append(self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset))
         
         #   Break out traces for viewing
+        """
         converter_0 = converter_instances[0]
         converter_1 = converter_instances[1]
         converter_2 = converter_instances[2]
         converter_3 = converter_instances[3]
+        """
         
         return instances()
         

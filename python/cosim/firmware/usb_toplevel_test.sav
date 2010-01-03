@@ -1,8 +1,10 @@
 [timestart] 0
 [size] 1280 953
-[pos] -27 -27
-*-8.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-13.000000 13100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] usb_toplevel_test.
+[treeopen] usb_toplevel_test.conv.
+[treeopen] usb_toplevel_test.fx2.
 @28
 usb_toplevel_test.doobie.spi_adc_cs
 usb_toplevel_test.doobie.usb_ep2_empty
@@ -14,3 +16,40 @@ usb_toplevel_test.doobie.usb_data_out[7:0]
 usb_toplevel_test.doobie.usb_sloe
 usb_toplevel_test.doobie.usb_slrd
 usb_toplevel_test.doobie.usb_slwr
+@200
+-Misc
+@28
+usb_toplevel_test.conv.custom_srclk
+@22
+usb_toplevel_test.conv.slot_data_in[23:0]
+usb_toplevel_test.conv.slot_data_out[23:0]
+@200
+-DAC SPI bus
+@28
+usb_toplevel_test.conv.spi_dac_mclk
+usb_toplevel_test.conv.spi_dac_mdi
+usb_toplevel_test.conv.spi_dac_mdo
+@200
+-ADC SPI bus
+@28
+usb_toplevel_test.conv.spi_adc_mclk
+usb_toplevel_test.conv.spi_adc_mdi
+usb_toplevel_test.conv.spi_adc_mdo
+@200
+-Data 0
+-Data 1
+-Data 2
+-Data 3
+-PMOD
+@28
+usb_toplevel_test.conv.converter_instances_0.sync
+usb_toplevel_test.conv.converter_instances_0.sync_last
+usb_toplevel_test.conv.converter_instances_0.bclk
+usb_toplevel_test.conv.converter_instances_0.dina
+@22
+usb_toplevel_test.conv.converter_instances_0.clk_counter[4:0]
+usb_toplevel_test.conv.converter_instances_0.sample_left[11:0]
+@28
+usb_toplevel_test.conv.converter_instances_0.dinb
+@22
+usb_toplevel_test.conv.converter_instances_0.sample_right[11:0]

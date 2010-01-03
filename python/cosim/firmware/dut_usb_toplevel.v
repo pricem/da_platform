@@ -31,6 +31,9 @@ module dut_usb_toplevel;
     reg [23:0] slot_data_in;
     wire [23:0] slot_data_out;
     
+    //  PMOD connector
+    wire [3:0] pmod;
+    
     wire spi_adc_cs;
     wire spi_adc_mclk;
     wire spi_adc_mdi;
@@ -54,7 +57,7 @@ module dut_usb_toplevel;
         $dumpfile("usb_toplevel_verilog.vcd");
         $dumpvars(0, dut);
         $from_myhdl(usb_ifclk, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full, mem_data_myhdl_in, mem_data_myhdl_driven, slot_data_in, custom_dirchan, spi_adc_mdo, spi_dac_mdo, custom_adc_ovf, custom_clk0, custom_clk1, clk, reset);
-        $to_myhdl(usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data_out, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, custom_adc_hwcon, custom_srclk, custom_clksel);
+        $to_myhdl(usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, mem_addr, mem_data, mem_oe, mem_we, mem_clk, mem_addr_valid, slot_data_out, pmod, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, custom_adc_hwcon, custom_srclk, custom_clksel);
     end
     
     assign mem_data = mem_data_myhdl_driven ? mem_data_myhdl_in : 16'hZZZZ;
@@ -79,6 +82,7 @@ module dut_usb_toplevel;
         .mem_addr_valid(mem_addr_valid),
         .slot_data_in(slot_data_in),
         .slot_data_out(slot_data_out),
+        .pmod_io(pmod),
         .custom_dirchan(custom_dirchan),
         .spi_adc_cs(spi_adc_cs),
         .spi_adc_mclk(spi_adc_mclk),

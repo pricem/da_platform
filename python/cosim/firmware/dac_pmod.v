@@ -111,7 +111,7 @@ module dac_pmod(
         if (reset) begin
             clk_counter <= 0;
             bit_clk_counter <= 0;
-            sample_bit_clk <= 1;
+            sample_bit_clk <= 0;
             reset_last <= 1;
             //  Cycle FIFO clock at reset
             if (reset_last)
@@ -138,9 +138,9 @@ module dac_pmod(
             pmod_io[3] <= sample_bit_clk;
             if (bit_clk_counter < 32) begin
                 //  Right channel data
-                pmod_io[2] <= sample[bit_clk_counter >> 1];
+                pmod_io[2] <= sample[31 - (bit_clk_counter >> 1)];
                 //  Left channel data
-                pmod_io[1] <= sample[16 + (bit_clk_counter >> 1)];
+                pmod_io[1] <= sample[15 - (bit_clk_counter >> 1)];
                 //  Active low sync
                 pmod_io[0] <= 0;
             end

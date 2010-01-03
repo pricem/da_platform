@@ -447,7 +447,12 @@ module fx2_interface(
                 PACKET_DONE: begin
                     usb_slwr <= 1;
                     state_packet_status[state_endpoint_index] <= PACKET_WAITING;
-                    case (state_endpoint_index)
+                    //  Special case: if the current endpoint is EP8 and there is a command waiting to be sent,
+                    //  stay on EP8 to get it out.  The controller cannot process any more commands (on EP4)
+                    //  until this is done.
+                    if (cmd_out_id > 0)
+                        state_endpoint_index <= EP8;
+                    else case (state_endpoint_index)
                         EP2: state_endpoint_index <= EP4;
                         EP4: state_endpoint_index <= EP6;
                         EP6: state_endpoint_index <= EP8;

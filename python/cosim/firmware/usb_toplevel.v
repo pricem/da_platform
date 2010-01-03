@@ -12,7 +12,7 @@ module usb_toplevel(
     //  Cell RAM connections
     mem_addr, mem_data, mem_ce, mem_oe, mem_we, mem_clk, mem_wait, mem_addr_valid, mem_cre, mem_lb, mem_ub,
     //  Audio converter connections
-    slot_data_in, slot_data_out, custom_dirchan, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1,
+    slot_data_in, slot_data_out, pmod_io, custom_dirchan, spi_adc_cs, spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, spi_dac_cs, spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_adc_hwcon, custom_adc_ovf, custom_clk0, custom_srclk, custom_clksel, custom_clk1,
     //  Control
     reset, clk
     );
@@ -52,6 +52,7 @@ module usb_toplevel(
     //  Audio converter (40-pin isolated bus)
     input [23:0] slot_data_in;
     output [23:0] slot_data_out;
+    output [3:0] pmod_io;
     input custom_dirchan;
     output spi_adc_cs;
     output spi_adc_mclk;
@@ -156,9 +157,6 @@ module usb_toplevel(
             assign slot_data[i] = directions[i] ? slot_data_in[((i + 1) * 4 - 1):(i * 4)] : 6'hZZ;
         end
     endgenerate
-    
-    //  Testing for PMOD DA2 module
-    wire [3:0] pmod_io;
     
     //  Other signals needed for main controller
     wire [7:0] aovf;                    //  ADC overflow bits (for parallel ADCs like the PCM4202)
