@@ -1,7 +1,7 @@
 
 from myhdl import *
 
-from fx2_framework import virtual_fx2
+from fx2_framework import FX2Model
 from tracking_fifo import tracking_fifo
 from test_settings import *
 
@@ -96,7 +96,7 @@ def tracking_fifo_test():
             
     """ Logic module instances """
     
-    fx2 = virtual_fx2(usb_ifclk, reset_neg, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full)
+    fx2 = FX2Model().myhdl_module(usb_ifclk, reset_neg, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full)
     
     fifo = tracking_fifo(usb_ifclk, usb_data_out, fifo_ep2_write_in, clk0, fifo_ep2_out_data, fifo_ep2_read_out, fifo_ep2_addr_in, fifo_ep2_addr_out, reset)
 

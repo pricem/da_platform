@@ -4,11 +4,9 @@ Todo (descending order of priority)
 IN PROG Make controller state machine
 
 Improve test framework; use to find and fix more bugs
--   Write Python test jigs for: converter board, PMOD-DA2 (later: all converter modules)
 -   Write proper bit matching, format, and timing into MyHDL test framework and make unit tests
 -   Design complete test case for initial PMOD-DA2 usage
--   Exercise serializer/deserializer issues
--   Use real audio signals and register programming sequences; run longer; use multiple channels simultaneously
+-   Use real audio signals and register programming sequences; run longer 
 
 Fix synthesis issues like clock speed, trimming
 
@@ -39,6 +37,11 @@ Make register control software
 Make converter interface modules
 -   Parameterized instantiation (or parameterized enables; depends on logic resources) of DAC/ADC modules using specified types
 -   Look into merging control specifications so a single module handles all converters (extend differently for DAC, ADC)
+
+Improve test framework
+-   Use multiple I/O ports simultaneously
+-   Exercise serializer/deserializer issues
+-   Write a Python emulator for each of the converter cards
 
 Begin documenting this architecture
 
