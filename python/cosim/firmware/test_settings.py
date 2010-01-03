@@ -4,7 +4,7 @@ CLK1_PERIOD = 38         #  24.576 MHz
 CLK_PERIOD = 8           #  100 - 150 MHz
 IFCLK_PERIOD = 20        #  48 MHz
 
-SIM_LENGTH = 500        #   Length of simulation in clk (100 - 150 MHz) cycles
+SIM_LENGTH = 1000        #   Length of simulation in clk (100 - 150 MHz) cycles
 
 MESSAGES_EP2 = ['\xff\x02\x00\x0babcdefghijk',
                 '\xff\x00\x00\x06abcdef',

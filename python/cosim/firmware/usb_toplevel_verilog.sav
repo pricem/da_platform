@@ -1,7 +1,7 @@
-[timestart] 2010000
+[timestart] 0
 [size] 1280 953
 [pos] -1 -1
-*-21.000000 2600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-22.000000 5396002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dut_usb_toplevel.
 [treeopen] dut_usb_toplevel.dut.
 [treeopen] dut_usb_toplevel.dut.dacs[0].
