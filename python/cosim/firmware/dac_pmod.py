@@ -7,9 +7,12 @@
 from myhdl import *
 from test_settings import *
 
-class DAC_PMOD(object):
-    def __init__(self, *args, **kwargs):
-        pass
+from testbase import TestBase, Event
+
+class DAC_PMOD(TestBase):
+    def __init__(self, port_index, *args, **kwargs):
+        super(DAC_PMOD, self).__init__(*args, **kwargs)
+        self.port = port_index
         
     def myhdl_module(self, 
         #   4-pin data bus
@@ -41,8 +44,9 @@ class DAC_PMOD(object):
                 sample_right.next = val_right
             else:
                 if not sync_last:
-                    print 'T = %s (dT = %s): PMOD-DA2 output L = 0x%03x, R = 0x%03x' % (now(), now() - time_last[0], sample_left, sample_right)
+                    self.log('T = %8d (dT = %6d): PMOD-DA2 output L = 0x%03x, R = 0x%03x' % (now(), now() - time_last[0], sample_left, sample_right))
                     time_last[0] = now()
+                    self.handle_event(Event('dac_sample', {'port': self.port, 'values': {'L': sample_left._val, 'R': sample_right._val}}))
             
         return instances()
 

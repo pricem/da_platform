@@ -21,20 +21,100 @@ Monitors:
 
 from myhdl import *
 
+from datetime import datetime
+
 from fx2_framework import FX2Model
 from usb_toplevel import USBToplevel
 from converterboard import ConverterBoard
 from test_settings import *
 
 
-class AudioTester(object):
-    def __init__(self):
-        self.fx2 = FX2Model()
-        self.converter = ConverterBoard()
-        self.dut = USBToplevel()
+#   Control which converter boards are used by modifying these imports.
+from adc_pcm4202 import ADC2
+from dac_dsd1792 import DAC2
+from dac_ad1934 import DAC8
+from adc_ad1974 import ADC8
+from dac_pmod import DAC_PMOD
+
+from testbase import TestBase, Event, Action, RecurrentAction
+
+class AudioTester(TestBase):
+    def __init__(self, mode=0, sim_cycles=SIM_LENGTH, logfile=None):
+        self.fx2 = FX2Model(parent=self)
+        self.converter = ConverterBoard(parent=self)
+        self.dut = USBToplevel(parent=self)
         
-    def log(self, message_type, message_data):
-        pass
+        self.sim_cycles = sim_cycles
+        self.action_queue = []
+        self.action_granularity = 10
+        
+        #   Set up a log file, clear its contents        
+        if logfile is None:
+            self.logfile = 'test_%s.log' % datetime.strftime(datetime.now(),'%Y%m%d_%H%M%S')
+        else:
+            self.logfile = logfile
+        fd = open(self.logfile, 'w')
+        fd.close()
+        
+        #   Set up converter board with the specified modules.
+        if mode == 0:
+            self.converter.add_module(DAC_PMOD, {})
+        else:
+            #   Initial configuration: all 2-channel DACs
+            self.converter_dirs = [0, 0, 0, 0]
+            self.converter_chans = [0, 0, 0, 0]
+            #   Rule for assigning converters by (dir, chan) pair
+            converter_rule = {(0, 0): DAC2, (0, 1): DAC8, (1, 0): ADC2, (1, 1): ADC8}
+            for i in range(len(self.converter_dirs)):
+                self.converter.add_module(converter_rule[(self.converter_dirs[i], self.converter_chans[i])], {})
+        
+        #   Set up a queue for USB command and data messages to be sent.
+        t = 0
+        t_step = 20
+        for msg in MESSAGES_EP2:
+            self.queue_action(t, self.fx2.write_ep2, [ord(x) for x in msg], recurrent=True, period=5000)
+            t += t_step
+        t = 0
+        for msg in MESSAGES_EP4:
+            self.queue_action(t, self.fx2.write_ep4, [ord(x) for x in msg])
+            t += t_step
+        
+    def queue_action(self, time, action, *args, **kwargs):
+        #   Keep a list sorted in chronological order.
+        if 'recurrent' in kwargs:
+            period = kwargs['period']
+            del kwargs['period']
+            del kwargs['recurrent']
+            self.action_queue.append(RecurrentAction(period, time, action, *args, **kwargs))
+        else:
+            self.action_queue.append(Action(time, action, *args, **kwargs))
+        self.action_queue.sort(key=lambda x: x.time)
+        
+    def process_actions(self):
+        time = now()
+        last_index = 0
+        if len(self.action_queue) > 0:
+            #   Iterate over actions until you find one whose time has not come.
+            while (last_index < len(self.action_queue)) and (self.action_queue[last_index].time <= time):
+                last_index += 1
+            
+            #   Execute and remove all actions from the beginning of the list up to that one.
+            for i in range(last_index):
+                self.action_queue[i].execute()
+            for i in range(last_index):
+                if not isinstance(self.action_queue[0], RecurrentAction):
+                    self.action_queue.pop(0)
+                
+            #   Return the actions to sorted order
+            self.action_queue.sort(key=lambda x: x.time)
+        
+    def log(self, message):
+        logfile = open(self.logfile, 'a')
+        logfile.write(message + '\n')
+        logfile.close()
+        
+    def handle_event(self, event):
+        self.log('%s' % unicode(event))
         
     def myhdl_module(self):
         """ Signals """
@@ -96,42 +176,19 @@ class AudioTester(object):
         @always(delay(CLK_PERIOD/2))
         def update_clk():
             clk.next = not clk
-            
-        #   Monitor the USB bus and print out a message at the end of each read or write.
-        endpoint_labels = {0: 'EP2', 1: 'EP4', 2: 'EP6', 3: 'EP8'}
-        transfer_labels = {0: 'BULK   ', 1: 'CONTROL', 2: 'BULK   ', 3: 'CONTROL'}
+        
+        #   Check for queued actions, but not on every clock cycle because that might
+        #   be too slow.  
         @instance
-        def usb_monitor():
-            port = -1
-            msg = []
-            state = 'idle'
+        def action_checker():
+            last_time = 0
             while 1:
-                yield usb_ifclk.posedge
-                if state == 'idle':
-                    if not usb_slrd:
-                        port = usb_addr._val._val
-                        state = 'read'
-                        msg = [usb_data_out._val._val]
-                    elif not usb_slwr:
-                        port = usb_addr._val._val
-                        state = 'write'
-                        msg = [usb_data_in._val._val]
-                elif state == 'read':
-                    if not usb_slrd:
-                        msg.append(usb_data_out._val._val)
-                    else:
-                        msg_str = ''.join(['%02X' % m for m in msg])
-                        print '%s read  of %6d bytes from %s completed: 0x%s' % (transfer_labels[port], len(msg), endpoint_labels[port], msg_str)
-                        state = 'idle'
-                elif state == 'write':
-                    if not usb_slwr:
-                        msg.append(usb_data_in._val._val)
-                    else:
-                        msg_str = ''.join(['%02X' % m for m in msg])
-                        print '%s write of %6d bytes to %s completed: 0x%s' % (transfer_labels[port], len(msg), endpoint_labels[port], msg_str)
-                        state = 'idle'
-                    
-                
+                delta = now() - last_time
+                if delta > self.action_granularity:
+                    self.process_actions()
+                    last_time = now()
+                yield usb_ifclk.negedge
+
         #   Run a few cycles of reset, then run the simulation for the specified time
         @instance
         def stimulus():
@@ -142,7 +199,7 @@ class AudioTester(object):
             reset.next = False
             yield usb_ifclk.negedge
         
-            for i in range(SIM_LENGTH):
+            for i in range(self.sim_cycles):
                 yield usb_ifclk.negedge
                 
             raise StopSimulation

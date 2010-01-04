@@ -12,7 +12,7 @@ from common import *
 
 #current_test = tracking_fifo_test
 #current_test = usb_toplevel_test
-test_structure = AudioTester()
+test_structure = AudioTester(logfile='audiotest.log')
 current_test = test_structure.myhdl_module
 
 class AllTests(TestCase):

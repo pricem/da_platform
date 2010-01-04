@@ -3,9 +3,21 @@ from myhdl import *
 from usbp_cores.fx2_model.fx2 import fx2
 from test_settings import *
 
-class FX2Model(object):
-    def __init__(self):
-        pass
+from testbase import TestBase, Event
+
+class FX2Model(TestBase):
+
+    def __init__(self, *args, **kwargs):
+        super(FX2Model, self).__init__(*args, **kwargs)
+        self.fx2 = fx2(verbose=FX2_VERBOSITY)
+
+    def write_ep2(self, data):
+        self.handle_event(Event('usb_queued', {'endpoint': 'EP2', 'data': [intbv(x)[8:] for x in data]}))
+        self.fx2.Write(data, 2)
+        
+    def write_ep4(self, data):
+        self.handle_event(Event('usb_queued', {'endpoint': 'EP4', 'data': [intbv(x)[8:] for x in data]}))
+        self.fx2.Write(data, 4)
 
     def myhdl_module(self,
         #   USB interface
@@ -23,42 +35,43 @@ class FX2Model(object):
             usb_slrd_neg.next = not usb_slrd
             usb_slwr_neg.next = not usb_slwr
             #   print 'FX2-framework: SLOE %s->%s' % (usb_sloe, usb_sloe_neg.next)
-        
-
-        """ Logic module instances """
-
-        usb_processor = fx2(verbose=FX2_VERBOSITY)
-        
-        usb_port = usb_processor.SlaveFifo(usb_ifclk, reset_neg, usb_slwr_neg, usb_slrd_neg, usb_sloe_neg, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_full, usb_ep4_empty, usb_ep8_full)
+            
+        #   Monitor the USB bus and print out a message at the end of each read or write.
+        endpoint_labels = {0: 'EP2', 1: 'EP4', 2: 'EP6', 3: 'EP8'}
+        transfer_labels = {0: 'BULK   ', 1: 'CONTROL', 2: 'BULK   ', 3: 'CONTROL'}
         
         @instance
-        def stimulus():
-            msg_index_ep2 = 0
-            msg_id_ep2 = 0
-            msg_index_ep4 = 0
-            msg_id_ep4 = 0
-            yield reset_neg.posedge
-            
+        def usb_monitor():
+            port = -1
+            msg = []
+            state = 'idle'
             while 1:
-                
-                if msg_index_ep2 <= len(MESSAGES_EP2[msg_id_ep2]):
-                    usb_processor.Write([ord(x) for x in MESSAGES_EP2[msg_id_ep2][msg_index_ep2:(msg_index_ep2+CHUNK_SIZE)]], 2)
-                    msg_index_ep2 = msg_index_ep2 + CHUNK_SIZE
-                else:
-                    msg_index_ep2 = 0
-                    msg_id_ep2 = (msg_id_ep2 + 1) % len(MESSAGES_EP2)
-                 
-                if msg_index_ep4 <= len(MESSAGES_EP4[msg_id_ep4]):
-                    usb_processor.Write([ord(x) for x in MESSAGES_EP4[msg_id_ep4][msg_index_ep4:(msg_index_ep4+CHUNK_SIZE)]], 4)
-                    msg_index_ep4 = msg_index_ep4 + CHUNK_SIZE
-                else:
-                    msg_index_ep4 = 0
-                    msg_id_ep4 = (msg_id_ep4 + 1) % len(MESSAGES_EP4)    
-                
-                for i in range(CHUNK_PERIOD):
-                    yield usb_ifclk.posedge
-               
-                
+                yield usb_ifclk.posedge
+                if state == 'idle':
+                    if not usb_slrd:
+                        port = usb_addr._val._val
+                        state = 'read'
+                        msg = [usb_data_out._val]
+                    elif not usb_slwr:
+                        port = usb_addr._val._val
+                        state = 'write'
+                        msg = [usb_data_in._val]
+                elif state == 'read':
+                    if not usb_slrd:
+                        msg.append(usb_data_out._val)
+                    else:
+                        self.handle_event(Event('usb_xfer  ', {'endpoint': endpoint_labels[port], 'data': msg}))
+                        state = 'idle'
+                elif state == 'write':
+                    if not usb_slwr:
+                        msg.append(usb_data_in._val)
+                    else:
+                        self.handle_event(Event('usb_xfer  ', {'endpoint': endpoint_labels[port], 'data': msg}))
+                        state = 'idle'
+
+        """ Logic module instances """
+        usb_port = self.fx2.SlaveFifo(usb_ifclk, reset_neg, usb_slwr_neg, usb_slrd_neg, usb_sloe_neg, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_full, usb_ep4_empty, usb_ep8_full)
+        
         
         return instances()
 

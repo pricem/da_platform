@@ -6,29 +6,22 @@ This model assumes that isolation is completely transparent.
 from myhdl import *
 from test_settings import *
 
-#   Control which converter boards are used by modifying these imports.
-from adc_pcm4202 import ADC2
-from dac_dsd1792 import DAC2
-from dac_ad1934 import DAC8
-from adc_ad1974 import ADC8
+from testbase import TestBase
+
+#   This is here merely to check the type when instantiating.
 from dac_pmod import DAC_PMOD
 
-class ConverterBoard(object):
+class ConverterBoard(TestBase):
     def __init__(self, *args, **kwargs):
-        #   Initial configuration: all 2-channel DACs
-        self.converter_dirs = [0, 0, 0, 0]
-        self.converter_chans = [0, 0, 0, 0]
-        
-        #   Rule for assigning converters by (dir, chan) pair
-        converter_rule = {(0, 0): DAC2, (0, 1): DAC8, (1, 0): ADC2, (1, 1): ADC8}
+        super(ConverterBoard, self).__init__(*args, **kwargs)
         
         #   Build list of converter objects (exception: port 0 uses PMOD-DA2)
         self.converters = []
-        for i in range(4):
-            if i == 0:
-                self.converters.append(DAC_PMOD())
-            else:
-                self.converters.append(converter_rule[(self.converter_dirs[i], self.converter_chans[i])]())
+        
+    def add_module(self, converter_class, parameters):
+        parameters['parent'] = self
+        parameters['port_index'] = len(self.converters)
+        self.converters.append(converter_class(**parameters))
         
     def myhdl_module(self, 
         #   Array of 4 6-pin bidirectional data buses.  In Verilog (and reality) this is a single bus.
@@ -138,21 +131,15 @@ class ConverterBoard(object):
             pmod_dina.next = pmod[1]
             pmod_sync.next = pmod[0]
         
-        converter_instances = []
         """ Converter blocks """
+        converter_instances = []
         for i in range(4):
-            if isinstance(self.converters[i], DAC_PMOD):
-                converter_instances.append(self.converters[i].myhdl_module(pmod_clk, pmod_sync, pmod_dina, pmod_dinb))
-            else:
-                converter_instances.append(self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset))
-        
-        #   Break out traces for viewing
-        """
-        converter_0 = converter_instances[0]
-        converter_1 = converter_instances[1]
-        converter_2 = converter_instances[2]
-        converter_3 = converter_instances[3]
-        """
+            if i < len(self.converters):
+                if isinstance(self.converters[i], DAC_PMOD):
+                    converter_instances.append(self.converters[i].myhdl_module(pmod_clk, pmod_sync, pmod_dina, pmod_dinb))
+                else:
+                    converter_instances.append(self.converters[i].myhdl_module(slot_data_in[i], slot_data_out[i], amcs[i], spi_adc_mclk, spi_adc_mdi, spi_adc_mdo, dmcs[i], spi_dac_mclk, spi_dac_mdi, spi_dac_mdo, custom_srclk, custom_adc_hwcon, direction[i], chan[i], aovfl[i], aovfr[i], clk[i], reset))
+
         
         return instances()
         
