@@ -294,9 +294,7 @@ module memory_arbitrator(
                     read_write[current_port] <= 0;
                     mem_ce <= 0;
                     
-                    //  Write only up to an even number of bytes (due to 16-bit memory word)
-                    current_delta <= ((write_in_addr[current_port] - write_out_addr[current_port]) / 2) << 1;
-
+                    //  Assign current_delta to write only up to an even number of bytes (due to 16-bit memory word)
                     if (clk_div2 == 1) begin
                         if (current_delta > MIN_CHUNK) begin
                             cycle_state <= INITIALIZING;
@@ -304,14 +302,20 @@ module memory_arbitrator(
                             //  Latch effective byte count at input.
                             write_mem_byte_count[current_port] <= write_mem_byte_count[current_port] + current_delta;
                             current_fifo_addr <= write_out_addr[current_port];
+                            current_delta <= ((write_in_addr[current_port] - write_out_addr[current_port]) / 2) << 1;
                         end
                         else if (current_port == (NUM_PORTS - 1)) begin
                             current_port <= 0;
                             state <= READ_SCAN;
+                            current_delta <= ((write_in_addr[0] - write_out_addr[0]) / 2) << 1;
                         end
-                        else
+                        else begin
                             current_port <= current_port + 1;
+                            current_delta <= ((write_in_addr[(current_port + 1) % NUM_PORTS] - write_out_addr[current_port + 1] % NUM_PORTS) / 2) << 1;
+                        end
                     end
+                    else
+                        current_delta <= ((write_in_addr[current_port] - write_out_addr[current_port]) / 2) << 1;
                 end
                 
                 READING: begin

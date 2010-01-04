@@ -3,7 +3,7 @@ Todo (descending order of priority)
 
 IN PROG Make controller state machine
 
-Improve test framework; use to find and fix more bugs
+IN PROG Improve test framework; use to find and fix more bugs
 -   Write proper bit matching, format, and timing into MyHDL test framework and make unit tests
 -   Design complete test case for initial PMOD-DA2 usage
 -   Use real audio signals and register programming sequences; run longer 
