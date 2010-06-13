@@ -1,27 +1,21 @@
-Release 11.1 Map L.33 (lin)
+Release 12.1 Map M.53d (lin64)
 Xilinx Map Application Log File for Design 'nexys2_toplevel'
 
 Design Information
 ------------------
-Command Line   : map -ise sandbox.ise -intstyle ise -p xc3s500e-fg320-5 -cm area
--ir off -pr off -c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd
-nexys2_toplevel.pcf 
+Command Line   : map -intstyle ise -p xc3s500e-fg320-5 -cm area -ir off -pr off
+-c 100 -o nexys2_toplevel_map.ncd nexys2_toplevel.ngd nexys2_toplevel.pcf 
 Target Device  : xc3s500e
 Target Package : fg320
 Target Speed   : -5
-Mapper Version : spartan3e -- $Revision: 1.51 $
-Mapped Date    : Fri Jan  1 20:02:15 2010
+Mapper Version : spartan3e -- $Revision: 1.52 $
+Mapped Date    : Sat Jun 12 20:49:43 2010
 
-WARNING:LIT:243 - Logical network pmod_d<3> has no load.
-WARNING:LIT:395 - The above warning message base_net_load_rule is repeated 78
-   more times for the following (max. 5 shown):
-   pmod_a<1>,
-   pmod_a<2>,
-   pmod_a<3>,
-   fx2<36>,
-   pmod_a<4>
-   To see the details of these warning messages, please use the -detail switch.
 Mapping design into LUTs...
+WARNING:MapLib:532 - The following XORCY(s) has/have their CI and LI pins
+   swapped in order to align with the associating MUXCY:
+   XORCY symbol "dut/spi/Madd_config_addr_addsub0000_Madd_xor<0>" (output
+   signal=dut/spi/config_addr_addsub0000<0>)
 Running directed packing...
 Running delay-based LUT packing...
 Running related packing...
@@ -29,21 +23,159 @@ Updating timing models...
 WARNING:PhysDesignRules:372 - Gated clock. Clock net fx2_37_OBUF is sourced by a
    combinatorial pin. This is not good design practice. Use the CE pin to
    control the loading of data into the flip-flop.
+WARNING:PhysDesignRules:367 - The signal <buttons<1>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <buttons<2>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <buttons<3>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <ps2_data_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<0>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<1>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<2>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<3>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<0>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<4>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<1>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<5>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<2>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<6>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<3>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_a<7>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<4>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<0>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<5>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<1>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<6>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<2>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_b<7>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<3>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_d<0>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<4>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_d<1>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<5>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_d<2>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<6>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_c<7>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <pmod_d<3>_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <usb_int0_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:368 - The signal <usb_slcs_OBUF> is incomplete. The
-   signal is not driven by any source pin in the design.
 WARNING:PhysDesignRules:367 - The signal <flash_sts_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <serial_in_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
-WARNING:PhysDesignRules:367 - The signal <usb_flagc_IBUF> is incomplete. The
-   signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <mem_wait_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 WARNING:PhysDesignRules:367 - The signal <usb_pktend_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<10>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<11>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<20>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<12>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<21>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<13>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<30>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<22>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<14>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<23>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<15>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<16>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<33>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<25>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<17>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<18>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<27>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<19>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<28>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<36>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<38>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<39>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<0>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<1>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<2>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<3>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<0>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<4>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<1>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<5>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<2>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<6>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<3>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<7>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<4>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<8>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<5>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <fx2<9>_IBUF> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<6>_IBUF> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal <switches<7>_IBUF> is incomplete. The
    signal does not drive any load pins in the design.
 
 Design Summary
@@ -51,34 +183,34 @@ Design Summary
 
 Design Summary:
 Number of errors:      0
-Number of warnings:   11
+Number of warnings:   79
 Logic Utilization:
-  Total Number Slice Registers:         655 out of   9,312    7%
-    Number used as Flip Flops:          654
-    Number used as Latches:               1
-  Number of 4 input LUTs:             1,065 out of   9,312   11%
+  Total Number Slice Registers:         994 out of   9,312   10%
+    Number used as Flip Flops:          989
+    Number used as Latches:               5
+  Number of 4 input LUTs:             1,399 out of   9,312   15%
 Logic Distribution:
-  Number of occupied Slices:            830 out of   4,656   17%
-    Number of Slices containing only related logic:     830 out of     830 100%
-    Number of Slices containing unrelated logic:          0 out of     830   0%
+  Number of occupied Slices:          1,150 out of   4,656   24%
+    Number of Slices containing only related logic:   1,150 out of   1,150 100%
+    Number of Slices containing unrelated logic:          0 out of   1,150   0%
       *See NOTES below for an explanation of the effects of unrelated logic.
-  Total Number of 4 input LUTs:       1,427 out of   9,312   15%
-    Number used as logic:             1,065
-    Number used as a route-thru:        362
+  Total Number of 4 input LUTs:       1,990 out of   9,312   21%
+    Number used as logic:             1,399
+    Number used as a route-thru:        591
 
   The Slice Logic Distribution report is not meaningful if the design is
   over-mapped for a non-slice resource or if Placement fails.
 
-  Number of bonded IOBs:                115 out of     232   49%
-  Number of RAMB16s:                     12 out of      20   60%
+  Number of bonded IOBs:                186 out of     232   80%
+  Number of RAMB16s:                     13 out of      20   65%
   Number of BUFGMUXs:                     3 out of      24   12%
   Number of DCMs:                         1 out of       4   25%
 
-Average Fanout of Non-Clock Nets:                3.40
+Average Fanout of Non-Clock Nets:                3.25
 
-Peak Memory Usage:  186 MB
-Total REAL time to MAP completion:  4 secs 
-Total CPU time to MAP completion:   4 secs 
+Peak Memory Usage:  388 MB
+Total REAL time to MAP completion:  8 secs 
+Total CPU time to MAP completion:   7 secs 
 
 NOTES:
 

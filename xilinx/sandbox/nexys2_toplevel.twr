@@ -1,15 +1,14 @@
 --------------------------------------------------------------------------------
-Release 11.1 Trace  (lin)
-Copyright (c) 1995-2009 Xilinx, Inc.  All rights reserved.
+Release 12.1 Trace  (lin64)
+Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
 
-/opt/Xilinx/11.1/ISE/bin/lin/unwrapped/trce -ise
-/home/price/projects/cdp/xilinx/sandbox/sandbox.ise -intstyle ise -v 3 -s 5
--fastpaths -xml nexys2_toplevel.twx nexys2_toplevel.ncd -o nexys2_toplevel.twr
-nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf
+/opt/Xilinx/12.1/ISE_DS/ISE/bin/lin64/unwrapped/trce -intstyle ise -v 3 -s 5 -n
+3 -fastpaths -xml nexys2_toplevel.twx nexys2_toplevel.ncd -o
+nexys2_toplevel.twr nexys2_toplevel.pcf -ucf nexys2_toplevel.ucf
 
 Design file:              nexys2_toplevel.ncd
 Physical constraint file: nexys2_toplevel.pcf
-Device,package,speed:     xc3s500e,fg320,-5 (PRODUCTION 1.27 2009-03-03)
+Device,package,speed:     xc3s500e,fg320,-5 (PRODUCTION 1.27 2010-04-09)
 Report level:             verbose report
 
 Environment Variable      Effect 
@@ -25,6 +24,14 @@ INFO:Timing:3339 - The clock-to-out numbers in this timing report are based on
    a 50 Ohm transmission line loading model.  For the details of this model, 
    and for more information on accounting for different loading conditions, 
    please see the device datasheet.
+INFO:Timing:3390 - This architecture does not support a default System Jitter 
+   value, please add SYSTEM_JITTER constraint to the UCF to modify the Clock 
+   Uncertainty calculation.
+INFO:Timing:3389 - This architecture does not support 'Discrete Jitter' and 
+   'Phase Error' calculations, these terms will be zero in the Clock 
+   Uncertainty calculation.  Please make appropriate modification to 
+   SYSTEM_JITTER to account for the unsupported Discrete Jitter and Phase 
+   Error.
 
 
 
@@ -34,38 +41,39 @@ All values displayed in nanoseconds (ns)
 
 Setup/Hold to clock clk0
 ------------+------------+------------+------------------+--------+
-            |  Setup to  |  Hold to   |                  | Clock  |
+            |Max Setup to|Max Hold to |                  | Clock  |
 Source      | clk (edge) | clk (edge) |Internal Clock(s) | Phase  |
 ------------+------------+------------+------------------+--------+
-buttons<0>  |   11.614(R)|   -2.522(R)|clk               |   0.000|
-            |   11.255(F)|   -8.074(F)|clk               |   0.000|
-mem_data<0> |    3.351(R)|   -1.768(R)|clk               |   0.000|
-mem_data<1> |    3.058(R)|   -1.534(R)|clk               |   0.000|
-mem_data<2> |    3.226(R)|   -1.668(R)|clk               |   0.000|
-mem_data<3> |    3.701(R)|   -2.049(R)|clk               |   0.000|
-mem_data<4> |    3.679(R)|   -2.031(R)|clk               |   0.000|
-mem_data<5> |    3.777(R)|   -2.109(R)|clk               |   0.000|
-mem_data<6> |    3.597(R)|   -1.962(R)|clk               |   0.000|
-mem_data<7> |    3.856(R)|   -2.169(R)|clk               |   0.000|
-mem_data<8> |    3.387(R)|   -1.797(R)|clk               |   0.000|
-mem_data<9> |    3.318(R)|   -1.741(R)|clk               |   0.000|
-mem_data<10>|    3.270(R)|   -1.704(R)|clk               |   0.000|
-mem_data<11>|    3.857(R)|   -2.174(R)|clk               |   0.000|
-mem_data<12>|    3.465(R)|   -1.860(R)|clk               |   0.000|
-mem_data<13>|    3.766(R)|   -2.101(R)|clk               |   0.000|
-mem_data<14>|    3.574(R)|   -1.943(R)|clk               |   0.000|
-mem_data<15>|    3.393(R)|   -1.798(R)|clk               |   0.000|
+buttons<0>  |   13.428(R)|   -2.385(R)|clk               |   0.000|
+            |   12.960(F)|   -2.932(F)|clk               |   0.000|
+mem_data<0> |    3.124(R)|   -1.586(R)|clk               |   0.000|
+mem_data<1> |    3.062(R)|   -1.536(R)|clk               |   0.000|
+mem_data<2> |    2.913(R)|   -1.406(R)|clk               |   0.000|
+mem_data<3> |    2.925(R)|   -1.416(R)|clk               |   0.000|
+mem_data<4> |    3.548(R)|   -1.924(R)|clk               |   0.000|
+mem_data<5> |    4.084(R)|   -2.353(R)|clk               |   0.000|
+mem_data<6> |    3.477(R)|   -1.864(R)|clk               |   0.000|
+mem_data<7> |    3.648(R)|   -2.000(R)|clk               |   0.000|
+mem_data<8> |    3.229(R)|   -1.670(R)|clk               |   0.000|
+mem_data<9> |    3.360(R)|   -1.775(R)|clk               |   0.000|
+mem_data<10>|    3.227(R)|   -1.658(R)|clk               |   0.000|
+mem_data<11>|    3.373(R)|   -1.774(R)|clk               |   0.000|
+mem_data<12>|    3.823(R)|   -2.143(R)|clk               |   0.000|
+mem_data<13>|    4.005(R)|   -2.290(R)|clk               |   0.000|
+mem_data<14>|    3.520(R)|   -1.898(R)|clk               |   0.000|
+mem_data<15>|    3.628(R)|   -1.984(R)|clk               |   0.000|
 ------------+------------+------------+------------------+--------+
 
 Setup/Hold to clock usb_ifclk
 ------------+------------+------------+------------------+--------+
-            |  Setup to  |  Hold to   |                  | Clock  |
+            |Max Setup to|Max Hold to |                  | Clock  |
 Source      | clk (edge) | clk (edge) |Internal Clock(s) | Phase  |
 ------------+------------+------------+------------------+--------+
-buttons<0>  |    8.399(R)|    0.834(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<0> |    2.173(R)|    1.441(R)|usb_ifclk_BUFGP   |   0.000|
-usb_flaga   |    5.366(R)|   -0.156(R)|usb_ifclk_BUFGP   |   0.000|
-usb_flagb   |    5.880(R)|   -0.567(R)|usb_ifclk_BUFGP   |   0.000|
+buttons<0>  |    9.617(R)|    0.463(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<0> |    2.952(R)|    1.657(R)|usb_ifclk_BUFGP   |   0.000|
+usb_flaga   |    4.162(R)|    0.148(R)|usb_ifclk_BUFGP   |   0.000|
+usb_flagb   |    4.747(R)|   -0.255(R)|usb_ifclk_BUFGP   |   0.000|
+usb_flagc   |    3.884(R)|    0.030(R)|usb_ifclk_BUFGP   |   0.000|
 ------------+------------+------------+------------------+--------+
 
 Clock clk0 to Pad
@@ -73,41 +81,41 @@ Clock clk0 to Pad
             | clk (edge) |                  | Clock  |
 Destination |   to PAD   |Internal Clock(s) | Phase  |
 ------------+------------+------------------+--------+
-fx2<26>     |    4.983(R)|clk               |   0.000|
-mem_addr<1> |    6.768(R)|clk               |   0.000|
-mem_addr<2> |    7.056(R)|clk               |   0.000|
-mem_addr<3> |    6.845(R)|clk               |   0.000|
-mem_addr<4> |    5.998(R)|clk               |   0.000|
-mem_addr<5> |    5.984(R)|clk               |   0.000|
-mem_addr<6> |    6.214(R)|clk               |   0.000|
-mem_addr<7> |    6.843(R)|clk               |   0.000|
-mem_addr<8> |    6.808(R)|clk               |   0.000|
-mem_addr<9> |    7.026(R)|clk               |   0.000|
-mem_addr<10>|    7.174(R)|clk               |   0.000|
-mem_addr<11>|    7.042(R)|clk               |   0.000|
-mem_addr<12>|    7.547(R)|clk               |   0.000|
-mem_addr<13>|    7.997(R)|clk               |   0.000|
-mem_addr<20>|    5.896(R)|clk               |   0.000|
-mem_adv     |    5.532(R)|clk               |   0.000|
-mem_clk     |    6.164(F)|clk               |   0.000|
-mem_data<0> |    7.444(R)|clk               |   0.000|
-mem_data<1> |    7.665(R)|clk               |   0.000|
-mem_data<2> |    7.892(R)|clk               |   0.000|
-mem_data<3> |    8.111(R)|clk               |   0.000|
-mem_data<4> |    8.559(R)|clk               |   0.000|
-mem_data<5> |    8.784(R)|clk               |   0.000|
-mem_data<6> |    8.781(R)|clk               |   0.000|
-mem_data<7> |    9.228(R)|clk               |   0.000|
-mem_data<8> |    7.651(R)|clk               |   0.000|
-mem_data<9> |    7.888(R)|clk               |   0.000|
-mem_data<10>|    8.117(R)|clk               |   0.000|
-mem_data<11>|    8.346(R)|clk               |   0.000|
-mem_data<12>|    7.432(R)|clk               |   0.000|
-mem_data<13>|    8.557(R)|clk               |   0.000|
-mem_data<14>|    9.246(R)|clk               |   0.000|
-mem_data<15>|    9.444(R)|clk               |   0.000|
-mem_oe      |    9.118(R)|clk               |   0.000|
-mem_we      |    7.978(R)|clk               |   0.000|
+fx2<26>     |    4.444(R)|clk               |   0.000|
+mem_addr<1> |    6.896(R)|clk               |   0.000|
+mem_addr<2> |    7.037(R)|clk               |   0.000|
+mem_addr<3> |    6.982(R)|clk               |   0.000|
+mem_addr<4> |    6.669(R)|clk               |   0.000|
+mem_addr<5> |    6.626(R)|clk               |   0.000|
+mem_addr<6> |    6.790(R)|clk               |   0.000|
+mem_addr<7> |    7.132(R)|clk               |   0.000|
+mem_addr<8> |    7.175(R)|clk               |   0.000|
+mem_addr<9> |    7.416(R)|clk               |   0.000|
+mem_addr<10>|    7.477(R)|clk               |   0.000|
+mem_addr<11>|    9.327(R)|clk               |   0.000|
+mem_addr<12>|    8.518(R)|clk               |   0.000|
+mem_addr<13>|    8.633(R)|clk               |   0.000|
+mem_addr<20>|    6.006(R)|clk               |   0.000|
+mem_adv     |    5.336(R)|clk               |   0.000|
+mem_clk     |    6.367(F)|clk               |   0.000|
+mem_data<0> |    7.470(R)|clk               |   0.000|
+mem_data<1> |    7.796(R)|clk               |   0.000|
+mem_data<2> |    7.803(R)|clk               |   0.000|
+mem_data<3> |    7.786(R)|clk               |   0.000|
+mem_data<4> |    8.121(R)|clk               |   0.000|
+mem_data<5> |    8.350(R)|clk               |   0.000|
+mem_data<6> |    8.359(R)|clk               |   0.000|
+mem_data<7> |    8.792(R)|clk               |   0.000|
+mem_data<8> |    7.469(R)|clk               |   0.000|
+mem_data<9> |    7.798(R)|clk               |   0.000|
+mem_data<10>|    8.016(R)|clk               |   0.000|
+mem_data<11>|    8.113(R)|clk               |   0.000|
+mem_data<12>|    8.012(R)|clk               |   0.000|
+mem_data<13>|    8.125(R)|clk               |   0.000|
+mem_data<14>|    8.572(R)|clk               |   0.000|
+mem_data<15>|    9.011(R)|clk               |   0.000|
+mem_oe      |    8.271(R)|clk               |   0.000|
+mem_we      |    7.712(R)|clk               |   0.000|
 ------------+------------+------------------+--------+
 
 Clock usb_ifclk to Pad
@@ -115,18 +123,18 @@ Clock usb_ifclk to Pad
             | clk (edge) |                  | Clock  |
 Destination |   to PAD   |Internal Clock(s) | Phase  |
 ------------+------------+------------------+--------+
-usb_addr<0> |   10.898(R)|usb_ifclk_BUFGP   |   0.000|
-usb_addr<1> |    8.874(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<0> |    8.960(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<1> |    9.555(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<2> |    9.342(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<3> |    9.184(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<4> |    8.904(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<5> |    9.446(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<6> |    9.157(R)|usb_ifclk_BUFGP   |   0.000|
-usb_data<7> |    9.969(R)|usb_ifclk_BUFGP   |   0.000|
-usb_slrd    |   12.608(R)|usb_ifclk_BUFGP   |   0.000|
-usb_slwr    |    9.398(R)|usb_ifclk_BUFGP   |   0.000|
+usb_addr<0> |   11.707(R)|usb_ifclk_BUFGP   |   0.000|
+usb_addr<1> |    8.992(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<0> |   10.446(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<1> |    9.403(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<2> |    9.907(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<3> |    9.918(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<4> |   10.398(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<5> |   10.177(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<6> |    9.009(R)|usb_ifclk_BUFGP   |   0.000|
+usb_data<7> |    9.362(R)|usb_ifclk_BUFGP   |   0.000|
+usb_slrd    |   13.033(R)|usb_ifclk_BUFGP   |   0.000|
+usb_slwr    |    8.498(R)|usb_ifclk_BUFGP   |   0.000|
 ------------+------------+------------------+--------+
 
 Clock to Setup on destination clock clk0
@@ -134,8 +142,8 @@ Clock to Setup on destination clock clk0
                | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
 Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
 ---------------+---------+---------+---------+---------+
-clk0           |    9.080|    4.856|         |    1.846|
-usb_ifclk      |   12.438|         |         |         |
+clk0           |    9.116|    4.714|         |    2.009|
+usb_ifclk      |   12.329|         |         |         |
 ---------------+---------+---------+---------+---------+
 
 Clock to Setup on destination clock usb_ifclk
@@ -143,27 +151,27 @@ Clock to Setup on destination clock usb_ifclk
                | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
 Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
 ---------------+---------+---------+---------+---------+
-clk0           |    8.827|         |         |         |
-usb_ifclk      |    9.380|         |         |         |
+clk0           |    9.885|         |         |         |
+usb_ifclk      |    9.857|         |         |         |
 ---------------+---------+---------+---------+---------+
 
 Pad to Pad
 ---------------+---------------+---------+
 Source Pad     |Destination Pad|  Delay  |
 ---------------+---------------+---------+
-usb_flaga      |usb_slrd       |    7.686|
-usb_flagb      |usb_slrd       |    8.393|
+usb_flaga      |usb_slrd       |    6.767|
+usb_flagb      |usb_slrd       |    7.945|
 ---------------+---------------+---------+
 
 
-Analysis completed Fri Jan  1 20:02:44 2010 
+Analysis completed Sat Jun 12 20:52:03 2010 
 --------------------------------------------------------------------------------
 
 Trace Settings:
 -------------------------
 Trace Settings 
 
-Peak Memory Usage: 104 MB
+Peak Memory Usage: 267 MB
 
 
 

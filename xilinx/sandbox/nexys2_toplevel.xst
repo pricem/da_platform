@@ -41,7 +41,9 @@ run
 -mux_extract YES
 -resource_sharing YES
 -async_to_sync NO
+-mult_style auto
 -iobuf YES
+-max_fanout 500
 -bufg 24
 -register_duplication YES
 -register_balancing No
