@@ -56,12 +56,12 @@ module dummy_adc(
     
     //  Include configuration registers
     wire [31:0] registers;
-    wire [7:0] config [3:0];
-    generate for (g = 0; g < 4; g = g + 1) begin
-            assign config[g] = registers[((g + 1) * 8 - 1):(g * 8)];
+    wire [7:0] config_w [3:0];
+    generate for (g = 0; g < 4; g = g + 1) begin:config_wires
+            assign config_w[g] = registers[((g + 1) * 8 - 1):(g * 8)];
         end
     endgenerate
-    ioreg config(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
+    ioreg config_reg(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
     
     always @(posedge clk) begin
         if (reset) begin

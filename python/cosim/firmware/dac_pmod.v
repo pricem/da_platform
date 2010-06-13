@@ -60,18 +60,18 @@ module dac_pmod(
     
     //  Include configuration registers
     wire [31:0] registers;
-    wire [7:0] config [3:0];
-    generate for (g = 0; g < 4; g = g + 1) begin
-            assign config[g] = registers[((g + 1) * 8 - 1):(g * 8)];
+    wire [7:0] config_w [3:0];
+    generate for (g = 0; g < 4; g = g + 1) begin:config_wires
+            assign config_w[g] = registers[((g + 1) * 8 - 1):(g * 8)];
         end
     endgenerate
-    ioreg config(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
+    ioreg config_reg(config_clk, config_write, config_read, config_addr, config_data, registers, clk, reset);
     
     //  I/O register definitions (see registers.py)
-    wire clksel = config[0][0];             //  0 = 11.2896 MHz, 1 = 24.576 MHz
-    wire [1:0] clkm = config[0][2:1];       //  0 = 44.1/48, 1 = 88.2/96, 2 = 192 
+    wire clksel = config_w[0][0];             //  0 = 11.2896 MHz, 1 = 24.576 MHz
+    wire [1:0] clkm = config_w[0][2:1];       //  0 = 44.1/48, 1 = 88.2/96, 2 = 192 
     wire [3:0] clkexp = clksel ? (9 - clkm) : (8 - clkm);   //  Base rate is 1/256 of clk0 and 1/512 of clk1
-    wire res = config[0][3];                //  0 = 16-bit data, 1 = 24-bit data
+    wire res = config_w[0][3];                //  0 = 16-bit data, 1 = 24-bit data
     parameter RES_16BIT = 1'b0;
     parameter RES_24BIT = 1'b1;
     

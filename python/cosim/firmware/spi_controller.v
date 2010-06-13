@@ -109,7 +109,7 @@ module spi_controller(
                             : (num_channels[port_index] ? SPI_FORMAT_ADI : SPI_FORMAT_TI);
 
     //  Assign chip select outputs.  Only one of the 8 is active at any given time.
-    generate for (g = 0; g < 4; g = g + 1) begin
+    generate for (g = 0; g < 4; g = g + 1) begin:cs_assignment
             assign spi_adc_cs[g] = ((port_index == g) && (direction[port_index] == 1) && (spi_state_last != SPI_START) && (spi_state_last != SPI_DONE));
             assign spi_dac_cs[g] = ((port_index == g) && (direction[port_index] == 0) && (spi_state_last != SPI_START) && (spi_state_last != SPI_DONE));
         end
@@ -188,7 +188,6 @@ module spi_controller(
                             config_read <= 0;
                             //  Go to programming SPI.
                             read_state <= RW_IDLE;
-                            spi_state <= SPI_START;
                             spi_direction <= 1;
                             state <= STATE_PROGRAMMING;
                         end
@@ -249,12 +248,7 @@ module spi_controller(
                             spi_bit_counter <= 0;
                             spi_state <= SPI_GLOBAL_ADDRESS;
                         end
-                        SPI_FORMAT_TI: begin
-                            //  Add the R/W flag to the address byte and continue to writing it.
-                            //  The 2nd MSB is set to 0 because in configuration memory that bit is used to store the R/W flag.
-                            spi_addr[7] <= ~spi_direction;      //  TI format is: Read high, write low
-                            spi_addr[6] <= 0;
-                            
+                        SPI_FORMAT_TI: begin                            
                             spi_bit_counter <= 0;
                             spi_state <= SPI_ADDRESS;
                         end
@@ -272,7 +266,20 @@ module spi_controller(
                 
                 SPI_ADDRESS: begin
                     spi_bit_counter <= spi_bit_counter + 1;
-                    spi_bit_out <= spi_addr[7 - spi_bit_counter];
+                    case (spi_format_id)
+                        SPI_FORMAT_TI: begin                            
+                            //  Add the R/W flag to the address byte and continue to writing it.
+                            //  The 2nd MSB is set to 0 because in configuration memory that bit is used to store the R/W flag.
+                            case (spi_bit_counter)
+                                0: spi_bit_out <= ~spi_direction;   //  TI format is: Read high, write low
+                                1: spi_bit_out <= 0;
+                                default: spi_bit_out <= spi_addr[7 - spi_bit_counter];
+                            endcase
+                        end
+                        default: begin
+                             spi_bit_out <= spi_addr[7 - spi_bit_counter];
+                        end
+                    endcase
                     if (spi_bit_counter == 7) begin
                         spi_bit_counter <= 0;
                         spi_state <= SPI_DATA;
@@ -296,9 +303,14 @@ module spi_controller(
                 end
                 
                 SPI_DONE: begin
-                    //  Wait for the main state machine to move on, then go idle.
-                    spi_data_in <= 0;
-                    spi_bit_counter <= 0;
+                    if (state == STATE_PROGRAMMING)
+                        //  Take the cue from the main state machine if another transfer is ready.
+                        spi_state <= SPI_START;
+                    else begin
+                        //  Wait for the main state machine to move on, then go idle.
+                        spi_data_in <= 0;
+                        spi_bit_counter <= 0;
+                    end
                 end
             endcase
         end

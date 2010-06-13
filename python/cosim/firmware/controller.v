@@ -269,7 +269,6 @@ module controller(
             ep8_state <= IDLE;
             write_byte_count <= 0;
             ep8_data <= 0;
-            cmd_out_data <= 0;
         end
         else begin
             case (ep8_state)
@@ -333,6 +332,7 @@ module controller(
             outgoing_length <= 0;
             execution_complete <= 0;
             execution_count <= 0;
+            cmd_out_data <= 0;
             cmd_out_next <= 0;
 
             config_state <= INITIALIZING;

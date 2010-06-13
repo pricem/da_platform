@@ -8,7 +8,7 @@ Has everything in it.
 
 module usb_toplevel(
     //  FX2 connections
-    usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full,
+    usb_ifclk, usb_slwr, usb_slrd, usb_sloe, usb_slcs, usb_addr, usb_data_in, usb_data_out, usb_ep2_empty, usb_ep4_empty, usb_ep6_full, usb_ep8_full,
     //  Cell RAM connections
     mem_addr, mem_data, mem_ce, mem_oe, mem_we, mem_clk, mem_wait, mem_addr_valid, mem_cre, mem_lb, mem_ub,
     //  Audio converter connections
@@ -26,6 +26,7 @@ module usb_toplevel(
     output usb_slwr;
     output usb_slrd;
     output usb_sloe;
+    output usb_slcs;
     output [1:0] usb_addr;
     output [7:0] usb_data_in;
     input [7:0] usb_data_out;
@@ -210,6 +211,8 @@ module usb_toplevel(
         end
     end
     
+    //  Assign usb_slcs (chip select for FX2) active low
+    assign usb_slcs = 0;
     
     /* Logic module instances */
     
@@ -469,7 +472,7 @@ module usb_toplevel(
     assign mem_lb_neg = 0;
     
     //  Memory (comment out for synthesis)
-    //  /*
+    /*
     cellram buffer(
         .clk(mem_clk), 
         .ce(mem_ce_neg),
@@ -484,7 +487,7 @@ module usb_toplevel(
         .ub(mem_ub_neg),
         .reset(reset_neg)
         );
-    //  */
+    */
 
     //  Main controller
     controller controller(
@@ -532,7 +535,8 @@ module usb_toplevel(
         .spo(config_data_out),
         .di(config_data), 
         .di2(spi_config_data),
-        .dpo(spi_config_data)
+        .dpo(spi_config_data),
+        .reset(reset)
         );
 
     //  SPI controller
@@ -542,6 +546,7 @@ module usb_toplevel(
         .config_read(spi_config_read), 
         .config_write(spi_config_write), 
         .config_data(spi_config_data),
+        .custom_srclk(custom_srclk),
         .direction(direction),
         .num_channels(num_channels),
         .spi_mclk(spi_mclk), 

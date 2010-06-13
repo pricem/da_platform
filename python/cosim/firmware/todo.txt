@@ -13,6 +13,8 @@ Fix synthesis issues like clock speed, trimming
 Update FX2 firmware to use all endpoints
 -   Determine + document proper algorithm for using only 3 flags with 4 endpoints
 -   Come up with a test for the FX2 firmware using simple software and FPGA firmware (echo EP2->EP6, EP4->EP8, measure accuracy/bitrate?)
+-   Add use of PKTEND to signal when IN packets should be committed, rather than using
+    AUTOIN with 1 byte
 
 Update memory arbitrator
 -   Allow larger deltas than size of tracking FIFOs (wait for read side FIFO to have nearly caught up)
@@ -59,7 +61,8 @@ Allow direction and channels to be byte values deserialized like AOVF, etc.
 Make simple Linux sound card driver framework
 -   Alternatively, make a simple program for playing audio files that writes to EP2
 -   Figure out API for configuration settings, both in SPI
-Make firmware test mode that has DAC data buses looped back to ADC data buses
+
+Make firmware test mode that has DAC data buses looped back to ADC data buses
 
 
 Completed things

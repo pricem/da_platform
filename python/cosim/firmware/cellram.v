@@ -40,7 +40,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     parameter WRITING = 3'b101;
     reg [2:0] mode;
     
-    reg [22:0] config;
+    reg [22:0] config_reg;
     reg [1:0] config_counter;
 
     reg [2:0] write_counter;
@@ -56,7 +56,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
     assign mem_oe = (mode == READING) && ~ce;
 
     //  Assign mem_wait output depending on configuration
-    assign mem_wait = config[10] ? mem_wait_internal : ~mem_wait_internal;
+    assign mem_wait = config_reg[10] ? mem_wait_internal : ~mem_wait_internal;
     
     //  Assign data
     assign mem_data_in = data;
@@ -67,7 +67,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
             
             mode <= IDLE;
             
-            config <= 23'h009D1F;
+            config_reg <= 23'h009D1F;
 
             config_counter <= 0;
             write_counter <= 0;
@@ -85,7 +85,7 @@ module cellram(clk, ce, we, oe, addr, data, reset, cre, mem_wait, adv, lb, ub);
                     if (cre) begin
                         //  Latch new configuration
                         mode <= CONFIGURING;
-                        config <= addr;
+                        config_reg <= addr;
                         config_counter <= 0;
                         mem_wait_internal <= 1;
                     end

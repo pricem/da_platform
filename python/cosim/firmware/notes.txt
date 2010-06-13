@@ -60,6 +60,7 @@ Clock frequencies:
     custom_clk0: 11.2896 MHz
     custom_clk1: 24.576 MHz
     spi_clk: 6 - 9 MHz (clk/16)
+    usb_ifclk: 48 MHz
 
 Command packet format
     Byte 0: header byte (0xFF default)
@@ -76,7 +77,6 @@ Data packet format
 Configuration RAM
     8-bit memory interface by 2k
     Stores 
-
 
 Audio converter serial ports
     DSD1792A: Max 10 MHz
