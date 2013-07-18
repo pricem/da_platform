@@ -1,0 +1,47 @@
+Signal		UART Code		Nexys2 Port		Direction	Note
+------		---------		-----------		---------	----
+
+F1DATA[1]	00				pmod1[0]		BIDIR
+F0DATA[0]	04				pmod1[4]		BIDIR
+F1DATA[0]	01				pmod1[1]		BIDIR
+F0DATA[1]	05				pmod1[5]		BIDIR
+F1DATA[3]	02				pmod1[2]		BIDIR
+F0DATA[2]	06				pmod1[6]		BIDIR
+F1DATA[2]	03				pmod1[3]		BIDIR
+F0DATA[3]	07				pmod1[7]		BIDIR
+F1DATA[5]	08				pmod2[0]		BIDIR
+F0DATA[4]	0C				pmod2[4]		BIDIR
+F1DATA[4]	09				pmod2[1]		BIDIR
+F0DATA[5]	0D				pmod2[5]		BIDIR
+
+F3DATA[1]	---
+F2DATA[0]	0A				pmod2[2]		BIDIR
+F3DATA[0]	---
+F2DATA[1]	0E				pmod2[6]		BIDIR
+F3DATA[3]	---
+F2DATA[2]	0B				pmod2[3]		BIDIR
+F3DATA[2]	---
+F2DATA[3]	0F				pmod2[7]		BIDIR
+F3DATA[5]	---
+F2DATA[4]	---
+F3DATA[4]	---
+F2DATA[5]	---
+
+FASP[0]		10				pmod3[0]		OUT		AMCS - Chip select for ADCs on SPI bus
+FSHARED[0]	14				pmod3[4]		IN
+FASP[1]		11				pmod3[1]		OUT		MCLK - SPI clock for DACs and ADCs
+FACON[3]	15				pmod3[5]		IN
+FASP[2]		12				pmod3[2]		OUT		AMDI - MOSI for ADCs
+FACON[2]	16				pmod3[6]		OUT
+FASP[3]		13				pmod3[3]		IN
+FACON[1]	17				pmod3[7]		OUT
+FDSP[0]		18				pmod4[0]		OUT
+FSHARED[4]	1C				pmod4[4]		IN
+FDSP[1]		19				pmod4[1]		OUT
+FSHARED[3]	1D				pmod4[5]		OUT		CLKSEL - serialized clock select signal (lower 4 bits of 8 are used)
+FDSP[2]		1A				pmod4[2]		IN
+FSHARED[2]	1E				pmod4[6]		OUT		SRCLK - clock for flip-flops after ser->par shift registers, and to load par->ser shift registers (bit clock is MCLK)
+FACON[0]	1B				pmod4[3]		IN
+FSHARED[1]	1F				pmod4[7]		OUT		RESET to ADC and DAC modules
+
+Correct order: 0-4-1-5-2-6-3-7

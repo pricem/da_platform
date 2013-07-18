@@ -1,0 +1,6 @@
+Factory:
+VID 1443
+PID 0005
+Manufacturer name "Digilent"
+Device name "ONBOARD USB"
+
