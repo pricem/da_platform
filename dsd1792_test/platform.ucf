@@ -1,0 +1,123 @@
+#
+# Copyright (C) 2009-2012 Chris McClelland
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+
+#===============================================================================
+# USB interface
+#===============================================================================
+NET "fx2Clk_in"       LOC="T15"  | IOSTANDARD=LVTTL;   # IFCLK
+NET "fx2Addr_out<0>"  LOC="T14"  | IOSTANDARD=LVTTL;   # PA4/FIFOADR0
+NET "fx2Addr_out<1>"  LOC="V13"  | IOSTANDARD=LVTTL;   # PA5/FIFOADR1
+
+NET "fx2Data_io<0>"   LOC="R14"  | IOSTANDARD=LVTTL;   # PB0/FD0
+NET "fx2Data_io<1>"   LOC="R13"  | IOSTANDARD=LVTTL;   # PB1/FD1
+NET "fx2Data_io<2>"   LOC="P13"  | IOSTANDARD=LVTTL;   # PB2/FD2
+NET "fx2Data_io<3>"   LOC="T12"  | IOSTANDARD=LVTTL;   # PB3/FD3
+NET "fx2Data_io<4>"   LOC="N11"  | IOSTANDARD=LVTTL;   # PB4/FD4
+NET "fx2Data_io<5>"   LOC="R11"  | IOSTANDARD=LVTTL;   # PB5/FD5
+NET "fx2Data_io<6>"   LOC="P10"  | IOSTANDARD=LVTTL;   # PB6/FD6
+NET "fx2Data_io<7>"   LOC="R10"  | IOSTANDARD=LVTTL;   # PB7/FD7
+
+NET "fx2Read_out"     LOC="N9"   | IOSTANDARD=LVTTL;   # RDY0/SLRD
+NET "fx2OE_out"       LOC="V15"  | IOSTANDARD=LVTTL;   # PA2/SLOE
+NET "fx2GotData_in"   LOC="V16"  | IOSTANDARD=LVTTL;   # CTL2/FLAGC
+
+NET "fx2Write_out"    LOC="V9"   | IOSTANDARD=LVTTL;   # RDY1/SLWR
+NET "fx2GotRoom_in"   LOC="U14"  | IOSTANDARD=LVTTL;   # CTL1/FLAGB
+NET "fx2PktEnd_out"   LOC="V12"  | IOSTANDARD=LVTTL;   # PA6/PKTEND
+
+#===============================================================================
+# Signals from Nexys2
+#===============================================================================
+NET "gclk0"         LOC = "B8";    # Bank = 0, Pin name = IP_L13P_0/GCLK8, Type = GCLK,                 Sch name = GCLK0
+NET "reset"      LOC = "B18";   # Bank = 1, Pin name = IP, Type = INPUT,                             Sch name = BTN0
+
+#===============================================================================
+# Signals to/from isolator
+#===============================================================================
+
+NET "pmod1<0>"       LOC = "L15";   # Bank = 1, Pin name = IO_L09N_1/A11, Type = DUAL,                   Sch name = JA1
+NET "pmod1<1>"       LOC = "K12";   # Bank = 1, Pin name = IO_L11N_1/A9/RHCLK1, Type = RHCLK/DUAL,       Sch name = JA2
+NET "pmod1<2>"       LOC = "L17";   # Bank = 1, Pin name = IO_L10N_1/VREF_1, Type = VREF,                Sch name = JA3
+NET "pmod1<3>"       LOC = "M15";   # Bank = 1, Pin name = IO_L07P_1, Type = I/O,                        Sch name = JA4
+NET "pmod1<4>"       LOC = "K13";   # Bank = 1, Pin name = IO_L11P_1/A10/RHCLK0, Type = RHCLK/DUAL,      Sch name = JA7
+NET "pmod1<5>"       LOC = "L16";   # Bank = 1, Pin name = IO_L09P_1/A12, Type = DUAL,                   Sch name = JA8
+NET "pmod1<6>"       LOC = "M14";   # Bank = 1, Pin name = IO_L05P_1, Type = I/O,                        Sch name = JA9
+NET "pmod1<7>"       LOC = "M16";   # Bank = 1, Pin name = IO_L07N_1, Type = I/O,                        Sch name = JA10
+
+##JB
+NET "pmod2<0>"       LOC = "M13";   # Bank = 1, Pin name = IO_L05N_1/VREF_1, Type = VREF,                Sch name = JB1
+NET "pmod2<1>"       LOC = "R18";   # Bank = 1, Pin name = IO_L02P_1/A14, Type = DUAL,                   Sch name = JB2
+NET "pmod2<2>"       LOC = "R15";   # Bank = 1, Pin name = IO_L03P_1, Type = I/O,                        Sch name = JB3
+NET "pmod2<3>"       LOC = "T17";   # Bank = 1, Pin name = IO_L01N_1/A15, Type = DUAL,                   Sch name = JB4
+NET "pmod2<4>"       LOC = "P17";   # Bank = 1, Pin name = IO_L06P_1, Type = I/O,                        Sch name = JB7
+NET "pmod2<5>"       LOC = "R16";   # Bank = 1, Pin name = IO_L03N_1/VREF_1, Type = VREF,                Sch name = JB8
+NET "pmod2<6>"       LOC = "T18";   # Bank = 1, Pin name = IO_L02N_1/A13, Type = DUAL,                   Sch name = JB9
+NET "pmod2<7>"       LOC = "U18";   # Bank = 1, Pin name = IO_L01P_1/A16, Type = DUAL,                   Sch name = JB10
+
+##JC
+NET "pmod3<0>"       LOC = "G15";   # Bank = 1, Pin name = IO_L18P_1, Type = I/O,                        Sch name = JC1
+NET "pmod3<1>"       LOC = "J16";   # Bank = 1, Pin name = IO_L13N_1/A5/RHCLK5, Type = RHCLK/DUAL,       Sch name = JC2
+NET "pmod3<2>"       LOC = "G13";   # Bank = 1, Pin name = IO_L20N_1, Type = I/O,                        Sch name = JC3
+NET "pmod3<3>"       LOC = "H16";   # Bank = 1, Pin name = IO_L16P_1, Type = I/O,                        Sch name = JC4
+NET "pmod3<4>"       LOC = "H15";   # Bank = 1, Pin name = IO_L17N_1, Type = I/O,                        Sch name = JC7
+NET "pmod3<5>"       LOC = "F14";   # Bank = 1, Pin name = IO_L21N_1, Type = I/O,                        Sch name = JC8
+NET "pmod3<6>"       LOC = "G16";   # Bank = 1, Pin name = IO_L18N_1, Type = I/O,                        Sch name = JC9
+NET "pmod3<7>"       LOC = "J12";   # Bank = 1, Pin name = IO_L15P_1/A2, Type = DUAL,                    Sch name = JC10
+
+##JD - NOTE: For other JD pins see LD(3:0) above under "Leds"
+NET "pmod4<0>"       LOC = "J13";   # Bank = 1, Pin name = IO_L15N_1/A1, Type = DUAL,                    Sch name = JD1
+NET "pmod4<1>"       LOC = "M18";   # Bank = 1, Pin name = IO_L08N_1, Type = I/O,                        Sch name = JD2
+NET "pmod4<2>"       LOC = "N18";   # Bank = 1, Pin name = IO_L08P_1, Type = I/O,                        Sch name = JD3
+NET "pmod4<3>"       LOC = "P18";   # Bank = 1, Pin name = IO_L06N_1, Type = I/O,                        Sch name = JD4
+NET "pmod4<4>"      LOC = "K14";   # Bank = 1, Pin name = IO_L12N_1/A7/RHCLK3/TRDY1, Type = RHCLK/DUAL, Sch name = JD7/LD3
+NET "pmod4<5>"      LOC = "K15";   # Bank = 1, Pin name = IO_L12P_1/A8/RHCLK2, Type = RHCLK/DUAL,       Sch name = JD8/LD2
+NET "pmod4<6>"      LOC = "J15";   # Bank = 1, Pin name = IO_L14P_1/A4/RHCLK6, Type = RHCLK/DUAL,       Sch name = JD9/LD1
+NET "pmod4<7>"      LOC = "J14";   # Bank = 1, Pin name = IO_L14N_1/A3/RHCLK7, Type = RHCLK/DUAL,       Sch name = JD10/LD0
+
+
+#===============================================================================
+# Timing constraint of FX2 48MHz clock "fx2Clk_in"
+#===============================================================================
+NET "fx2Clk_in" CLOCK_DEDICATED_ROUTE = FALSE;
+NET "fx2Clk_in" TNM_NET = "fx2Clk_in";
+TIMESPEC "TS_clk" = PERIOD "fx2Clk_in" 20 ns HIGH 50 %;
+
+#===============================================================================
+# Timing constraint of Nexys2 50MHz clock "gclk0"
+#===============================================================================
+NET "gclk0" CLOCK_DEDICATED_ROUTE = FALSE;
+NET "gclk0" TNM_NET = "gclk0";
+TIMESPEC "TS_gclk0" = PERIOD "gclk0" 20 ns HIGH 50 %;
+
+NET "pmod4<4>" CLOCK_DEDICATED_ROUTE = FALSE;
+NET "pmod4<4>" TNM_NET = "clk0";
+TIMESPEC "TS_clk0" = PERIOD "clk0" 20 ns HIGH 50 %;
+
+NET "pmod3<4>" CLOCK_DEDICATED_ROUTE = FALSE;
+NET "pmod3<4>" TNM_NET = "clk1";
+TIMESPEC "TS_clk1" = PERIOD "clk1" 20 ns HIGH 50 %;
+
+TIMESPEC TS_false_path_1a = FROM "gclk0" TO "clk0" TIG ;
+TIMESPEC TS_false_path_1b = FROM "clk0" TO "gclk0" TIG ;
+
+TIMESPEC TS_false_path_2a = FROM "gclk0" TO "clk1" TIG ;
+TIMESPEC TS_false_path_2b = FROM "clk1" TO "gclk0" TIG ;
+
+TIMESPEC TS_false_path_3a = FROM "clk0" TO "clk1" TIG ;
+TIMESPEC TS_false_path_3b = FROM "clk1" TO "clk0" TIG ;
