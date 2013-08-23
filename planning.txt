@@ -1,0 +1,7 @@
+CDP work planning - Summer 2013
+
+Get PMOD DAC working over USB - drive headphones
+
+Get full complement of regulators working - +/- 15, +5, +3.3D, +3.3A
+
+
