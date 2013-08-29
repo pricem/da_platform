@@ -1,14 +1,20 @@
 module da_platform(
     //  Connections on Nexys2 board
     clk_nexys, clk_fx2, reset,
+    clk_mem_out, mem_adv_n, mem_ce_n, mem_oe_n, mem_we_n, mem_cre, mem_lb_n, mem_ub_n, mem_wait,
+	mem_dq, mem_a,
 
     //  Interface to FPGALink
     chanAddr, h2fData, h2fValid, h2fReady, f2hData, f2hValid, f2hReady,
 
     //  Interface to isolator board
     slotdata,
-    mclk, amcs, amdi, amdo, dmcs, dmdi, dmdo, dirchan, acon, aovf, clk0, reset_out, srclk, clksel, clk1
+    mclk, amcs, amdi, amdo, dmcs, dmdi, dmdo, dirchan, acon, aovf, clk0, reset_out, srclk, clksel, clk1,
+    spi_state
 );
+
+`include "parameters.v"
+
 
 parameter M = 6;
 
@@ -18,6 +24,19 @@ parameter M = 6;
 input clk_nexys;
 input clk_fx2;
 input reset;
+
+output clk_mem_out;
+output mem_adv_n;
+output mem_ce_n;
+output mem_oe_n;
+output mem_we_n;
+output mem_cre;
+output mem_lb_n;
+output mem_ub_n;
+input mem_wait;
+
+inout [Nb-1:0] mem_dq;
+output [Nb_addr-1:0] mem_a;
 
 //  Interface to FPGALink
 input [6:0] chanAddr;
@@ -52,6 +71,7 @@ output srclk;               //  Clock for (parallel) shift registers
 output clksel;              //  Selector between clocks for each DAC/ADC board (serialized)
 input clk1;                 //  24.576 MHz clock from low jitter oscillator
 
+output [3:0] spi_state;
 
 //  Keep everything out of reset for now
 assign reset_out = !reset;
@@ -91,6 +111,56 @@ wire clk0_last;
 delay clk0_delay(clk_core, reset, clk0, clk0_last);
 wire clk1_last;
 delay clk1_delay(clk_core, reset, clk1, clk1_last);
+
+
+//  CellRAM interface
+
+wire [Nb_bl-1:0] cmd_bl;
+wire [Nb_inst-1:0] cmd_instr;
+wire [Nb_addr-1:0] cmd_addr;
+wire cmd_valid;
+wire cmd_ready;
+wire [M_fc:0] cmd_count;
+
+wire [Nb-1:0] wr_data;
+wire wr_valid;
+wire wr_ready;
+wire [M_fw:0] wr_count;
+
+wire rd_ready;
+wire [Nb-1:0] rd_data;
+wire rd_valid;
+wire [M_fr:0] rd_count;
+
+cellram_interface interface (
+	.reset(reset),
+	.clk_core(clk_core), 
+	.clk_mem_out(clk_mem_out),
+	.cmd_bl(cmd_bl), 
+	.cmd_instr(cmd_instr), 
+	.cmd_addr(cmd_addr), 
+	.cmd_valid(cmd_valid), 
+	.cmd_ready(cmd_ready), 
+	.cmd_count(cmd_count), 
+	.wr_data(wr_data), 
+	.wr_valid(wr_valid), 
+	.wr_ready(wr_ready), 
+	.wr_count(wr_count),
+	.rd_valid(rd_valid), 
+	.rd_data(rd_data), 
+	.rd_ready(rd_ready), 
+	.rd_count(rd_count),
+	.mem_adv_n(mem_adv_n), 
+	.mem_ce_n(mem_ce_n), 
+	.mem_oe_n(mem_oe_n), 
+	.mem_we_n(mem_we_n), 
+	.mem_cre(mem_cre), 
+	.mem_lb_n(mem_lb_n), 
+	.mem_ub_n(mem_ub_n), 
+	.mem_wait(mem_wait),
+	.mem_dq(mem_dq), 
+	.mem_a(mem_a)
+);
 
 //  Parallel versions of serialized signals
 
@@ -230,6 +300,43 @@ assign aud_rd_data = read_fifo_rd_data;
 assign ctl_rd_valid = read_fifo_rd_valid && (state == STATE_HANDLE_READ) && (current_cmd == CMD_FIFO_WRITE) && (byte_counter >= 4) && (byte_counter < fifo_read_length + 4);
 assign ctl_rd_data = read_fifo_rd_data;
 
+/*  Replace audio read/write FIFOs with CellRAM     */
+
+wire [3:0] aud_slots_rd_ready;
+wire [3:0] aud_slots_rd_valid;
+wire [31:0] aud_slots_rd_data;
+wire [3:0] aud_slots_wr_ready;
+wire [3:0] aud_slots_wr_valid;
+wire [31:0] aud_slots_wr_data;
+
+fifo_arbiter arbiter(
+    .reset(reset), 
+    .clk_core(clk_core),
+	.cmd_bl(cmd_bl), 
+	.cmd_instr(cmd_instr), 
+	.cmd_addr(cmd_addr), 
+	.cmd_valid(cmd_valid), 
+	.cmd_ready(cmd_ready), 
+	.cmd_count(cmd_count), 
+	.wr_data(wr_data), 
+	.wr_valid(wr_valid), 
+	.wr_ready(wr_ready), 
+	.wr_count(wr_count),
+	.rd_valid(rd_valid), 
+	.rd_data(rd_data), 
+	.rd_ready(rd_ready), 
+	.rd_count(rd_count),
+	.ports_rd_ready(aud_slots_rd_ready), 
+	.ports_rd_valid(aud_slots_rd_valid), 
+	.ports_rd_data(aud_slots_rd_data),
+	.ports_wr_ready(aud_slots_wr_ready), 
+	.ports_wr_valid(aud_slots_wr_valid), 
+	.ports_wr_data(aud_slots_wr_data)
+);
+defparam arbiter.num_ports = 4;
+
+
+
 genvar g;
 generate for (g = 0; g < 4; g = g + 1) begin: slots
 
@@ -244,17 +351,6 @@ generate for (g = 0; g < 4; g = g + 1) begin: slots
     wire [7:0] slot_ctl_wr_data;
     assign ctl_wr_data = (slot_index == g) ? slot_ctl_wr_data : 8'bzzzzzzzz;
     wire slot_ctl_wr_ready = (slot_index == g) ? ctl_wr_ready : 0;
-    
-    wire slot_aud_rd_valid = (slot_index == g) ? aud_rd_valid : 0;
-    wire [7:0] slot_aud_rd_data = (slot_index == g) ? aud_rd_data : 0;
-    wire slot_aud_rd_ready;
-    assign aud_rd_ready = (slot_index == g) ? slot_aud_rd_ready : 1'bz;
-    
-    wire slot_aud_wr_valid;
-    assign aud_wr_valid = (slot_index == g) ? slot_aud_wr_valid : 1'bz;
-    wire [7:0] slot_aud_wr_data;
-    assign aud_wr_data = (slot_index == g) ? slot_aud_wr_data : 8'bzzzzzzzz;
-    wire slot_aud_wr_ready = (slot_index == g) ? aud_wr_ready : 0;
     
     wire slot_clk = (!clk_inhibit[g]) && (clksel_parallel[g] ? clk1 : clk0);
 
@@ -275,6 +371,10 @@ generate for (g = 0; g < 4; g = g + 1) begin: slots
     assign amdi = ((slot_dir == 0) && (slot_spi_ss_in == 0)) ? slot_spi_mosi : 1'bz;
     assign dmdi = ((slot_dir == 1) && (slot_spi_ss_in == 0)) ? slot_spi_mosi : 1'bz;
     wire slot_spi_miso = slot_dir ? dmdo : amdo;
+    
+    //  Debug - monitor SPI state
+    wire [3:0] slot_spi_state;
+    assign spi_state = (g == 0) ? slot_spi_state : 4'bzzzz;
 
     //  FIFOs - control and audio, read and write
     
@@ -291,8 +391,8 @@ generate for (g = 0; g < 4; g = g + 1) begin: slots
     wire [7:0] int_aud_wr_data;
     wire int_aud_wr_ready;
     
-    wire [2:0] ctl_rd_fifo_count;
-    fifo_sync #(.Nb(8), .M(2)) ctl_rd_fifo(
+    wire [4:0] ctl_rd_fifo_count;
+    fifo_sync #(.Nb(8), .M(4)) ctl_rd_fifo(
     	.clk(clk_core), 
     	.reset(reset_core),
     	.wr_valid(slot_ctl_rd_valid), 
@@ -304,8 +404,8 @@ generate for (g = 0; g < 4; g = g + 1) begin: slots
     	.count(ctl_rd_fifo_count)
     );
     
-    wire [2:0] ctl_wr_fifo_count;
-    fifo_sync #(.Nb(8), .M(2)) ctl_wr_fifo(
+    wire [4:0] ctl_wr_fifo_count;
+    fifo_sync #(.Nb(8), .M(4)) ctl_wr_fifo(
     	.clk(clk_core), 
     	.reset(reset_core),
     	.wr_valid(int_ctl_wr_valid), 
@@ -317,31 +417,17 @@ generate for (g = 0; g < 4; g = g + 1) begin: slots
     	.count(ctl_wr_fifo_count)
     );
     
-    wire [4:0] aud_rd_fifo_count;
-    fifo_sync #(.Nb(8), .M(4)) aud_rd_fifo(
-    	.clk(clk_core), 
-    	.reset(reset_core),
-    	.wr_valid(slot_aud_rd_valid), 
-    	.wr_data(slot_aud_rd_data),
-    	.wr_ready(slot_aud_rd_ready),
-    	.rd_ready(int_aud_rd_ready),
-    	.rd_valid(int_aud_rd_valid), 
-    	.rd_data(int_aud_rd_data),
-    	.count(aud_rd_fifo_count)
-    );
+    //  Audio read and write FIFOs were replaced by CellRAM based FIFO - mux between ADC and DAC directions
+    assign int_aud_rd_valid = slot_dir ? aud_slots_rd_valid[g] : 1'b0;
+    assign int_aud_rd_data = slot_dir ? aud_slots_rd_data[(g+1)*8-1:g*8] : 8'h00;
+    assign aud_slots_rd_ready[g] = slot_dir ? int_aud_rd_ready : ((slot_index == g) && aud_wr_ready);
     
-    wire [4:0] aud_wr_fifo_count;
-    fifo_sync #(.Nb(8), .M(4)) aud_wr_fifo(
-    	.clk(clk_core), 
-    	.reset(reset_core),
-    	.wr_valid(int_aud_wr_valid), 
-    	.wr_data(int_aud_wr_data),
-    	.wr_ready(int_aud_wr_ready),
-    	.rd_ready(slot_aud_wr_ready),
-    	.rd_valid(slot_aud_wr_valid), 
-    	.rd_data(slot_aud_wr_data),
-    	.count(aud_wr_fifo_count)
-    );
+    assign aud_slots_wr_valid[g] = slot_dir ? ((slot_index == g) ? aud_rd_valid : 1'b0) : int_aud_wr_valid;
+    assign aud_slots_wr_data[(g+1)*8-1:g*8] = slot_dir ? ((slot_index == g) ? aud_rd_data : 8'h00) : int_aud_wr_data;
+    assign int_aud_wr_ready = slot_dir ? 1'b0 : aud_slots_wr_ready[g];
+    
+    //  Global "ready to receive audio data" signal
+    assign aud_rd_ready = (slot_index == g) ? (slot_dir ? aud_slots_wr_ready[g] : 1'b1) : 1'bz;
 
     //  Slot controllers
     slot_controller ctl(
@@ -370,7 +456,8 @@ generate for (g = 0; g < 4; g = g + 1) begin: slots
         .dir(slot_dir), 
         .chan(slot_chan), 
         .acon(slot_acon), 
-        .aovf(slot_aovf)
+        .aovf(slot_aovf),
+        .spi_state(slot_spi_state)
     );
 
 end

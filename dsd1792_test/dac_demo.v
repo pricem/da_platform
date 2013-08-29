@@ -1,5 +1,5 @@
 module
-	top_level(
+	dac_demo(
 		// FX2 interface -----------------------------------------------------------------------------
 		input  wire      fx2Clk_in,     // 48MHz clock from FX2
 		output wire[1:0] fx2Addr_out,   // select FIFO: "10" for EP6OUT, "11" for EP8IN
@@ -15,29 +15,9 @@ module
 		input  wire      fx2GotRoom_in, // asserted (active-high) when FX2 has room for more data from us
 		output wire      fx2PktEnd_out, // asserted (active-low) when a host read needs to be committed early
 
-		//	Extra connections on Nexys2 board
-
         input wire gclk0,   //  Nexys2 50 MHz clock
         input wire reset,   //  User button 0
-		
-        inout wire [7:0]  pmod1, 
-		inout wire [7:0]  pmod2, 
-		inout wire [7:0]  pmod3, 
-		inout wire [7:0]  pmod4,
-		
-		output wire clk_mem_out,		//	CellRAM bus
-		output wire mem_adv_n,
-		output wire mem_ce_n,
-		output wire mem_oe_n,
-		output wire mem_we_n,
-		output wire mem_cre,
-		output wire mem_lb_n,
-		output wire mem_ub_n,
-		input wire mem_wait,
-		inout wire [15:0] mem_dq,
-		output wire [22:0] mem_a,
-
-		output wire [3:0] spi_state
+        output wire [3:0] pmod1a_data
 	);
 
 	// Channel read/write interface -----------------------------------------------------------------
@@ -104,59 +84,22 @@ module
 		.f2hReady_out(f2hReady)
 	);
 
-	wire [5:0] slotdata3;
-	wire [5:0] slotdata2;
-
     //  DAC driving module
-    da_platform main(
-	    .clk_nexys(gclk0), 
-		.clk_fx2(fx2Clk_in), 
-		.reset(reset),
+    dac_control dac_ctl(
+        .clk_in(gclk0), 
+        .reset(reset), 
+        .clk_fx2(fx2Clk_in),
+        .chanAddr(chanAddr), 
+        .h2fData(h2fData), 
+        .h2fValid(h2fValid), 
+        .h2fReady(h2fReady), 
+        .f2hData(f2hData), 
+        .f2hValid(f2hValid), 
+        .f2hReady(f2hReady),
+        .dac_sclk(pmod1a_data[3]), 
+        .dac_dina(pmod1a_data[1]), 
+        .dac_dinb(pmod1a_data[2]), 
+        .dac_sync(pmod1a_data[0])
+    );
 
-		.clk_mem_out(clk_mem_out), 
-		.mem_adv_n(mem_adv_n), 
-		.mem_ce_n(mem_ce_n), 
-		.mem_oe_n(mem_oe_n), 
-		.mem_we_n(mem_we_n), 
-		.mem_cre(mem_cre), 
-		.mem_lb_n(mem_lb_n), 
-		.mem_ub_n(mem_ub_n), 
-		.mem_wait(mem_wait),
-		.mem_dq(mem_dq),
-		.mem_a(mem_a),
-
-		.chanAddr(chanAddr), 
-		.h2fData(h2fData), 
-		.h2fValid(h2fValid), 
-		.h2fReady(h2fReady), 
-		.f2hData(f2hData), 
-		.f2hValid(f2hValid), 
-		.f2hReady(f2hReady),
-
-		.slotdata({
-			slotdata3, 
-			slotdata2, 
-			pmod2[0], pmod2[1], pmod1[2], pmod1[3], pmod1[0], pmod1[1],	//	Slot 1
-			pmod2[5], pmod2[4], pmod1[7], pmod1[6], pmod1[5], pmod1[4] 	//	Slot 0
-		}),
-		.mclk(pmod3[1]), 
-		.amcs(pmod3[0]), 
-		.amdi(pmod3[2]), 
-		.amdo(pmod3[3]), 
-		.dmcs(pmod4[0]), 
-		.dmdi(pmod4[1]), 
-		.dmdo(pmod4[2]), 
-		.dirchan(pmod4[3]), 
-		.acon({pmod3[6], pmod3[7]}), 
-		.aovf(pmod3[5]), 
-		.clk0(pmod4[4]), 
-		.reset_out(pmod4[7]), 
-		.srclk(pmod4[6]), 
-		.clksel(pmod4[5]), 
-		.clk1(pmod3[4]),
-		.spi_state(spi_state)
-	);
-	
-	
-	
 endmodule

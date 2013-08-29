@@ -1,7 +1,7 @@
 module spi_master(clk, reset, clk_serial,
     request_valid, request_data, request_ready, 
     response_valid, response_data, response_ready,
-    sck, ss_out, ss_in, mosi, miso
+    sck, ss_out, ss_in, mosi, miso, state
 );
 
 parameter M = 2;
@@ -36,7 +36,7 @@ parameter STATE_SEND_DATA = 4'h2;
 parameter STATE_READ_DATA = 4'h3;
 parameter STATE_RESPOND = 4'h4;
 
-reg [3:0] state;
+output reg [3:0] state;
 
 reg [3:0] bit_counter;
 reg [4:0] num_ss_cycles;

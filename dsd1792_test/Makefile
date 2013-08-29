@@ -29,6 +29,9 @@ HDLS      := \
 	spi_master.v \
 	serializer.v \
 	deserializer.v \
+	cellram_interface.v \
+	fifo_arbiter.v \
+	fifo_byte_adapter.v \
 	../comm_fpga/comm_fpga_fx2.v
 
 include $(COMMON)/top.mk

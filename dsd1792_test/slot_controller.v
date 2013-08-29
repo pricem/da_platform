@@ -4,7 +4,8 @@ module slot_controller(clk_core, reset,
     aud_rd_valid, aud_rd_data, aud_rd_ready,
     aud_wr_valid, aud_wr_data, aud_wr_ready,
     spi_ss_out, spi_ss_in, spi_sck, spi_mosi, spi_miso,
-    slot_data, slot_clk, mclk, dir, chan, acon, aovf
+    slot_data, slot_clk, mclk, dir, chan, acon, aovf,
+    spi_state
 );
 
 `include "commands.v"
@@ -42,24 +43,9 @@ input chan;
 output reg [7:0] acon;
 input [1:0] aovf;
 
-
+output [3:0] spi_state;
 
 wire [5:0] slot_data_val;
-
-//  2 channel DAC mode
-reg pbck;
-reg plrck;
-reg pdata;
-wire dbck = 0;
-wire dsdr = 0;
-wire dsdl = 0;
-assign slot_data_val = {pbck, pdata, plrck, dbck, dsdr, dsdl};
-
-reg slot_data_en;
-assign slot_data = slot_data_en ? slot_data_val : 6'bzzzzzz;
-
-
-
 
 reg [9:0] audio_clk_ratio;
 reg [3:0] audio_sample_res;
@@ -76,6 +62,23 @@ reg [23:0] audio_sample_right_next;
 reg [3:0] audio_bytes_received;
 reg [3:0] audio_bytes_requested;
 
+wire pdata_left_active = (audio_clk_counter > 4) && (audio_clk_counter <= 100);
+wire pdata_right_active = (audio_clk_counter > 132) && (audio_clk_counter <= 228);
+wire pdata_active = pdata_left_active || pdata_right_active;
+
+//  2 channel DAC mode
+reg pbck;
+reg plrck;
+//  wire plrck;
+reg pdata;
+wire dbck = 0;
+wire dsdr = 0;
+wire dsdl = 0;
+//  wire pdata_mod = pdata || !pdata_active;
+assign slot_data_val = {pbck, pdata, plrck, dbck, dsdr, dsdl};
+
+reg slot_data_en;
+assign slot_data = slot_data_en ? slot_data_val : 6'bzzzzzz;
 
 //  SPI controller
 
@@ -109,7 +112,8 @@ spi_master spi(
     .ss_out(spi_ss_out), 
     .ss_in(spi_ss_in),
     .mosi(spi_mosi), 
-    .miso(spi_miso)
+    .miso(spi_miso),
+    .state(spi_state)
 );
 
 reg [3:0] byte_counter;
@@ -146,6 +150,11 @@ fifo_async audio_rx_fifo(
 defparam audio_rx_fifo.Nb = 8;
 defparam audio_rx_fifo.M = 4;
 defparam audio_rx_fifo.N = 16;
+/*
+clk_divider lrclk_divider(reset, slot_clk, plrck);
+defparam lrclk_divider.ratio = 192;
+defparam lrclk_divider.threshold = 96;
+*/
 
 
 //  Sequential logic - audio
@@ -184,13 +193,29 @@ always @(posedge slot_clk) begin
         if (dir && !chan) begin
             slot_data_en <= 1;  
             
+            //  Digital filtering in DSD1792
             //  Audio serial port
-            pbck <= (audio_clk_counter / 2);
-            plrck <= !(audio_clk_counter / 128);
+            pbck <= audio_clk_counter / 2;
+            plrck <= (audio_clk_counter / 128);
+            /*
+            //  Standard right justified format
             if (audio_clk_counter < 128)
                 pdata <= audio_sample_left >> (31 - (audio_clk_counter / 4));
             else
                 pdata <= audio_sample_right >> (31 - ((audio_clk_counter - 128) / 4));
+            */
+            //  I2S format
+            if (audio_clk_counter < audio_clk_ratio / 2)
+                pdata <= audio_sample_left >> (24 - audio_clk_counter / 4);
+            else
+                pdata <= audio_sample_right >> (24 - (audio_clk_counter - audio_clk_ratio / 2) / 4);
+            
+            /*
+            //  Digital filter here, bypassing digital filter in DSD1792
+            pbck <= audio_clk_counter;
+            plrck <= (audio_clk_counter / 32);
+            pdata <= audio_sample_right >> (31 - ((audio_clk_counter / 2) % 32));
+            */
         end
         
         if (audio_clk_counter == 0) begin
