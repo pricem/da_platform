@@ -1,0 +1,232 @@
+[size] 1600 1124
+[pos] -1 -1
+*-20.000000 13000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] da_platform_tb.
+[treeopen] da_platform_tb.dut.
+[treeopen] da_platform_tb.dut.slots[0].
+[treeopen] da_platform_tb.dut.slots[1].
+[treeopen] da_platform_tb.dut.slots[1].ctl.
+[treeopen] da_platform_tb.dut.slots[2].
+[treeopen] da_platform_tb.dut.slots[3].
+[treeopen] da_platform_tb.spi_slaves[1].
+[treeopen] da_platform_tb.spi_slaves[1].adc_spi.
+@28
+da_platform_tb.clk0
+da_platform_tb.clk1
+da_platform_tb.clk_core
+da_platform_tb.clk_fx2
+da_platform_tb.dut.reset_core
+da_platform_tb.mclk
+da_platform_tb.srclk
+@200
+-Echo
+@22
+da_platform_tb.dut.echo_count[3:0]
+da_platform_tb.dut.echo_fifo_count[4:0]
+@28
+da_platform_tb.dut.echo_wr_ready
+da_platform_tb.dut.echo_wr_valid
+@22
+da_platform_tb.dut.echo_wr_data[7:0]
+@28
+da_platform_tb.dut.echo_rd_ready
+da_platform_tb.dut.echo_rd_valid
+@22
+da_platform_tb.dut.echo_rd_data[7:0]
+@200
+-FIFOs
+@28
+da_platform_tb.dut.read_fifo_rd_ready
+@22
+da_platform_tb.dut.read_fifo_rd_data[7:0]
+@28
+da_platform_tb.dut.read_fifo_rd_valid
+da_platform_tb.dut.write_fifo_wr_ready
+da_platform_tb.dut.write_fifo_wr_valid
+@22
+da_platform_tb.dut.write_fifo_wr_data[7:0]
+@24
+da_platform_tb.dut.fifo_read_length[23:0]
+da_platform_tb.dut.byte_counter[23:0]
+@22
+da_platform_tb.dut.data_checksum_calculated[15:0]
+da_platform_tb.dut.data_checksum_received[15:0]
+da_platform_tb.dut.current_cmd[7:0]
+da_platform_tb.dut.current_report[7:0]
+da_platform_tb.dut.state[3:0]
+@200
+-Top level control
+@22
+da_platform_tb.dut.state[3:0]
+da_platform_tb.dut.current_cmd[7:0]
+da_platform_tb.dut.current_report[7:0]
+da_platform_tb.dut.aovf_parallel[7:0]
+da_platform_tb.dut.dirchan_parallel[7:0]
+da_platform_tb.dut.clksel_parallel[7:0]
+@28
+da_platform_tb.dut.ctl_wr_ready
+da_platform_tb.dut.ctl_wr_valid
+@22
+da_platform_tb.dut.ctl_wr_data[7:0]
+@24
+da_platform_tb.dut.byte_counter[23:0]
+@28
+da_platform_tb.dut.ctl_wr_valid
+@200
+-Testbench
+@28
+da_platform_tb.tb_read_fifo_rd_ready
+da_platform_tb.tb_read_fifo_rd_valid
+@22
+da_platform_tb.tb_read_fifo_rd_data[7:0]
+@28
+da_platform_tb.tb_write_fifo_wr_valid
+@22
+da_platform_tb.tb_write_fifo_wr_data[7:0]
+da_platform_tb.dut.clk_inhibit[3:0]
+@28
+da_platform_tb.dut.aud_rd_valid
+@22
+da_platform_tb.dut.aud_rd_data[7:0]
+da_platform_tb.dut.slot_index[7:0]
+@200
+-Global SPI port
+@28
+da_platform_tb.dut.srclk
+da_platform_tb.dmcs
+da_platform_tb.dut.dmdi
+da_platform_tb.dut.dmdo
+@22
+da_platform_tb.dmcs_parallel[7:0]
+da_platform_tb.dmcs_parallel[7:0]
+@28
+da_platform_tb.dut.amcs
+@22
+da_platform_tb.dut.amcs_parallel[7:0]
+da_platform_tb.amcs_parallel[7:0]
+@28
+da_platform_tb.dut.reset_mclk
+@200
+-Slot 0
+@28
+da_platform_tb.dut.slots[0].ctl.slot_clk
+da_platform_tb.dut.slots[0].ctl.reset
+@200
+-Slot 1
+@28
+da_platform_tb.dut.slots[1].ctl.slot_clk
+da_platform_tb.dut.slots[1].ctl.reset
+da_platform_tb.dut.slots[1].ctl.ctl_wr_ready
+da_platform_tb.dut.slots[1].ctl.ctl_wr_valid
+@22
+da_platform_tb.dut.slots[1].ctl.ctl_wr_data[7:0]
+@200
+-SPI master
+@28
+da_platform_tb.dut.slots[1].ctl.spi.request_valid
+@22
+da_platform_tb.dut.slots[1].ctl.spi.state[3:0]
+da_platform_tb.dut.slots[1].ctl.spi.bit_counter[3:0]
+da_platform_tb.dut.slots[1].ctl.spi.request_data[34:0]
+@28
+da_platform_tb.dut.slots[1].ctl.spi.request_isread
+@22
+da_platform_tb.dut.slots[1].ctl.spi.request_data_contents[15:0]
+@28
+da_platform_tb.dut.slots[1].ctl.spi.request_data_bytes
+@22
+da_platform_tb.dut.slots[1].ctl.spi.request_addr_contents[15:0]
+@28
+da_platform_tb.dut.slots[1].ctl.spi.request_addr_bytes
+da_platform_tb.dut.slots[1].ctl.spi.sck
+da_platform_tb.dut.slots[1].ctl.spi.mosi
+da_platform_tb.dut.slots[1].ctl.spi.miso
+da_platform_tb.dut.slots[1].ctl.spi.response_fifo_wr_valid
+@22
+da_platform_tb.dut.slots[1].ctl.spi.response_fifo_wr_data[31:0]
+da_platform_tb.dut.slots[1].ctl.spi.request_addr_contents[15:0]
+@28
+da_platform_tb.dut.slots[1].ctl.spi.response_ready
+@200
+-SPI slave
+@28
+da_platform_tb.spi_slaves[1].adc_spi.ss
+da_platform_tb.spi_slaves[1].adc_spi.sck
+da_platform_tb.spi_slaves[1].adc_spi.mosi
+@22
+da_platform_tb.spi_slaves[1].adc_spi.read_addr[6:0]
+@28
+da_platform_tb.spi_slaves[1].adc_spi.miso
+@22
+da_platform_tb.spi_slaves[1].adc_spi.bit_counter[3:0]
+@200
+-Audio read FIFO
+@28
+da_platform_tb.dut.slots[1].aud_rd_fifo.wr_valid
+@22
+da_platform_tb.dut.slots[1].aud_rd_fifo.wr_data[7:0]
+@28
+da_platform_tb.dut.slots[1].aud_rd_fifo.wr_ready
+@200
+-Command read FIFO
+@28
+da_platform_tb.dut.slots[1].ctl_rd_fifo.wr_valid
+@22
+da_platform_tb.dut.slots[1].ctl_rd_fifo.wr_data[7:0]
+@200
+-RX FIFO
+@28
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.wr_clk
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.wr_ready
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.wr_valid
+@22
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.wr_data[7:0]
+@28
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.rd_clk
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.reset
+@22
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.wr_addr_bin[4:0]
+@28
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.rd_ready
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.rd_valid
+@22
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.rd_addr_bin[4:0]
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo.rd_data[7:0]
+@200
+-Audio serial port
+@24
+da_platform_tb.dut.slots[1].ctl.audio_clk_counter[9:0]
+@22
+da_platform_tb.dut.slots[1].ctl.audio_bytes_received[3:0]
+@28
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo_rd_ready
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo_rd_valid
+@22
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo_rd_data[7:0]
+@28
+da_platform_tb.dut.slots[1].ctl.aud_rd_valid
+@22
+da_platform_tb.dut.slots[1].ctl.aud_rd_data[7:0]
+@28
+da_platform_tb.dut.slots[1].ctl.aud_rd_ready
+@22
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo_wr_count[4:0]
+da_platform_tb.dut.slots[1].ctl.audio_rx_fifo_rd_count[4:0]
+da_platform_tb.dut.slots[1].ctl.audio_sample_left_next[23:0]
+da_platform_tb.dut.slots[1].ctl.audio_sample_right_next[23:0]
+da_platform_tb.dut.slots[1].ctl.audio_sample_right[23:0]
+@28
+da_platform_tb.dut.slots[1].ctl.audio_sample_left[23:0]
+da_platform_tb.dut.slots[1].ctl.plrck
+da_platform_tb.dut.slots[1].ctl.pbck
+da_platform_tb.dut.slots[1].ctl.pdata
+@200
+-Slot 2
+@28
+da_platform_tb.dut.slots[2].ctl.slot_clk
+da_platform_tb.dut.slots[2].ctl.reset
+@200
+-Slot 3
+@28
+da_platform_tb.dut.slots[3].ctl.slot_clk
+da_platform_tb.dut.slots[3].ctl.reset

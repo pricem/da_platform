@@ -1,0 +1,34 @@
+[size] 1506 1090
+[pos] -1 -1
+*-18.000000 1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] cellram_tb.
+@28
+cellram_tb.clk_core
+@200
+-Interface bus
+@28
+cellram_tb.cmd_valid
+cellram_tb.cmd_ready
+cellram_tb.wr_valid
+@22
+cellram_tb.wr_data[15:0]
+@200
+-Memory bus
+@28
+cellram_tb.mem_adv_n
+@22
+cellram_tb.mem_addr[22:0]
+@28
+cellram_tb.mem_ce_n
+cellram_tb.mem_oe_n
+cellram_tb.mem_we_n
+cellram_tb.mem_wait
+cellram_tb.mem_cre
+@22
+cellram_tb.mem_dq[15:0]
+@28
+cellram_tb.mem_lb_n
+cellram_tb.mem_ub_n
+@200
+-Inside interface
+-Inside memory

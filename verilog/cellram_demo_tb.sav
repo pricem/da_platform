@@ -1,0 +1,56 @@
+[*]
+[*] GTKWave Analyzer v3.3.58 (w)1999-2014 BSI
+[*] Sun Oct 12 17:32:24 2014
+[*]
+[dumpfile] "/media/sf_cdp/verilog/cellram_demo_tb.vcd"
+[dumpfile_mtime] "Sun Oct 12 17:30:39 2014"
+[dumpfile_size] 17630
+[savefile] "/media/sf_cdp/verilog/cellram_demo_tb.sav"
+[timestart] 0
+[size] 1873 1071
+[pos] -1 -443
+*-19.000000 288000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] cellram_demo_tb.
+[sst_width] 217
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 328
+@28
+cellram_demo_tb.dut.clk_nexys
+cellram_demo_tb.dut.clk_mem_out
+@200
+-FPGALink
+@28
+cellram_demo_tb.dut.h2fReady
+cellram_demo_tb.dut.h2fValid
+@22
+cellram_demo_tb.dut.h2fData[7:0]
+@28
+cellram_demo_tb.dut.f2hReady
+cellram_demo_tb.dut.f2hValid
+@22
+cellram_demo_tb.dut.f2hData[7:0]
+@200
+-Mem interface
+@28
+cellram_demo_tb.dut.cmd_ready
+cellram_demo_tb.dut.cmd_valid
+@22
+cellram_demo_tb.dut.cmd_bl[5:0]
+@28
+cellram_demo_tb.dut.cmd_count[2:0]
+cellram_demo_tb.dut.cmd_instr[2:0]
+cellram_demo_tb.dut.rd_valid
+cellram_demo_tb.dut.rd_ready
+@22
+cellram_demo_tb.dut.rd_data[15:0]
+cellram_demo_tb.dut.rd_count[6:0]
+@28
+cellram_demo_tb.dut.wr_valid
+cellram_demo_tb.dut.wr_ready
+@23
+cellram_demo_tb.dut.wr_count[6:0]
+@22
+cellram_demo_tb.dut.wr_data[15:0]
+[pattern_trace] 1
+[pattern_trace] 0
