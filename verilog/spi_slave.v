@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module spi_slave(clk, reset, sck, ss, mosi, miso);
 
 //  Simple simulation model - read/write registers, first bit received is used for read/write

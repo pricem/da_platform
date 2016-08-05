@@ -22,11 +22,11 @@ output reg [7:0] ctl_wr_data;
 input ctl_wr_ready;
 
 input aud_rd_valid;
-input [7:0] aud_rd_data;
+input [31:0] aud_rd_data;
 output aud_rd_ready;
 
 output reg aud_wr_valid;
-output reg [7:0] aud_wr_data;
+output reg [31:0] aud_wr_data;
 input aud_wr_ready;
 
 output spi_ss_out;
@@ -49,33 +49,62 @@ wire [5:0] slot_data_val;
 
 reg [9:0] audio_clk_ratio;
 reg [3:0] audio_sample_res;
-reg [3:0] audio_num_channels;
 
 reg [9:0] audio_clk_counter;
 
-reg [23:0] audio_sample_left;
-reg [23:0] audio_sample_right;
+reg [23:0] audio_samples_active[7:0];
+reg [23:0] audio_samples_next[7:0];
 
-reg [23:0] audio_sample_left_next;
-reg [23:0] audio_sample_right_next;
+reg [3:0] audio_samples_received;
+reg [3:0] audio_samples_requested;
 
-reg [3:0] audio_bytes_received;
-reg [3:0] audio_bytes_requested;
+//  256xFS master clock and I2S output format are the default. Should be configurable though.
+//  TODO: Add configurable output justification, support RJ/LJ in addition to I2S.
+reg pdata_left_active;     //  "LEFT" = "even" numbered channels 0, 2, 4, 6
+reg pdata_right_active;    //  "RIGHT" = "odd" numbered channels 1, 3, 5, 7
 
-wire pdata_left_active = (audio_clk_counter > 4) && (audio_clk_counter <= 100);
-wire pdata_right_active = (audio_clk_counter > 132) && (audio_clk_counter <= 228);
+always @(*) begin
+    case (audio_clk_ratio)
+    256: begin
+        pdata_left_active = (audio_clk_counter > 4) && (audio_clk_counter <= 100);
+        pdata_right_active = (audio_clk_counter > 132) && (audio_clk_counter <= 228);
+    end
+    512: begin
+        pdata_left_active = (audio_clk_counter > 8) && (audio_clk_counter <= 200);
+        pdata_right_active = (audio_clk_counter > 264) && (audio_clk_counter <= 456);
+    end
+    128: begin
+        pdata_left_active = (audio_clk_counter > 2) && (audio_clk_counter <= 50);
+        pdata_right_active = (audio_clk_counter > 66) && (audio_clk_counter <= 114);
+    end
+    default: begin
+        pdata_left_active = 0;
+        pdata_right_active = 0;
+    end
+    endcase
+end
+
 wire pdata_active = pdata_left_active || pdata_right_active;
+
+//  Convenience: figure out how many channels we're supposed to have
+wire [3:0] audio_num_channels;
+assign audio_num_channels = chan ? 8 : 2;
 
 //  2 channel DAC mode
 reg pbck;
 reg plrck;
 //  wire plrck;
-reg pdata;
+reg [3:0] pdata;
+
+//  Note: alternatively the other 3 lines can be used for DSD format.
+//  This is not yet supported.
 wire dbck = 0;
 wire dsdr = 0;
 wire dsdl = 0;
+
 //  wire pdata_mod = pdata || !pdata_active;
-assign slot_data_val = {pbck, pdata, plrck, dbck, dsdr, dsdl};
+//  This slot data mapping is set up for the PCM1792 2-channel DAC.
+assign slot_data_val = {pbck, pdata[0], plrck, dbck, dsdr, dsdl};
 
 reg slot_data_en;
 assign slot_data = slot_data_en ? slot_data_val : 6'bzzzzzz;
@@ -128,8 +157,8 @@ wire [4:0] audio_rx_fifo_wr_count;
 wire [4:0] audio_rx_fifo_rd_count;
 
 wire audio_rx_fifo_rd_valid;
-wire [7:0] audio_rx_fifo_rd_data;
-wire audio_rx_fifo_rd_ready = ((audio_clk_counter < 6) || (audio_bytes_requested > 0));
+wire [31:0] audio_rx_fifo_rd_data;
+wire audio_rx_fifo_rd_ready = (((audio_clk_counter == 0) && (audio_rx_fifo_rd_count >= audio_num_channels)) || (audio_samples_requested > 0));
 
 wire audio_rx_fifo_rd_ready_last;
 delay arfrr_delay(slot_clk, reset, audio_rx_fifo_rd_ready, audio_rx_fifo_rd_ready_last);
@@ -147,7 +176,7 @@ fifo_async audio_rx_fifo(
 	.rd_data(audio_rx_fifo_rd_data), 
 	.rd_count(audio_rx_fifo_rd_count)
 );
-defparam audio_rx_fifo.Nb = 8;
+defparam audio_rx_fifo.Nb = 32;
 defparam audio_rx_fifo.M = 4;
 defparam audio_rx_fifo.N = 16;
 /*
@@ -158,6 +187,7 @@ defparam lrclk_divider.threshold = 96;
 
 
 //  Sequential logic - audio
+integer i;
 always @(posedge slot_clk) begin
     if (reset) begin
 
@@ -167,20 +197,18 @@ always @(posedge slot_clk) begin
         plrck <= 0;
         pdata <= 0;
         
-        audio_sample_left <= 0;
-        audio_sample_right <= 0;
-        
-        audio_sample_left_next <= 0;
-        audio_sample_right_next <= 0;
-        
+        for (i = 0; i < 8; i = i + 1) begin
+            audio_samples_active[i] <= 0;
+            audio_samples_next[i] <= 0;
+        end
+
         //  Hardcode settings for now...
         audio_clk_ratio <= 256;
         audio_sample_res <= 24;
-        audio_num_channels <= 2;
         
         audio_clk_counter <= 0;
-        audio_bytes_received <= 0;
-        audio_bytes_requested <= 0;
+        audio_samples_received <= 0;
+        audio_samples_requested <= 0;
     end
     else begin
 
@@ -205,10 +233,12 @@ always @(posedge slot_clk) begin
                 pdata <= audio_sample_right >> (31 - ((audio_clk_counter - 128) / 4));
             */
             //  I2S format
-            if (audio_clk_counter < audio_clk_ratio / 2)
-                pdata <= audio_sample_left >> (24 - audio_clk_counter / 4);
-            else
-                pdata <= audio_sample_right >> (24 - (audio_clk_counter - audio_clk_ratio / 2) / 4);
+            for (i = 0; i < audio_num_channels / 2; i = i + 1) begin
+                if (audio_clk_counter < audio_clk_ratio / 2)
+                    pdata[i] <= audio_samples_active[i * 2] >> (24 - audio_clk_counter / 4);
+                else
+                    pdata[i] <= audio_samples_active[i * 2 + 1] >> (24 - (audio_clk_counter - audio_clk_ratio / 2) / 4);
+            end
             
             /*
             //  Digital filter here, bypassing digital filter in DSD1792
@@ -219,33 +249,26 @@ always @(posedge slot_clk) begin
         end
         
         if (audio_clk_counter == 0) begin
-            audio_sample_left <= audio_sample_left_next;
-            audio_sample_right <= audio_sample_right_next;
-            audio_sample_left_next <= 0;
-            audio_sample_right_next <= 0;
+            for (i = 0; i < audio_num_channels; i = i + 1) begin
+                audio_samples_active[i] <= audio_samples_next[i];
+                audio_samples_next[i] <= 0;
+            end
         end
         
         //  Request samples in chunks of 6 bytes (24 bits left/right)
         if (audio_rx_fifo_rd_ready) begin
-            if (audio_bytes_requested >= 5)
-                audio_bytes_requested <= 0;
+            if (audio_samples_requested >= audio_num_channels - 1)
+                audio_samples_requested <= 0;
             else
-                audio_bytes_requested <= audio_bytes_requested + 1;
+                audio_samples_requested <= audio_samples_requested + 1;
         end
         
         if (audio_rx_fifo_rd_valid && audio_rx_fifo_rd_ready_last) begin
-            case (audio_bytes_received)
-            0:  audio_sample_left_next[23:16] <= audio_rx_fifo_rd_data;
-            1:  audio_sample_left_next[15:8] <= audio_rx_fifo_rd_data;
-            2:  audio_sample_left_next[7:0] <= audio_rx_fifo_rd_data;
-            3:  audio_sample_right_next[23:16] <= audio_rx_fifo_rd_data;
-            4:  audio_sample_right_next[15:8] <= audio_rx_fifo_rd_data;
-            5:  audio_sample_right_next[7:0] <= audio_rx_fifo_rd_data;
-            endcase
-            if (audio_bytes_received == 5)
-                audio_bytes_received <= 0;
+            audio_samples_next[audio_samples_received] <= audio_rx_fifo_rd_data;
+            if (audio_samples_received >= audio_num_channels - 1)
+                audio_samples_received <= 0;
             else
-                audio_bytes_received <= audio_bytes_received + 1;
+                audio_samples_received <= audio_samples_received + 1;
         end
         
     end

@@ -1,6 +1,7 @@
+/*	FIFO model	*/
+
 `timescale 1ns / 1ps
 
-/*	FIFO model	*/
 module fifo_async(
 	reset,
 	wr_clk, wr_valid, wr_data,

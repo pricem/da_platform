@@ -1,3 +1,6 @@
+
+`timescale 1ns / 1ps
+
 module clk_divider(reset, clkin, clkout);
 
 parameter ratio = 3;

@@ -1,0 +1,150 @@
+[*]
+[*] GTKWave Analyzer v3.3.74 (w)1999-2016 BSI
+[*] Thu Aug  4 21:56:03 2016
+[*]
+[dumpfile] "/home/price/projects/cdp/verilog/da_platform_tb.vcd"
+[dumpfile_mtime] "Thu Aug  4 21:28:10 2016"
+[dumpfile_size] 18034618
+[savefile] "/home/price/projects/cdp/verilog/da_platform_tb.gtkw"
+[timestart] 0
+[size] 1855 1079
+[pos] -1 -78
+*-19.000000 822943 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] da_platform_tb.
+[treeopen] da_platform_tb.dut.
+[sst_width] 225
+[signals_width] 270
+[sst_expanded] 1
+[sst_vpaned_height] 328
+@200
+-Core
+@28
+da_platform_tb.dut.cr_core.clk
+da_platform_tb.dut.cr_core.reset
+@200
+-Host
+@28
+da_platform_tb.dut.cr_host.clk
+da_platform_tb.dut.cr_host.reset
+@200
+-Mem
+@28
+da_platform_tb.cr_mem.clk
+da_platform_tb.cr_mem.reset
+@200
+-Iso interface
+@22
+da_platform_tb.iso.slotdata[23:0]
+@28
+da_platform_tb.iso.clk0
+da_platform_tb.iso.clk1
+da_platform_tb.iso.mclk
+da_platform_tb.iso.amcs
+da_platform_tb.iso.amdi
+da_platform_tb.iso.amdo
+da_platform_tb.iso.dmcs
+da_platform_tb.iso.dmdi
+da_platform_tb.iso.dmdo
+da_platform_tb.iso.srclk
+da_platform_tb.iso.clksel
+da_platform_tb.iso.dirchan
+da_platform_tb.iso.acon[1:0]
+da_platform_tb.iso.aovf
+da_platform_tb.iso.reset_out
+@200
+-Host in
+@28
+da_platform_tb.host_in.enable
+da_platform_tb.host_in.ready
+@22
+da_platform_tb.host_in.data[15:0]
+@28
+da_platform_tb.dut.host_in_core.ready
+da_platform_tb.dut.host_in_core.enable
+@22
+da_platform_tb.dut.host_in_core.data[15:0]
+@200
+-Host out
+@28
+da_platform_tb.host_out.enable
+da_platform_tb.host_out.ready
+@22
+da_platform_tb.host_out.data[15:0]
+@200
+-Mem cmd
+@28
+da_platform_tb.mem_cmd.ready
+da_platform_tb.mem_cmd.enable
+@22
+da_platform_tb.mem_cmd.data[64:0]
+@200
+-Mem write
+@28
+da_platform_tb.mem_write.ready
+da_platform_tb.mem_write.enable
+@22
+da_platform_tb.mem_write.data[31:0]
+@200
+-Mem read
+@28
+da_platform_tb.mem_read.ready
+da_platform_tb.mem_read.enable
+@22
+da_platform_tb.mem_read.data[31:0]
+@200
+-DAP top level
+@22
+da_platform_tb.dut.state[3:0]
+@c00022
+da_platform_tb.dut.byte_counter[23:0]
+@28
+(0)da_platform_tb.dut.byte_counter[23:0]
+(1)da_platform_tb.dut.byte_counter[23:0]
+(2)da_platform_tb.dut.byte_counter[23:0]
+(3)da_platform_tb.dut.byte_counter[23:0]
+(4)da_platform_tb.dut.byte_counter[23:0]
+(5)da_platform_tb.dut.byte_counter[23:0]
+(6)da_platform_tb.dut.byte_counter[23:0]
+(7)da_platform_tb.dut.byte_counter[23:0]
+(8)da_platform_tb.dut.byte_counter[23:0]
+(9)da_platform_tb.dut.byte_counter[23:0]
+(10)da_platform_tb.dut.byte_counter[23:0]
+(11)da_platform_tb.dut.byte_counter[23:0]
+(12)da_platform_tb.dut.byte_counter[23:0]
+(13)da_platform_tb.dut.byte_counter[23:0]
+(14)da_platform_tb.dut.byte_counter[23:0]
+(15)da_platform_tb.dut.byte_counter[23:0]
+(16)da_platform_tb.dut.byte_counter[23:0]
+(17)da_platform_tb.dut.byte_counter[23:0]
+(18)da_platform_tb.dut.byte_counter[23:0]
+(19)da_platform_tb.dut.byte_counter[23:0]
+(20)da_platform_tb.dut.byte_counter[23:0]
+(21)da_platform_tb.dut.byte_counter[23:0]
+(22)da_platform_tb.dut.byte_counter[23:0]
+(23)da_platform_tb.dut.byte_counter[23:0]
+@1401200
+-group_end
+@22
+da_platform_tb.dut.fifo_read_length[23:0]
+da_platform_tb.dut.data_checksum_calculated[31:0]
+da_platform_tb.dut.data_checksum_received[31:0]
+da_platform_tb.dut.slot_index[7:0]
+da_platform_tb.dut.current_cmd[7:0]
+da_platform_tb.dut.current_report[7:0]
+@200
+-Aud in write
+@28
+da_platform_tb.dut.aud_in_write.ready
+da_platform_tb.dut.aud_in_write.enable
+@22
+da_platform_tb.dut.aud_in_write.data[31:0]
+@201
+-Arbiter
+@28
+da_platform_tb.dut.arbiter.current_port_index[2:0]
+da_platform_tb.dut.arbiter.port_in_active
+da_platform_tb.dut.arbiter.port_out_active
+@22
+da_platform_tb.dut.arbiter.state[3:0]
+[pattern_trace] 1
+[pattern_trace] 0

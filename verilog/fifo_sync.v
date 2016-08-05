@@ -1,6 +1,7 @@
+/*	FIFO model - synchronous (same read and write clock, no delay in count/full/empty)	*/
+
 `timescale 1ns / 1ps
 
-/*	FIFO model - synchronous (same read and write clock, no delay in count/full/empty)	*/
 module fifo_sync(
 	clk, reset,
 	wr_valid, wr_data,
