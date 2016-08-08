@@ -26,6 +26,119 @@ FIFOInterface #(.num_bits(host_width)) host_out (cr_host.clk);
 IsolatorInterface iso ();
 logic [3:0] led_debug;
 
+`ifdef USE_WRAPPER
+//  Use a wrapper and more realistic interfaces
+wire [15:0] ddr3_dq;
+wire [1:0] ddr3_dqs_n;
+wire [1:0] ddr3_dqs_p;
+wire [13:0] ddr3_addr;
+wire [2:0] ddr3_ba;
+wire ddr3_ras_n;
+wire ddr3_cas_n;
+wire ddr3_we_n;
+wire ddr3_reset_n;
+wire [0:0] ddr3_ck_p;
+wire [0:0] ddr3_ck_n;
+wire [0:0] ddr3_cke;
+wire [1:0] ddr3_dm;
+wire [0:0] ddr3_odt;
+
+wire fx2_ifclk;
+wire [15:0] fx2_fd;
+wire fx2_slwr;
+wire fx2_pktend;
+wire fx2_slrd;
+wire fx2_sloe;
+wire [1:0] fx2_fifoaddr;
+wire fx2_empty_flag;
+wire fx2_full_flag;
+
+da_platform_wrapper dut(
+    .fxclk_in(fx2_ifclk),
+    .ifclk_in(),
+    .reset(),
+    .ddr3_dq(ddr3_dq),
+    .ddr3_dqs_n(ddr3_dqs_n),
+    .ddr3_dqs_p(ddr3_dqs_p),
+    .ddr3_addr(ddr3_addr),
+    .ddr3_ba(ddr3_ba),
+    .ddr3_ras_n(ddr3_ras_n),
+    .ddr3_cas_n(ddr3_cas_n),
+    .ddr3_we_n(ddr3_we_n),
+    .ddr3_reset_n(ddr3_reset_n),
+    .ddr3_ck_p(ddr3_ck_p),
+    .ddr3_ck_n(ddr3_ck_n),
+    .ddr3_cke(ddr3_cke),
+    .ddr3_dm(ddr3_dm),
+    .ddr3_odt(ddr3_odt),
+    .fx2_fd(fx2_fd),
+    .fx2_slwr(fx2_slwr), 
+    .fx2_slrd(fx2_slrd),
+    .fx2_sloe(fx2_sloe), 
+    .fx2_fifoaddr0(fx2_fifoaddr[0]), 
+    .fx2_fifoaddr1(fx2_fifoaddr[1]), 
+    .fx2_pktend(fx2_pktend),
+    .fx2_flaga(fx2_empty_flag), 
+    .fx2_flagb(fx2_full_flag),
+    .iso_slotdata(iso.slotdata),
+    .iso_mclk(iso.mclk),
+    .iso_amcs(iso.amcs),
+    .iso_amdi(iso.amdi), 
+    .iso_amdo(iso.amdo), 
+    .iso_dmcs(iso.dmcs), 
+    .iso_dmdi(iso.dmdi), 
+    .iso_dmdo(iso.dmdo), 
+    .iso_dirchan(iso.dirchan),
+    .iso_acon(iso.acon),
+    .iso_aovf(iso.aovf),
+    .iso_clk0(iso.clk0), 
+    .iso_reset_out(iso.reset_out),
+    .iso_srclk(iso.srclk),
+    .iso_clksel(iso.clksel),
+    .iso_clk1(iso.clk1),
+    .led_debug(led_debug)
+);
+
+fx2_model fx2(
+    .ifclk(fx2_ifclk),
+    .fd(fx2_fd),
+    .SLWR(fx2_slwr), 
+    .PKTEND(fx2_pktend),
+    .SLRD(fx2_slrd), 
+    .SLOE(fx2_sloe), 
+    .FIFOADDR(fx2_fifoaddr),
+    .EMPTY_FLAG(fx2_empty_flag),
+    .FULL_FLAG(fx2_full_flag),
+    .in(host_in.in),
+    .out(host_out.out)
+);
+
+`ifndef USE_MIG_MODEL
+//  DDR3 SDRAM model
+//  (note: if USE_MIG_MODEL is defined, that means the da_platform_wrapper module instantiated a simplified model
+//  of the MIG+DDR3 combination, and thus the detailed model of the DDR3 memory itself doesn't need to be instantiated.)
+ddr3_model mem (
+    .rst_n(ddr3_rst_n),
+    .ck(ddr3_ck_p),
+    .ck_n(ddr3_ck_n),
+    .cke(ddr3_cke),
+    .cs_n(ddr3_cs_n),
+    .ras_n(ddr3_ras_n),
+    .cas_n(ddr3_cas_n),
+    .we_n(ddr3_we_n),
+    .dm_tdqs(ddr3_dm_tqds),
+    .ba(ddr3_ba),
+    .addr(ddr3_addr),
+    .dq(ddr3_dq),
+    .dqs(ddr3_dqs_p),
+    .dqs_n(ddr3_dqs_n),
+    .tdqs_n(ddr3_tqds_n),
+    .odt(ddr3_odt)
+);
+`endif
+
+`else
+//  Instantiate core DA Platform logic directly
 da_platform #(
     .mem_width(mem_width),
     .host_width(host_width)
@@ -40,6 +153,7 @@ da_platform #(
     .iso(iso.fpga),
     .led_debug(led_debug)
 );
+`endif
 
 isolator_model isolator(.iso(iso.isolator));
 

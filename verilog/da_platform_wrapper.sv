@@ -1,0 +1,265 @@
+`timescale 1ns / 1ps
+
+/*
+    Adapts generic interfaces of da_platform to the physical interfaces (DDR3 memory, FX2 USB interface) on ZTEX FPGA module 2.13.
+*/
+
+module da_platform_wrapper #(
+    host_width = 16,
+    mem_width = 32,
+    mclk_ratio = 8,
+    num_slots = 4
+) (
+    //  ZTEX global inputs
+    input fxclk_in,
+    input ifclk_in,
+    input reset,
+
+    //  DDR3 memory interface
+	inout [15:0] ddr3_dq,
+	inout [1:0] ddr3_dqs_n,
+	inout [1:0] ddr3_dqs_p,
+	output [13:0] ddr3_addr,
+	output [2:0] ddr3_ba,
+	output ddr3_ras_n,
+	output ddr3_cas_n,
+	output ddr3_we_n,
+    output ddr3_reset_n,
+    output [0:0] ddr3_ck_p,
+    output [0:0] ddr3_ck_n,
+    output [0:0] ddr3_cke,
+    output [1:0] ddr3_dm,
+    output [0:0] ddr3_odt,
+    
+    //  FX2 host interface
+    inout [15:0] fx2_fd,
+    output fx2_slwr, 
+    output fx2_slrd,
+    output fx2_sloe, 
+    output fx2_fifoaddr0, 
+    output fx2_fifoaddr1, 
+    output fx2_pktend,
+    input fx2_flaga, 
+    input fx2_flagb,
+
+    //  Interface to isolator board
+    inout [23:0] iso_slotdata,
+    output iso_mclk,
+    output iso_amcs,
+    output iso_amdi, 
+    input iso_amdo, 
+    output iso_dmcs, 
+    output iso_dmdi, 
+    input iso_dmdo, 
+    input iso_dirchan,
+    output [1:0] iso_acon,
+    input iso_aovf,
+    input iso_clk0, 
+    output iso_reset_out,
+    output iso_srclk,
+    output iso_clksel,
+    input iso_clk1,
+    
+    //  Other
+    output [3:0] led_debug
+);
+
+//  Interfaces
+ClockReset cr_mem ();
+FIFOInterface #(.num_bits(65)) mem_cmd(cr_mem.clk);
+FIFOInterface #(.num_bits(mem_width)) mem_write(cr_mem.clk);
+FIFOInterface #(.num_bits(mem_width)) mem_read(cr_mem.clk);
+
+ClockReset cr_host ();
+FIFOInterface #(.num_bits(host_width)) host_in(cr_host.clk);
+FIFOInterface #(.num_bits(host_width)) host_out(cr_host.clk);
+
+IsolatorInterface iso ();
+
+//  Core
+da_platform #(
+    .host_width(host_width),
+    .mem_width(mem_width),
+    .mclk_ratio(mclk_ratio),
+    .num_slots(num_slots)
+) main(
+    .cr_mem(cr_mem.client),
+    .mem_cmd(mem_cmd.out),
+    .mem_write(mem_write.out),
+    .mem_read(mem_read.in),
+    .cr_host(cr_host.client),
+    .host_in(host_in.in),
+    .host_out(host_out.out),
+    .iso(iso.fpga),
+    .led_debug(led_debug)
+);
+
+//  Host adapter
+ezusb_io #(
+    .OUTEP(2),
+    .INEP(6),
+    .TARGET("A7")
+) ezusb_io_inst (
+    .ifclk(ifclk),
+    .reset(reset),
+    .reset_out(reset_usb),
+    .ifclk_in(ifclk_in),
+    .fd(fx2_fd),
+    .SLWR(fx2_slwr),
+    .SLRD(fx2_slrd),
+    .SLOE(fx2_sloe), 
+    .PKTEND(fx2_pktend),
+    .FIFOADDR({fx2_fifoaddr1, fx2_fifoaddr0}), 
+    .EMPTY_FLAG(fx2_flaga),
+    .FULL_FLAG(fx2_flagb),
+    .DI(host_in.data),
+    .DI_valid(host_in.enable),
+    .DI_ready(host_in.ready),
+    .DI_enable(1'b1),
+    .pktend_timeout(16'd73),
+    .DO(host_out.data),
+    .DO_valid(host_out.enable),
+    .DO_ready(host_out.ready),
+    .status(usb_status)	
+);
+
+//  MIG interfaces
+wire [23:0] app_addr;
+wire [2:0] app_cmd;
+wire app_en;
+wire app_wdf_wren;
+wire app_rdy;
+wire app_wdf_rdy;
+wire app_rd_data_valid;
+wire [127:0] app_wdf_data;
+wire [127:0] app_rd_data;
+
+//  Memory adapter (MIG)
+MIGAdapter #(
+    .addr_width(28),
+    .data_width(128),
+    .DDR3_BURST_LENGTH(8),
+    .nCK_PER_CLK(4)
+) mig_adapter(
+    .cr(cr_mem),
+    .ext_mem_cmd(mem_cmd.in),
+    .ext_mem_write(mem_write.in),
+    .ext_mem_read(mem_read.out),
+    .mig_clk(clk),
+    .mig_reset(rst),
+    .mig_init_done(init_calib_complete),
+    .mig_af_rdy(app_rdy),
+    .mig_af_wr_en(app_en),
+    .mig_af_addr(app_addr),
+    .mig_af_cmd(app_cmd),
+    .mig_wdf_rdy(app_wdf_rdy),
+    .mig_wdf_wr_en(app_wdf_wren),
+    .mig_wdf_data(app_wdf_data),
+    .mig_wdf_last(app_wdf_end),
+    .mig_wdf_mask(app_wdf_mask),
+    .mig_read_data_valid(app_rd_data_valid),
+    .mig_read_data_last(app_rd_data_end),
+    .mig_read_data(app_rd_data)
+);
+
+//  MIG instantiation
+//  In simulation mode, use MIG model instead.
+`ifdef USE_MIG_MODEL
+//  MIG model
+mig_ddr3_model #(
+    .BANK_WIDTH(3),
+    .COL_WIDTH(10),
+    .ROW_WIDTH(15),
+    .BURST_LEN(1),	                //	not the same as the memory's actual burst length... just set to get right number of cycles when reading
+    .RST_ACT_LOW(0),      // 1: active low, 0: active high
+    .CLKIN_PERIOD(5000),    // in psec
+	.nCK_PER_CLK(4),
+	.RANKS(1),
+	.ADDR_WIDTH(28),
+	.CK_WIDTH(1),
+	.PAYLOAD_WIDTH(128),
+	.BURST_TYPE("SEQ"),
+	.TRCD(13750),
+    .TRFC(300000),
+    .TRP(13750),
+    .TWTR(7500),
+    .init_use_file(0)
+) mig_model (
+    .sys_clk_p(sys_clk_p),
+    .sys_rst(sys_rst),
+    .ddr3_reset_n(ddr3_reset_n),
+    .app_addr({1'b0, app_addr, 3'b000}),
+    .app_cmd(app_cmd),
+    .app_en(app_en),
+    .app_wdf_data(app_wdf_data),
+    .app_wdf_end(app_wdf_end),
+    .app_wdf_mask(app_wdf_mask),
+    .app_wdf_wren(app_wdf_wren),
+    .app_rd_data(app_rd_data),
+    .app_rd_data_end(app_rd_data_end),
+    .app_rd_data_valid(app_rd_data_valid),
+    .app_rdy(app_rdy),
+    .app_wdf_rdy(app_wdf_rdy),
+    .app_sr_req(1'b0),
+    .app_sr_active(),
+    .app_ref_req(1'b0),
+    .app_ref_ack(),
+    .app_zq_req(1'b0),
+    .app_zq_ack(),
+    .ui_clk(clk),
+    .ui_clk_sync_rst(rst),
+    .init_calib_complete(init_calib_complete)
+);
+`else
+//  Actual MIG
+mig_7series_0 mem0 (
+    .ddr3_dq(ddr3_dq),
+    .ddr3_dqs_n(ddr3_dqs_n),
+    .ddr3_dqs_p(ddr3_dqs_p),
+    .ddr3_addr(ddr3_addr),
+    .ddr3_ba(ddr3_ba),
+    .ddr3_ras_n(ddr3_ras_n),
+    .ddr3_cas_n(ddr3_cas_n),
+    .ddr3_we_n(ddr3_we_n),
+    .ddr3_reset_n(ddr3_reset_n),
+    .ddr3_ck_p(ddr3_ck_p[0]),
+    .ddr3_ck_n(ddr3_ck_n[0]),
+    .ddr3_cke(ddr3_cke[0]),
+    .ddr3_dm(ddr3_dm),
+    .ddr3_odt(ddr3_odt[0]),
+    .app_addr({1'b0, app_addr, 3'b000}),	
+    .app_cmd(app_cmd),
+    .app_en(app_en),
+    .app_rdy(app_rdy),
+    .app_wdf_rdy(app_wdf_rdy), 
+    .app_wdf_data(app_wdf_data),
+    .app_wdf_mask(16'h0000),
+    .app_wdf_end(app_wdf_wren),
+    .app_wdf_wren(app_wdf_wren),
+    .app_rd_data(app_rd_data),
+    .app_rd_data_end(app_rd_data_end),
+    .app_rd_data_valid(app_rd_data_valid),
+    .app_sr_req(1'b0), 
+    .app_sr_active(),
+    .app_ref_req(1'b0),
+    .app_ref_ack(),
+    .app_zq_req(1'b0),
+    .app_zq_ack(),
+    .ui_clk(uiclk),
+    .ui_clk_sync_rst(ui_clk_sync_rst),
+    .init_calib_complete(init_calib_complete),
+    .sys_rst(!reset),
+    .sys_clk_i(clk400),
+    .clk_ref_i(clk200)
+);
+`endif
+
+//  Connect isolator interface
+//  TODO
+always_comb begin
+    
+end
+
+endmodule
+
+
