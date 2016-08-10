@@ -84,51 +84,10 @@ logic [M_fr:0] out_count[num_ports];
 
 genvar g;
 //  Experimenting to solve problem of ports_in / ports_out not being an array
-/*
-generate for (g = 0; g < num_ports; g++) begin: io_fifos
-    fifo_sync_sv #(.width(mem_width), .depth(N_fw)) write_fifo (
-        .cr(cr_core),
-        .in(ports_in[g]),
-        .out(ports_in_buf[g].out),
-        .count(in_count[g])
-    );
-    fifo_sync_sv #(.width(mem_width), .depth(N_fr)) read_fifo (
-        .cr(cr_core),
-        .in(ports_out_buf[g].in),
-        .out(ports_out[g]),
-        .count(out_count[g])
-    );
-end
-endgenerate
-*/
-/*
-fifo_sync_sv #(.width(mem_width), .depth(N_fw)) write_fifos[num_ports] (
-    .cr(cr_core),
-    .in(ports_in),
-    .out(ports_in_buf.out),
-    .count(in_count)
-);
-fifo_sync_sv #(.width(mem_width), .depth(N_fr)) read_fifos[num_ports] (
-    .cr(cr_core),
-    .in(ports_out_buf.in),
-    .out(ports_out),
-    .count(out_count)
-);
-*/
 //  RRRR....
 FIFOInterface #(.num_bits(mem_width)) ports_in_rep[num_ports] (cr_core.clk);
 FIFOInterface #(.num_bits(mem_width)) ports_out_rep[num_ports] (cr_core.clk);
-/*
-generate for (g = 0; g < num_ports; g++) begin: ports_dup
-    assign ports_in[g].ready = ports_in_rep[g].ready;
-    assign ports_in_rep[g].enable = ports_in[g].enable;
-    assign ports_in_rep[g].data = ports_in[g].data;
-    assign ports_out_rep[g].ready = ports_out[g].ready;
-    assign ports_out[g].enable = ports_out_rep[g].enable;
-    assign ports_out[g].data = ports_out_rep[g].data;
-end
-endgenerate
-*/
+
 generate for (g = 0; g < num_ports; g++) begin: ports_dup
     assign ports_in_ready[g] = ports_in_rep[g].ready;
     assign ports_in_rep[g].enable = ports_in_enable[g];

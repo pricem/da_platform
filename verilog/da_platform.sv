@@ -205,31 +205,6 @@ FIFOInterface #(.num_bits(host_width)) ctl_slots_out[num_slots] (cr_core.clk);
 //  The inputs and outputs of the arbiter include audio FIFOs in both directions, 
 //  and we can't concatenate interface arrays, so there is some plumbing here.
 
-/*
-FIFOInterface #(.num_bits(32)) arb_in[num_slots * 2] ();
-FIFOInterface #(.num_bits(32)) arb_out[num_slots * 2] ();
-generate for (g = 0; g < num_slots; g++) always_comb begin
-    //  Audio in (DAC) has arbitrator I/O ports from 0 to num_slots - 1
-    aud_slots_in_write[g].ready = arb_in[g].ready;
-    arb_in[g].enable = aud_slots_in_write[g].enable;
-    arb_in[g].data = aud_slots_in_write[g].data;
-
-    arb_out[g].ready = aud_slots_in_read[g].ready;
-    aud_slots_in_read[g].enable = arb_out[g].enable;
-    aud_slots_in_read[g].data = arb_out[g].data;
-    
-    //  Audio out (ADC) has arbitrator I/O ports from num_slots to 2 * num_slots - 1
-    aud_slots_out_write[g].ready = arb_in[num_slots + g].ready;
-    arb_in[num_slots + g].enable = aud_slots_out_write[g].enable;
-    arb_in[num_slots + g].data = aud_slots_out_write[g].data;
-    
-    arb_out[num_slots + g].ready = aud_slots_out_read[g].ready;
-    aud_slots_out_read[g].enable = arb_out[num_slots + g].enable;
-    aud_slots_out_read[g].data = arb_out[num_slots + g].data;
-end
-endgenerate
-*/
-
 //  Temporary - breakout FIFO interfaces
 logic arb_in_ready[num_slots * 2];
 logic arb_in_enable[num_slots * 2];
@@ -352,13 +327,6 @@ generate for (g = 0; g < num_slots; g++) begin: slots
             aud_slots_in_write[g].enable = aud_in_write.enable;
             aud_slots_in_write[g].data = aud_in_write.data;
             aud_slots_out_read[g].ready = aud_out_read.ready;
-            
-            /*
-            //  Experiment
-            aud_in_write.ready = aud_slots_in_write[g].ready;
-            aud_out_read.enable = aud_slots_out_read[g].enable;
-            aud_out_read.data = aud_slots_out_read[g].data;
-            */
         end
         else begin
             aud_slots_in_write[g].enable = 0;
@@ -367,25 +335,13 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         end
     end
     
-    /*
-    assign aud_in_write.ready = (slot_index == g) ? aud_slots_in_write[g].ready : 1'bz;
-    assign aud_out_read.enable = (slot_index == g) ? aud_slots_out_read[g].enable : 1'bz;
-    assign aud_out_read.data = (slot_index == g) ? aud_slots_out_read[g].data : 'z;
-    */
-    
     //  Muxing of control FIFOs.
     always_comb begin
         if (slot_index == g) begin
             ctl_slots_in[g].enable = ctl_in.enable;
             ctl_slots_in[g].data = ctl_in.data;
             ctl_slots_out[g].ready = ctl_out.ready;
-            
-            /*
-            //  Experiment
-            ctl_in.ready = ctl_slots_in[g].ready;
-            ctl_out.enable = ctl_slots_out[g].enable;
-            ctl_out.data = ctl_slots_out[g].data;
-            */
+
         end
         else begin
             ctl_slots_in[g].enable = 0;
@@ -393,13 +349,7 @@ generate for (g = 0; g < num_slots; g++) begin: slots
             ctl_slots_out[g].ready = 0;
         end
     end
-    
-    /*
-    assign ctl_in.ready = (slot_index == g) ? ctl_slots_in[g].ready : 1'bz;
-    assign ctl_out.enable = (slot_index == g) ? ctl_slots_out[g].enable : 1'bz;
-    assign ctl_out.data = (slot_index == g) ? ctl_slots_out[g].data : 'z;
-    */
-    
+
     //  Muxing of isolator interface signals
     wire slot_clk = (!clk_inhibit[g]) && (clksel_parallel[g] ? iso.clk1 : iso.clk0);
 
