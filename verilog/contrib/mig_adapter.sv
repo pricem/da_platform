@@ -22,6 +22,7 @@
 module MIGAdapter #(
     parameter addr_width = 28,
     parameter data_width = 256,
+    parameter interface_width = 8,
     parameter DDR3_BURST_LENGTH = 8,
     parameter nCK_PER_CLK = 4
 ) (
@@ -48,7 +49,7 @@ module MIGAdapter #(
     input logic [data_width - 1 : 0] mig_read_data
 );
 
-`include "structures.sv"
+`include "../structures.sv"
 
 typedef enum logic [3:0] { MAS_RESET, MAS_WAITING, MAS_FETCH_CMD, MAS_PARSE_CMD, MAS_READ_WAIT, MAS_READ_SUBMIT, MAS_WRITE_WAIT, MAS_WRITE_SUBMIT, MAS_PRE_WRITE, MAS_PRE_READ } MAState;
 
@@ -58,6 +59,8 @@ localparam INSTR_WRITE = 3'b000;
 //  Offset added to prevent startup calibration from overwriting data that we need
 //  256 words should be plenty.
 localparam PHYS_ADDR_OFFSET = 32'h00000100;
+
+localparam word_count = data_width / interface_width;
 
 //  Reset synchronization
 logic [1:0] reset_sync;
@@ -81,18 +84,21 @@ end
 
 //  Async FIFOs - get everything to the mig_clk domain
 //  1.  Control
-FIFOInterface ctl_in ();
-FIFOInterface ctl_out ();
+FIFOInterface #(.num_bits(65)) ctl_in (cr.clk);
+FIFOInterface #(.num_bits(65)) ctl_out (cr_mig.clk);
 logic [2:0] ctl_wr_count;
 logic [2:0] ctl_rd_count;
-fifo_async_sv #(
+fifo_async_sv2 #(
     .width(65 /* sizeof(ExtMemRequest) */),
-    .depth(4)
+    .depth(4),
+    .debug_display(1)
 ) ctl_fifo(
-    .cr_in(cr),
+    .clk_in(cr.clk),
+    .reset_in(cr.reset),
     .in(ctl_in.in),
     .count_in(ctl_wr_count),
-    .cr_out(cr_mig.client),
+    .clk_out(cr_mig.clk),
+    .reset_out(cr_mig.reset),
     .out(ctl_out.out),
     .count_out(ctl_rd_count)
 );
@@ -103,18 +109,21 @@ always_comb begin
 end
 
 //  2.  Write
-FIFOInterface write_in ();
-FIFOInterface write_out ();
+FIFOInterface #(.num_bits(interface_width)) write_in (cr.clk);
+FIFOInterface #(.num_bits(interface_width)) write_out (cr_mig.clk);
 logic [6:0] write_wr_count;
 logic [6:0] write_rd_count;
-fifo_async_sv #(
-    .width(8),
-    .depth(64)
+fifo_async_sv2 #(
+    .width(interface_width),
+    .depth(64),
+    .debug_display(1)
 ) write_fifo(
-    .cr_in(cr),
+    .clk_in(cr.clk),
+    .reset_in(cr.reset),
     .in(write_in.in),
     .count_in(write_wr_count),
-    .cr_out(cr_mig.client),
+    .clk_out(cr_mig.clk),
+    .reset_out(cr_mig.reset),
     .out(write_out.out),
     .count_out(write_rd_count)
 );
@@ -125,18 +134,21 @@ always_comb begin
 end
 
 //  3.  Read
-FIFOInterface read_in ();
-FIFOInterface read_out ();
+FIFOInterface #(.num_bits(interface_width)) read_in (cr_mig.clk);
+FIFOInterface #(.num_bits(interface_width)) read_out (cr.clk);
 logic [6:0] read_wr_count;
 logic [6:0] read_rd_count;
-fifo_async_sv #(
-    .width(8),
-    .depth(64)
+fifo_async_sv2 #(
+    .width(interface_width),
+    .depth(64),
+    .debug_display(1)
 ) read_fifo(
-    .cr_in(cr_mig.client),
+    .clk_in(cr_mig.clk),
+    .reset_in(cr_mig.reset),
     .in(read_in.in),
     .count_in(read_wr_count),
-    .cr_out(cr),
+    .clk_out(cr.clk),
+    .reset_out(cr.reset),
     .out(read_out.out),
     .count_out(read_rd_count)
 );
@@ -152,16 +164,17 @@ MAState state;
 
 MemoryCommand cur_request;
 
-logic [31:0] read_bytes_needed;
-logic [31:0] read_bytes_requested;
-logic [31:0] read_bytes_filled;
-logic [7:0] read_bytes_pending;
-logic [7:0] read_bytes_align;
+//  Counts of interface words
+logic [31:0] read_words_needed;
+logic [31:0] read_words_requested;
+logic [31:0] read_words_filled;
+logic [7:0] read_words_pending;
+logic [7:0] read_words_align;
 
-logic [31:0] write_bytes_supplied;
-logic [31:0] write_bytes_submitted;
-logic [31:0] write_bytes_fetched;
-logic [7:0] write_bytes_align;
+logic [31:0] write_words_supplied;
+logic [31:0] write_words_submitted;
+logic [31:0] write_words_fetched;
+logic [7:0] write_words_align;
 
 logic [3:0] read_accum_index;
 logic [7:0] write_accum_index;
@@ -177,8 +190,8 @@ logic [3:0] reads_in_flight_next;
 
 //  Local read data FIFO (operates at MIG clock, along with logic)
 localparam read_data_depth = 8;
-FIFOInterface read_data_in ();
-FIFOInterface read_data_out ();
+FIFOInterface #(.num_bits(data_width)) read_data_in (cr_mig.clk);
+FIFOInterface #(.num_bits(data_width)) read_data_out (cr_mig.clk);
 logic [$clog2(read_data_depth):0] read_data_count;
 logic read_data_afull;
 fifo_sync_sv #(
@@ -205,17 +218,17 @@ endgenerate
 wire [1:0] wr_fifo_pending_words = (write_out.enable && write_out.ready) ? 1 : 0;
 
 //  Some delays to improve timing
-logic [31:0] write_bytes_supplied_buf;
-delay_sv #(.num_bits(32)) wws_delay(.cr(cr_mig), .in(write_bytes_supplied), .out(write_bytes_supplied_buf));
+logic [31:0] write_words_supplied_buf;
+delay_sv #(.num_bits(32)) wws_delay(.cr(cr_mig), .in(write_words_supplied), .out(write_words_supplied_buf));
 
-logic [7:0] write_bytes_align_buf;
-delay_sv #(.num_bits(8)) wwa_delay(.cr(cr_mig), .in(write_bytes_align), .out(write_bytes_align_buf));
+logic [7:0] write_words_align_buf;
+delay_sv #(.num_bits(8)) wwa_delay(.cr(cr_mig), .in(write_words_align), .out(write_words_align_buf));
 
-logic [31:0] read_bytes_needed_buf;
-delay_sv #(.num_bits(32)) rwn_delay(.cr(cr_mig), .in(read_bytes_needed), .out(read_bytes_needed_buf));
+logic [31:0] read_words_needed_buf;
+delay_sv #(.num_bits(32)) rwn_delay(.cr(cr_mig), .in(read_words_needed), .out(read_words_needed_buf));
 
-logic [7:0] read_bytes_align_buf;
-delay_sv #(.num_bits(8)) rwa_delay(.cr(cr_mig), .in(read_bytes_align), .out(read_bytes_align_buf));
+logic [7:0] read_words_align_buf;
+delay_sv #(.num_bits(8)) rwa_delay(.cr(cr_mig), .in(read_words_align), .out(read_words_align_buf));
 
 //	This is needed to make things work properly with the MIG model - ignore for synthesis
 //  wire #1 mig_read_data_valid_delay = mig_read_data_valid;
@@ -244,19 +257,19 @@ always_ff @(posedge cr_mig.clk) if (cr_mig.reset) begin
     mig_wdf_mask <= 0;
     mig_wdf_last <= 0;
     
-    read_bytes_needed <= 0;
-    read_bytes_requested <= 0;
-    read_bytes_filled <= 0;
-    read_bytes_pending <= 0;
-    read_bytes_align <= 0;
+    read_words_needed <= 0;
+    read_words_requested <= 0;
+    read_words_filled <= 0;
+    read_words_pending <= 0;
+    read_words_align <= 0;
 
     read_accum_index <= 0;
     read_data_accum <= 0;
 
-    write_bytes_supplied <= 0;
-    write_bytes_submitted <= 0;
-    write_bytes_fetched <= 0;
-    write_bytes_align <= 0;
+    write_words_supplied <= 0;
+    write_words_submitted <= 0;
+    write_words_fetched <= 0;
+    write_words_align <= 0;
 
     write_accum_index <= 0;
     write_burst_index <= 0;
@@ -303,24 +316,24 @@ else begin
         if (cur_request.read_not_write) begin
             //	Include read_bytes_align in read_bytes_needed
             //	read_bytes_needed <= cmd_fifo_rd_bl + 1;
-            read_bytes_needed <= cur_request.length + (cur_request.address % (data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK));
-            read_bytes_align <= cur_request.address % (data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK);
+            read_words_needed <= cur_request.length + (cur_request.address % (word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK));
+            read_words_align <= cur_request.address % (word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK);
             state <= MAS_PRE_READ;
         end
         else begin
-            write_bytes_supplied <= cur_request.length;
-            write_bytes_align <= cur_request.address % (data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK);
+            write_words_supplied <= cur_request.length;
+            write_words_align <= cur_request.address % (word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK);
             state <= MAS_PRE_WRITE;
         end
     
-        read_bytes_requested <= 0;
-        read_bytes_filled <= 0;
-        read_bytes_pending <= 0;
+        read_words_requested <= 0;
+        read_words_filled <= 0;
+        read_words_pending <= 0;
         read_data_accum <= 0;
         write_data_accum <= 0;
         write_data_accum_mask <= 0;
-        write_bytes_submitted <= 0;
-        write_bytes_fetched <= 0;
+        write_words_submitted <= 0;
+        write_words_fetched <= 0;
         write_burst_index <= 0;
         write_accum_index <= 0;
     end
@@ -338,40 +351,40 @@ else begin
     MAS_READ_WAIT: begin
 
         //	if (read_bytes_filled == read_bytes_needed_buf + read_bytes_align_buf) begin
-        if (read_bytes_filled == read_bytes_needed_buf) begin
+        if (read_words_filled == read_words_needed_buf) begin
             //	Read command finished, we can go on to the next one
             state <= MAS_WAITING;
             read_accum_index <= 0;
-            read_bytes_pending <= 0;
+            read_words_pending <= 0;
         end
         else if (read_data_out.ready && read_data_out.enable) begin
             //	Let the MIG fill our 1-burst accum register
             read_accum_index <= read_accum_index + 1;
             read_data_accum <= read_data_accum_next;
-            read_bytes_pending <= read_bytes_pending + data_width / 8;
+            read_words_pending <= read_words_pending + word_count;
         end
         //	Wait until the accumulator is completely full before discharging, in case we get data in non-consecutive clock cycles
-        else if (read_in.ready && (read_bytes_pending > 0) && (read_accum_index == DDR3_BURST_LENGTH / 2 / nCK_PER_CLK)) begin
+        else if (read_in.ready && (read_words_pending > 0) && (read_accum_index == DDR3_BURST_LENGTH / 2 / nCK_PER_CLK)) begin
             //	Discharge the burst accum register to the read FIFO, excluding words that weren't part of the original request
-            if (read_bytes_filled >= read_bytes_align_buf) begin
+            if (read_words_filled >= read_words_align_buf) begin
                 read_in.enable <= 1;
-                read_in.data <= read_data_accum >> ((data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK - read_bytes_pending) * 8);
+                read_in.data <= read_data_accum >> ((word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK - read_words_pending) * interface_width);
                 //	rd_fifo_wr_data is set above, outside the if statement
             end
-            read_bytes_filled <= read_bytes_filled + 1;
-            read_bytes_pending <= read_bytes_pending - 1;
+            read_words_filled <= read_words_filled + 1;
+            read_words_pending <= read_words_pending - 1;
             //  If we have handled the last word of a burst, start accumulating the next burst.
-            if (read_bytes_pending - 1 == 0)
+            if (read_words_pending - 1 == 0)
                 read_accum_index <= 0;
         end
 
         //	if ((read_bytes_requested < read_bytes_needed_buf + read_bytes_align_buf) && (read_bytes_filled == read_bytes_requested) && !mig_af_rdy) begin
-        if ((read_bytes_requested < read_bytes_needed_buf) && !read_data_afull && mig_af_rdy) begin
+        if ((read_words_requested < read_words_needed_buf) && !read_data_afull && mig_af_rdy) begin
             //	Submit burst read requests as long as we need more data and the read FIFO has space.
             mig_af_wr_en <= 1;
             mig_af_cmd <= INSTR_READ;
-            mig_af_addr <= ((cur_request.address - read_bytes_align_buf + read_bytes_requested) * 8) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
-            read_bytes_requested <= read_bytes_requested + data_width * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK / 8;
+            mig_af_addr <= ((cur_request.address - read_words_align_buf + read_words_requested) * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+            read_words_requested <= read_words_requested + data_width * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK / interface_width;
         end
 
     end
@@ -379,19 +392,19 @@ else begin
 
     MAS_WRITE_WAIT: begin
 
-        if ((write_bytes_fetched < write_bytes_supplied_buf - wr_fifo_pending_words) && (write_accum_index < data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK - wr_fifo_pending_words) && !((write_bytes_submitted == 0) && (write_accum_index + wr_fifo_pending_words < write_bytes_align_buf)))
+        if ((write_words_fetched < write_words_supplied_buf - wr_fifo_pending_words) && (write_accum_index < word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK - wr_fifo_pending_words) && !((write_words_submitted == 0) && (write_accum_index + wr_fifo_pending_words < write_words_align_buf)))
             write_out.ready <= 1;
         else
             write_out.ready <= 0;
 
         //	This assignment is outside the following if statement in order to reduce critical path delay
-        mig_af_addr <= ((cur_request.address - write_bytes_align_buf + write_bytes_submitted) * 8) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+        mig_af_addr <= ((cur_request.address - write_words_align_buf + write_words_submitted) * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
         mig_wdf_data <= write_data_accum >> (write_burst_index * data_width);
         mig_wdf_mask <= write_data_accum_mask >> (write_burst_index * data_width / 8);
 
         mig_wdf_last <= 0;	//	overridden below
 
-        if (write_bytes_submitted >= write_bytes_supplied_buf + write_bytes_align_buf) begin
+        if (write_words_submitted >= write_words_supplied_buf + write_words_align_buf) begin
             //	Write command finished, we can go on to the next one
             state <= MAS_WAITING;
             mig_wdf_wr_en <= 0;
@@ -403,7 +416,7 @@ else begin
             //	Only move on if the MIG is ready to.
             if (mig_af_rdy && mig_af_wr_en) begin
                 mig_af_wr_en <= 0;
-                write_bytes_submitted <= write_bytes_submitted + data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK;
+                write_words_submitted <= write_words_submitted + word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK;
                 write_burst_index <= 0;
                 write_accum_index <= 0;
             end
@@ -413,7 +426,7 @@ else begin
                 mig_wdf_wr_en <= 0;
             end
         end
-        else if (write_accum_index == data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK) begin
+        else if (write_accum_index == word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK) begin
             //	Once the data is accumulated, write it to the MIG's write data FIFO.
             //	mig_wdf_data, mig_wdf_mask set outside
             mig_wdf_wr_en <= 1;
@@ -432,17 +445,17 @@ else begin
         end
 
         //	This if statement broken out separately in order to reduce critical path delay
-        if (write_accum_index < data_width / 8 * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK) begin
+        if (write_accum_index < word_count * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK) begin
             //	Accumulate data from FIFO in a register wide enough to supply a burst to the MIG.
             if (write_out.enable && write_out.ready) begin
-                write_data_accum <= { write_out.data, write_data_accum } >> 8;
-                write_data_accum_mask <= { {(8 / 8){1'b0}}, write_data_accum_mask } >> (8 / 8);
-                write_bytes_fetched <= write_bytes_fetched + 1;
+                write_data_accum <= { write_out.data, write_data_accum } >> interface_width;
+                write_data_accum_mask <= { {(interface_width / 8){1'b0}}, write_data_accum_mask } >> (interface_width / 8);
+                write_words_fetched <= write_words_fetched + 1;
                 write_accum_index <= write_accum_index + 1;
             end
-            else if (((write_accum_index < write_bytes_align_buf) && (write_bytes_submitted == 0)) || (write_bytes_fetched >= write_bytes_supplied_buf)) begin
-                write_data_accum <= { {8{1'b0}}, write_data_accum } >> 8;
-                write_data_accum_mask <= { {(8 / 8){1'b1}}, write_data_accum_mask } >> (8 / 8);
+            else if (((write_accum_index < write_words_align_buf) && (write_words_submitted == 0)) || (write_words_fetched >= write_words_supplied_buf)) begin
+                write_data_accum <= { {interface_width{1'b0}}, write_data_accum } >> interface_width;
+                write_data_accum_mask <= { {(interface_width / 8){1'b1}}, write_data_accum_mask } >> (interface_width / 8);
                 write_accum_index <= write_accum_index + 1;
             end
         end

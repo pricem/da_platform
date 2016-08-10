@@ -55,8 +55,8 @@ wire fx2_full_flag;
 
 da_platform_wrapper dut(
     .fxclk_in(fx2_ifclk),
-    .ifclk_in(),
-    .reset(),
+    .ifclk_in(fx2_ifclk),
+    .reset(cr_host.reset),
     .ddr3_dq(ddr3_dq),
     .ddr3_dqs_n(ddr3_dqs_n),
     .ddr3_dqs_p(ddr3_dqs_p),
@@ -80,6 +80,7 @@ da_platform_wrapper dut(
     .fx2_pktend(fx2_pktend),
     .fx2_flaga(fx2_empty_flag), 
     .fx2_flagb(fx2_full_flag),
+    /*
     .iso_slotdata(iso.slotdata),
     .iso_mclk(iso.mclk),
     .iso_amcs(iso.amcs),
@@ -96,6 +97,8 @@ da_platform_wrapper dut(
     .iso_srclk(iso.srclk),
     .iso_clksel(iso.clksel),
     .iso_clk1(iso.clk1),
+    */
+    .iso(iso.fpga),
     .led_debug(led_debug)
 );
 
@@ -122,11 +125,11 @@ ddr3_model mem (
     .ck(ddr3_ck_p),
     .ck_n(ddr3_ck_n),
     .cke(ddr3_cke),
-    .cs_n(ddr3_cs_n),
+    .cs_n(1'b0),    //  always selected, only 1 chip
     .ras_n(ddr3_ras_n),
     .cas_n(ddr3_cas_n),
     .we_n(ddr3_we_n),
-    .dm_tdqs(ddr3_dm_tqds),
+    .dm_tdqs(ddr3_dm),
     .ba(ddr3_ba),
     .addr(ddr3_addr),
     .dq(ddr3_dq),
@@ -269,21 +272,34 @@ initial begin
     
     //  Wait 1.6 us for config information (dir/chan) to be serialized by isolator and received
     #1600 ;
-    
+    /*
     //  Try some SPI setup stuff
     spi_write(8'h01, 8'h29, 8'hA3);
     spi_read(8'h01, 8'h19, spi_receive_data);
     spi_read(8'h01, 8'h29, spi_receive_data);
+    */
     
-    
+    /*
+    //  Short audio test
     for (int i = 0; i < 10; i++) send_cmd_data[i] = (2 * i) + ((2 * i + 1) << 8);
     send_cmd(8'h01, AUD_FIFO_WRITE, 10);
+    */
+
+    //  Long audio loop: 128 samples in a row triggers some dropouts in I2S in testing
+    for (int i = 0; i < 256; i++) begin
+        send_cmd_data[2 * i] = 16'h0080;
+        send_cmd_data[2 * i + 1] = 16'h0000;
+    end
+    send_cmd(8'h01, AUD_FIFO_WRITE, 512);
+
+    //  Temporary
+    //  #1000 $finish;
 end
 
 //  Clocks
 `ifndef verilator
 always #2.5 cr_mem.clk = !cr_mem.clk;
-always #10.41667 cr_host.clk = !cr_host.clk;
+always #10.4166 cr_host.clk = !cr_host.clk;
 `else
 logic clk_global;
 always_comb begin
@@ -315,7 +331,7 @@ logic [31:0] cycle_counter;
 initial cycle_counter = 0;
 always @(posedge cr_host.clk) begin
     cycle_counter <= cycle_counter + 1;
-    if (cycle_counter > 10000) $finish;
+    if (cycle_counter > 100000) $finish;
 end
 
 endmodule

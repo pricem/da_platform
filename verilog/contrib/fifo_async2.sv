@@ -15,15 +15,17 @@
 
 `timescale 1ns / 1ps
 
-module fifo_async_sv #(
+module fifo_async_sv2 #(
     width = 8,
     depth = 8,
     debug_display = 0
 ) (
-    ClockReset.client cr_in,
+    input clk_in,
+    input reset_in,
 	FIFOInterface.in in,
 	output logic [$clog2(depth) : 0] count_in,
-    ClockReset.client cr_out,
+    input clk_out,
+    input reset_out,
 	FIFOInterface.out out,
 	output logic [$clog2(depth) : 0] count_out
 );
@@ -87,22 +89,13 @@ module fifo_async_sv #(
     
     //	Reset protection on input side
     logic [1:0] cr_out_reset_sync;
-    always @(posedge cr_in.clk) cr_out_reset_sync <= {cr_out_reset_sync[0], cr_out.reset};
+    always @(posedge clk_in) cr_out_reset_sync <= {cr_out_reset_sync[0], reset_out};
 
     logic temp_val;
-    
-    
-    logic clk_in;
-    logic clk_out;
-    
-    always_comb begin
-        clk_in = cr_in.clk;
-        clk_out = cr_out.clk;
-    end
-    
+
     logic in_osc_counter;
 
-    always @(posedge cr_in.clk) if (cr_in.reset || cr_out_reset_sync[1]) begin
+    always @(posedge clk_in) if (reset_in || cr_out_reset_sync[1]) begin
 		wr_addr_bin <= 0;
 		wr_addr_gray <= 0;
 		
@@ -144,11 +137,11 @@ module fifo_async_sv #(
 
 	//	Reset protection on output side
 	logic [1:0] cr_in_reset_sync;
-	always @(posedge cr_out.clk) cr_in_reset_sync <= {cr_in_reset_sync[0], cr_in.reset};
+	always @(posedge clk_out) cr_in_reset_sync <= {cr_in_reset_sync[0], reset_in};
 
     logic out_osc_counter;
 
-    always @(posedge cr_out.clk) if (cr_out.reset || cr_in_reset_sync[1]) begin
+    always @(posedge clk_out) if (reset_out || cr_in_reset_sync[1]) begin
 		rd_addr_bin <= 0;
 		rd_addr_gray <= 0;
 		
@@ -194,7 +187,7 @@ module fifo_async_sv #(
     logic [width - 1 : 0] write_input_prev;
     logic write_enable_prev;
     logic write_ready_prev;
-    always @(posedge cr_in.clk) if (cr_in.reset) begin
+    always @(posedge clk_in) if (reset_in) begin
         write_input_prev <= 0;
         write_enable_prev <= 0;
         write_ready_prev <= 0;

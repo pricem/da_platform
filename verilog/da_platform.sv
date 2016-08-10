@@ -11,6 +11,7 @@
     - check isolator reset line; does it need to be MCLK synchronous?
     - figure out pause/resume/discard functionality, i.e. commands to adjust FIFO counters 
     - allow 16/24/32 bit data packing (currently it's only 32 bit)
+    - add length/checksum to output packets as well, so the software can parse them (there's a bit of guesswork now...)
 */
 
 `timescale 1ns / 1ps
@@ -58,8 +59,9 @@ always_comb begin
 end
 
 //  Drive isolator reset line
+//  8/10/2016: DSD1792 reset is active low.
 always_comb begin
-    iso.reset_out = cr_core.reset;
+    iso.reset_out = !cr_core.reset;
 end
 
 //  MCLK generation, along with a reset synchronized to it
@@ -121,20 +123,24 @@ wire [M:0] host_in_rd_count;
 wire [M:0] host_out_wr_count;
 wire [M:0] host_out_rd_count;
 
-fifo_async_sv #(.width(host_width), .depth(1 << M)) host_in_h2c(
-    .cr_in(cr_host),
+fifo_async_sv2 #(.width(host_width), .depth(1 << M)) host_in_h2c(
+    .clk_in(cr_host.clk),
+    .reset_in(cr_host.reset),
     .in(host_in),
     .count_in(host_in_wr_count),
-    .cr_out(cr_core),
+    .clk_out(cr_core.clk),
+    .reset_out(cr_core.reset),
     .out(host_in_core.out),
     .count_out(host_in_rd_count)
 );
 
-fifo_async_sv #(.width(host_width), .depth(1 << M), .debug_display(1)) host_out_c2h(
-    .cr_in(cr_core),
+fifo_async_sv2 #(.width(host_width), .depth(1 << M), .debug_display(1)) host_out_c2h(
+    .clk_in(cr_core.clk),
+    .reset_in(cr_core.reset),
     .in(host_out_core.in),
     .count_in(host_out_wr_count),
-    .cr_out(cr_host),
+    .clk_out(cr_host.clk),
+    .reset_out(cr_host.reset),
     .out(host_out),
     .count_out(host_out_rd_count)
 );
@@ -304,6 +310,39 @@ always_comb begin
     ctl_out.ready = ctl_out_ready_int;
 end
 
+//  New experiment for slot muxing - 8/9/2016
+logic ctl_slots_in_ready[num_slots];
+logic ctl_slots_out_enable[num_slots];
+logic [host_width - 1 : 0] ctl_slots_out_data[num_slots];
+generate for (g = 0; g < num_slots; g++) begin: ctl_slot_map
+    always_comb begin
+        ctl_slots_in_ready[g] = ctl_slots_in[g].ready;
+        ctl_slots_out_enable[g] = ctl_slots_out[g].enable;
+        ctl_slots_out_data[g] = ctl_slots_out[g].data;
+    end
+end
+endgenerate
+
+always_comb begin
+    aud_in_write.ready = 0;
+    aud_out_read.enable = 0;
+    aud_out_read.data = 0;
+    for (int i = 0; i < num_slots; i++) if (slot_index == i) begin
+        aud_in_write.ready = arb_in_ready[i];
+        aud_out_read.enable = arb_out_enable[num_slots + i];
+        aud_out_read.data = arb_out_data[num_slots + i];
+    end
+    
+    ctl_in.ready = 0;
+    ctl_out.enable = 0;
+    ctl_out.data = 0;
+    for (int i = 0; i < num_slots; i++) if (slot_index == i) begin
+        ctl_in.ready = ctl_slots_in_ready[i];
+        ctl_out.enable = ctl_slots_out_enable[i];
+        ctl_out.data = ctl_slots_out_data[i];
+    end
+end
+
 generate for (g = 0; g < num_slots; g++) begin: slots
 
     //  Muxing of audio FIFOs.  Assignment to array elements can be done with always_comb,
@@ -314,10 +353,12 @@ generate for (g = 0; g < num_slots; g++) begin: slots
             aud_slots_in_write[g].data = aud_in_write.data;
             aud_slots_out_read[g].ready = aud_out_read.ready;
             
+            /*
             //  Experiment
             aud_in_write.ready = aud_slots_in_write[g].ready;
             aud_out_read.enable = aud_slots_out_read[g].enable;
             aud_out_read.data = aud_slots_out_read[g].data;
+            */
         end
         else begin
             aud_slots_in_write[g].enable = 0;
@@ -339,10 +380,12 @@ generate for (g = 0; g < num_slots; g++) begin: slots
             ctl_slots_in[g].data = ctl_in.data;
             ctl_slots_out[g].ready = ctl_out.ready;
             
+            /*
             //  Experiment
             ctl_in.ready = ctl_slots_in[g].ready;
             ctl_out.enable = ctl_slots_out[g].enable;
             ctl_out.data = ctl_slots_out[g].data;
+            */
         end
         else begin
             ctl_slots_in[g].enable = 0;
@@ -350,11 +393,13 @@ generate for (g = 0; g < num_slots; g++) begin: slots
             ctl_slots_out[g].ready = 0;
         end
     end
+    
     /*
     assign ctl_in.ready = (slot_index == g) ? ctl_slots_in[g].ready : 1'bz;
     assign ctl_out.enable = (slot_index == g) ? ctl_slots_out[g].enable : 1'bz;
     assign ctl_out.data = (slot_index == g) ? ctl_slots_out[g].data : 'z;
     */
+    
     //  Muxing of isolator interface signals
     wire slot_clk = (!clk_inhibit[g]) && (clksel_parallel[g] ? iso.clk1 : iso.clk0);
 

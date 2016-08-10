@@ -136,43 +136,63 @@ generate for (g = 0; g < num_ports; g++) begin: ports_dup
     assign ports_out_rep[g].ready = ports_out_ready[g];
     assign ports_out_enable[g] = ports_out_rep[g].enable;
     assign ports_out_data[g] = ports_out_rep[g].data;
+    fifo_sync_sv #(.width(mem_width), .depth(N_fw)) write_fifo (
+        .cr(cr_core),
+        .in(ports_in_rep[g].in),
+        .out(ports_in_buf[g].out),
+        .count(in_count[g])
+    );
+    fifo_sync_sv #(.width(mem_width), .depth(N_fr)) read_fifo (
+        .cr(cr_core),
+        .in(ports_out_buf[g].in),
+        .out(ports_out_rep[g].out),
+        .count(out_count[g])
+    );
 end
 endgenerate
-fifo_sync_sv #(.width(mem_width), .depth(N_fw)) write_fifos[num_ports] (
-    .cr(cr_core),
-    .in(ports_in_rep.in),
-    .out(ports_in_buf.out),
-    .count(in_count)
-);
-fifo_sync_sv #(.width(mem_width), .depth(N_fr)) read_fifos[num_ports] (
-    .cr(cr_core),
-    .in(ports_out_buf.in),
-    .out(ports_out_rep.out),
-    .count(out_count)
-);
 
 //  Here is the code for the async FIFOs to/from the memory interface
 FIFOInterface #(.num_bits(mem_width)) port_in_sel(cr_core.clk);
 FIFOInterface #(.num_bits(mem_width)) port_out_sel(cr_core.clk);
 
+//  Vivado simulator hacks
+FIFOInterface #(.num_bits(mem_width)) mem_write_rep(cr_mem.clk);
+FIFOInterface #(.num_bits(mem_width)) mem_read_rep(cr_mem.clk);
+ClockReset cr_mem_rep ();
+
+always_comb begin
+    cr_mem_rep.clk = cr_mem.clk;
+    cr_mem_rep.reset = cr_mem.reset;
+    mem_write_rep.ready = mem_write.ready;
+    mem_write.enable = mem_write_rep.enable;
+    mem_write.data = mem_write_rep.data;
+    mem_read.ready = mem_read_rep.ready;
+    mem_read_rep.enable = mem_read.enable;
+    mem_read_rep.data = mem_read.data;
+end
+
 logic [4:0] c2m_wr_count;
 logic [4:0] c2m_rd_count;
-fifo_async_sv #(.width(mem_width), .depth(16), .debug_display(1)) main_write_fifo(
-    .cr_in(cr_core),
+fifo_async_sv2 #(.width(mem_width), .depth(16), .debug_display(1)) main_write_fifo(
+    .clk_in(cr_core.clk),
+    .reset_in(cr_core.reset),
     .in(port_in_sel.in),
     .count_in(c2m_wr_count),
-    .cr_out(cr_mem),
-    .out(mem_write),
+    .clk_out(cr_mem.clk),
+    .reset_out(cr_mem.reset),
+    .out(mem_write_rep.out),
     .count_out(c2m_rd_count)
 );
 
 logic [4:0] m2c_wr_count;
 logic [4:0] m2c_rd_count;
-fifo_async_sv #(.width(mem_width), .depth(16)) main_read_fifo(
-    .cr_in(cr_mem),
-    .in(mem_read),
+fifo_async_sv2 #(.width(mem_width), .depth(16), .debug_display(1)) main_read_fifo(
+    .clk_in(cr_mem.clk),
+    .reset_in(cr_mem.reset),
+    .in(mem_read_rep.in),
     .count_in(m2c_wr_count),
-    .cr_out(cr_core),
+    .clk_out(cr_core.clk),
+    .reset_out(cr_core.reset),
     .out(port_out_sel.out),
     .count_out(m2c_rd_count)
 );
@@ -225,11 +245,13 @@ MemoryCommand cur_mem_cmd;
 FIFOInterface #(.num_bits(65 /* $sizeof(MemoryCommand) */)) mem_cmd_core (cr_core.clk);
 logic [2:0] c2m_cmd_wr_count;
 logic [2:0] c2m_cmd_rd_count;
-fifo_async_sv #(.width(65), .depth(4)) main_cmd_fifo(
-    .cr_in(cr_core),
+fifo_async_sv2 #(.width(65), .depth(4)) main_cmd_fifo(
+    .clk_in(cr_core.clk),
+    .reset_in(cr_core.reset),
     .in(mem_cmd_core.in),
     .count_in(c2m_cmd_wr_count),
-    .cr_out(cr_mem),
+    .clk_out(cr_mem.clk),
+    .reset_out(cr_mem.reset),
     .out(mem_cmd),
     .count_out(c2m_cmd_rd_count)
 );

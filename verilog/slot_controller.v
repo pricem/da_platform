@@ -233,11 +233,16 @@ always @(posedge slot_clk) begin
                 pdata <= audio_sample_right >> (31 - ((audio_clk_counter - 128) / 4));
             */
             //  I2S format
-            for (i = 0; i < audio_num_channels / 2; i = i + 1) begin
-                if (audio_clk_counter < audio_clk_ratio / 2)
-                    pdata[i] <= audio_samples_active[i * 2] >> (24 - audio_clk_counter / 4);
-                else
-                    pdata[i] <= audio_samples_active[i * 2 + 1] >> (24 - (audio_clk_counter - audio_clk_ratio / 2) / 4);
+            for (i = 0; i < 4; i = i + 1) begin
+                if (i < audio_num_channels / 2) begin
+                    if (audio_clk_counter < audio_clk_ratio / 2)
+                        pdata[i] <= audio_samples_active[i * 2] >> (24 - audio_clk_counter / 4);
+                    else
+                        pdata[i] <= audio_samples_active[i * 2 + 1] >> (24 - (audio_clk_counter - audio_clk_ratio / 2) / 4);
+                end
+                else begin
+                    pdata[i] <= 0;
+                end
             end
             
             /*

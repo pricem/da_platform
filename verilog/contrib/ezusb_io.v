@@ -78,7 +78,7 @@ module ezusb_io #(
     		.BANDWIDTH("OPTIMIZED"),
     		.CLKFBOUT_MULT_F(20.0),
     		.CLKFBOUT_PHASE(0.0),
-    		.CLKIN1_PERIOD(0.0),
+    		.CLKIN1_PERIOD(20.0 /* was 0.0 */),
     		.CLKOUT0_DIVIDE_F(20.0), 
     		.CLKOUT1_DIVIDE(1),
     	    	.CLKOUT2_DIVIDE(1),
@@ -144,6 +144,8 @@ module ezusb_io #(
     assign DI_ready = !reset_ifclk && FULL_FLAG && if_out & if_out_buf[4] && !resend;
     assign reset_out = reset || reset_ifclk;
     
+    
+    
     always @ (posedge ifclk)
     begin
 	reset_ifclk <= reset || !locked;
@@ -154,25 +156,34 @@ module ezusb_io #(
 	    if_out <= DI_enable;  // direction of EZ-USB interface: 1 means FPGA writes / EZ_USB reads
 	    resend <= 1'b0;
 	    SLRD_buf <= 1'b1;
+	    //  Michael Price 8/9/2016: Experimenting with change in assignment to DO_valid
+        //  DO_valid <= 0;
 	end else if ( FULL_FLAG && if_out && if_out_buf[4] && ( resend || DI_valid) )  	// FPGA -> EZ-USB
 	begin
 	    SLWR <= 1'b0;
 	    SLRD_buf <= 1'b1;
 	    resend <= 1'b0;
+	    //  DO_valid <= 0;
 	    if ( !resend ) fd_buf <= DI;
 	end else if ( EMPTY_FLAG && !if_out && !if_out_buf[4] && DO_ready )  		// EZ-USB -> FPGA
 	begin
 	    SLWR <= 1'b1;
 	    DO <= fd;
 	    SLRD_buf <= 1'b0;
+	    //  Michael Price 8/9/2016
+	    //  DO_valid <= 1;
 	end else if (if_out == if_out_buf[4])
 	begin
 	    if ( !SLWR && !FULL_FLAG ) resend <= 1'b1;  // FLAGS are received two clocks after data. If FULL_FLAG was asserted last data was ignored and has to be re-sent.
 	    SLRD_buf <= 1'b1;
 	    SLWR <= 1'b1;
+	    //  DO_valid <= 0;
 	    if_out <= DI_enable && (!DO_ready || !EMPTY_FLAG);
 	end 
 	if_out_buf <= reset_ifclk ? {5{!DI_enable}} : { if_out_buf[3:0], if_out };
+	
+	//  Michael Price 8/9/2016: Experimenting with a modification to this because it looks like
+	//  it will assert DO_valid one cycle too late at the beginning of a transfer.
 	if ( DO_ready ) DO_valid <= !if_out && !if_out_buf[4] && EMPTY_FLAG && !SLRD_buf;  // assertion of SLRD_buf takes two clocks to take effect
 	
 	// PKTEND processing

@@ -43,6 +43,7 @@ module da_platform_wrapper #(
     input fx2_flagb,
 
     //  Interface to isolator board
+    /*
     inout [23:0] iso_slotdata,
     output iso_mclk,
     output iso_amcs,
@@ -59,6 +60,8 @@ module da_platform_wrapper #(
     output iso_srclk,
     output iso_clksel,
     input iso_clk1,
+    */
+    IsolatorInterface.fpga iso,
     
     //  Other
     output [3:0] led_debug
@@ -74,7 +77,19 @@ ClockReset cr_host ();
 FIFOInterface #(.num_bits(host_width)) host_in(cr_host.clk);
 FIFOInterface #(.num_bits(host_width)) host_out(cr_host.clk);
 
-IsolatorInterface iso ();
+wire reset_usb;
+
+wire uiclk;
+wire ui_clk_sync_rst;
+
+always_comb begin
+    cr_mem.clk = uiclk;
+    cr_mem.reset = ui_clk_sync_rst;
+    cr_host.clk = ifclk;
+    cr_host.reset = reset_usb;
+end
+
+//  IsolatorInterface iso ();
 
 //  Core
 da_platform #(
@@ -90,7 +105,7 @@ da_platform #(
     .cr_host(cr_host.client),
     .host_in(host_in.in),
     .host_out(host_out.out),
-    .iso(iso.fpga),
+    .iso(iso),
     .led_debug(led_debug)
 );
 
@@ -112,14 +127,14 @@ ezusb_io #(
     .FIFOADDR({fx2_fifoaddr1, fx2_fifoaddr0}), 
     .EMPTY_FLAG(fx2_flaga),
     .FULL_FLAG(fx2_flagb),
-    .DI(host_in.data),
-    .DI_valid(host_in.enable),
-    .DI_ready(host_in.ready),
+    .DI(host_out.data),
+    .DI_valid(host_out.enable),
+    .DI_ready(host_out.ready),
     .DI_enable(1'b1),
     .pktend_timeout(16'd73),
-    .DO(host_out.data),
-    .DO_valid(host_out.enable),
-    .DO_ready(host_out.ready),
+    .DO(host_in.data),
+    .DO_valid(host_in.enable),
+    .DO_ready(host_in.ready),
     .status(usb_status)	
 );
 
@@ -132,12 +147,62 @@ wire app_rdy;
 wire app_wdf_rdy;
 wire app_rd_data_valid;
 wire [127:0] app_wdf_data;
+wire [15:0] app_wdf_mask;
 wire [127:0] app_rd_data;
+
+wire clk200_in;
+wire clk200;
+wire clk400_in;
+wire clk400;
+
+wire init_calib_complete;
+
+//  Clock generation
+BUFG fxclk_buf (
+    .I(fxclk_in),
+    .O(fxclk) 
+);
+
+BUFG clk200_buf (  		// sometimes it is generated automatically, sometimes not ...
+    .I(clk200_in),
+    .O(clk200) 
+);
+
+BUFG clk400_buf (
+    .I(clk400_in),
+    .O(clk400) 
+);
+
+PLLE2_BASE #(
+	.BANDWIDTH("LOW"),
+  	.CLKFBOUT_MULT(25),       // f_VCO = 1200 MHz (valid: 800 .. 1600 MHz)
+  	.CLKFBOUT_PHASE(0.0),
+  	.CLKIN1_PERIOD(20.832),
+  	.CLKOUT0_DIVIDE(3),	// 400 MHz
+  	.CLKOUT1_DIVIDE(6),	// 200 MHz
+  	.CLKOUT0_DUTY_CYCLE(0.5),
+  	.CLKOUT1_DUTY_CYCLE(0.5),
+  	.CLKOUT0_PHASE(0.0),
+  	.CLKOUT1_PHASE(0.0),
+  	.DIVCLK_DIVIDE(1),
+  	.REF_JITTER1(0.0),
+  	.STARTUP_WAIT("FALSE")
+)
+dram_fifo_pll_inst (
+  	.CLKIN1(fxclk),
+  	.CLKOUT0(clk400_in),
+  	.CLKOUT1(clk200_in),    
+  	.CLKFBOUT(pll_fb),
+  	.CLKFBIN(pll_fb),
+  	.PWRDWN(1'b0),
+  	.RST(1'b0)
+);
 
 //  Memory adapter (MIG)
 MIGAdapter #(
     .addr_width(28),
     .data_width(128),
+    .interface_width(32),
     .DDR3_BURST_LENGTH(8),
     .nCK_PER_CLK(4)
 ) mig_adapter(
@@ -145,8 +210,8 @@ MIGAdapter #(
     .ext_mem_cmd(mem_cmd.in),
     .ext_mem_write(mem_write.in),
     .ext_mem_read(mem_read.out),
-    .mig_clk(clk),
-    .mig_reset(rst),
+    .mig_clk(uiclk),
+    .mig_reset(ui_clk_sync_rst),
     .mig_init_done(init_calib_complete),
     .mig_af_rdy(app_rdy),
     .mig_af_wr_en(app_en),
@@ -165,6 +230,15 @@ MIGAdapter #(
 //  MIG instantiation
 //  In simulation mode, use MIG model instead.
 `ifdef USE_MIG_MODEL
+
+
+//  Sim: reset latch, since UI clk doesn't start up until after reset is done
+logic mig_model_reset;
+initial begin
+    mig_model_reset = 1;
+    #1000 mig_model_reset = 0;
+end
+
 //  MIG model
 mig_ddr3_model #(
     .BANK_WIDTH(3),
@@ -177,7 +251,7 @@ mig_ddr3_model #(
 	.RANKS(1),
 	.ADDR_WIDTH(28),
 	.CK_WIDTH(1),
-	.PAYLOAD_WIDTH(128),
+	.PAYLOAD_WIDTH(16 /* 128 */),
 	.BURST_TYPE("SEQ"),
 	.TRCD(13750),
     .TRFC(300000),
@@ -185,8 +259,8 @@ mig_ddr3_model #(
     .TWTR(7500),
     .init_use_file(0)
 ) mig_model (
-    .sys_clk_p(sys_clk_p),
-    .sys_rst(sys_rst),
+    .sys_clk_p(clk200),
+    .sys_rst(mig_model_reset),
     .ddr3_reset_n(ddr3_reset_n),
     .app_addr({1'b0, app_addr, 3'b000}),
     .app_cmd(app_cmd),
@@ -206,8 +280,8 @@ mig_ddr3_model #(
     .app_ref_ack(),
     .app_zq_req(1'b0),
     .app_zq_ack(),
-    .ui_clk(clk),
-    .ui_clk_sync_rst(rst),
+    .ui_clk(uiclk),
+    .ui_clk_sync_rst(ui_clk_sync_rst),
     .init_calib_complete(init_calib_complete)
 );
 `else
@@ -254,11 +328,6 @@ mig_7series_0 mem0 (
 );
 `endif
 
-//  Connect isolator interface
-//  TODO
-always_comb begin
-    
-end
 
 endmodule
 

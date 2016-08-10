@@ -26,13 +26,15 @@ module fx2_model #(
 
 //  Generate clock - 48 MHz
 initial ifclk = 0;
-always #10.4166 ifclk <= !ifclk;
+//  8/8/2016: round frequency up since this is eventually going to a MIG, and it is very sensitive in simulation
+//  in reality, half-period should be 10.41666... ns
+always #10.4 ifclk <= !ifclk;
 
 ClockReset cr_local ();
 always_comb cr_local.clk = ifclk;
 initial begin
     cr_local.reset = 1;
-    @(posedge cr_local.clk) cr_local.reset = 0;
+    @(posedge cr_local.clk) cr_local.reset <= 0;
 end    
 
 FIFOInterface #(.num_bits(16)) in_local (ifclk);
@@ -54,14 +56,21 @@ fifo_sync_sv #(.width(16), .depth(512)) out_fifo(
     .count(out_count)
 );
 
+logic [15:0] data_buf;
+logic data_pending;
+logic data_pending_last;
+logic empty_next;
+logic enable_last;
+
 //  I/O duties
-assign fd = SLOE ? 16'hZZZZ : in_local.data;
+assign fd = SLOE ? 16'hZZZZ : data_buf;
 always_comb begin
-    EMPTY_FLAG = (in_count == 0);
-    FULL_FLAG = (out_count == 512);
+    //  Active-low flags
+    empty_next = !((in_count == 0));
+    FULL_FLAG = !(out_count == 512);
     
     //  Only allow read/write if FIFO address is correct
-    in_local.ready = (!SLRD && (FIFOADDR == INEP / 2 - 1));
+    in_local.ready = (!SLRD && (FIFOADDR == INEP / 2 - 1)) && !data_pending;
 
     out_local.data = fd;
     out_local.enable = (!SLWR && (FIFOADDR == OUTEP / 2 - 1));
@@ -71,8 +80,27 @@ end
 
 //  Monitoring logic
 always @(posedge ifclk) begin
-    if (!SLWR && !out_local.ready) begin
-        $display("%t %m: SLWR asserted but out FIFO is full", $time);
+    if (cr_local.reset) begin 
+        data_pending <= 0;
+        data_pending_last <= 0;
+        enable_last <= 0;
+        EMPTY_FLAG <= 0;
+    end
+    else begin
+        data_pending_last <= data_pending;
+        enable_last <= in_local.enable && in_local.ready;
+        EMPTY_FLAG <= empty_next;
+        if (!SLRD) begin
+            data_pending <= 0;
+            if (!data_pending)
+                data_buf <= in_local.data;
+        end
+        else if (enable_last)
+            data_pending <= 1; 
+        
+        if (!SLWR && !out_local.ready) begin
+            $display("%t %m: SLWR asserted but out FIFO is full", $time);
+        end
     end
 end
 
