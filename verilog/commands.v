@@ -37,4 +37,10 @@ localparam SPI_WRITE_REG			= 8'h60;
 localparam SPI_READ_REG			= 8'h61;
 localparam SPI_REPORT			= 8'h62;
 
+localparam SLOT_START_PLAYBACK = 8'h70;
+localparam SLOT_STOP_PLAYBACK = 8'h71;
+localparam SLOT_START_RECORDING = 8'h72;
+localparam SLOT_STOP_RECORDING = 8'h73;
+
 //  TODO: Digital filtering control
+

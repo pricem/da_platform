@@ -265,33 +265,44 @@ end
 
 //  Fun stuff
 logic [7:0] spi_receive_data;
+logic [15:0] test_receive_length;
 initial begin
     @(negedge cr_host.reset);
     
     @(posedge cr_host.clk);
     
-    //  Wait 1.6 us for config information (dir/chan) to be serialized by isolator and received
-    #1600 ;
-    /*
+    //  Wait 10 us for config information (dir/chan) to be serialized by isolator and received
+    //  and for SS chip selects to be all deasserted (clock startup; ser/des) 
+    #10000 ;
+    
     //  Try some SPI setup stuff
     spi_write(8'h01, 8'h29, 8'hA3);
     spi_read(8'h01, 8'h19, spi_receive_data);
     spi_read(8'h01, 8'h29, spi_receive_data);
-    */
     
-    /*
+    //  Enable recording
+    send_cmd_data[0] = SLOT_START_RECORDING;
+    send_cmd_data[1] = 0;
+    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+
     //  Short audio test
     for (int i = 0; i < 10; i++) send_cmd_data[i] = (2 * i) + ((2 * i + 1) << 8);
     send_cmd(8'h01, AUD_FIFO_WRITE, 10);
-    */
-
+    
+    //  Disable recording after 100 us / approx 4 samples (wait for timeout, we should get the data back)
+    #100000 ;
+    send_cmd_data[0] = SLOT_STOP_RECORDING;
+    send_cmd_data[1] = 0;
+    transaction(8'h00, CMD_FIFO_WRITE, 2, 2000, test_receive_length);    //  TBD: How many words to receive?  Depends on timing.
+    
+    /*
     //  Long audio loop: 128 samples in a row triggers some dropouts in I2S in testing
     for (int i = 0; i < 256; i++) begin
         send_cmd_data[2 * i] = 16'h0080;
         send_cmd_data[2 * i + 1] = 16'h0000;
     end
     send_cmd(8'h01, AUD_FIFO_WRITE, 512);
-
+    */
     //  Temporary
     //  #1000 $finish;
 end

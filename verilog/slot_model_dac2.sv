@@ -22,7 +22,11 @@ module slot_model_dac2(
     output aovfl,
     output aovfr,
     input srclk,
-    input reset
+    input reset,
+    
+    //  Testbench output
+    input logic sample_clk,
+    FIFOInterface.out samples
 );
 
 //  2-channel DAC
@@ -37,7 +41,7 @@ assign aovfr = 0;
 //  SPI interface
 spi_slave ctl_model(
     .clk(clk), 
-    .reset(reset), 
+    .reset(!reset), 
     .sck(dmclk), 
     .ss(dmcs), 
     .mosi(dmdi), 
@@ -46,6 +50,8 @@ spi_slave ctl_model(
 
 //  Audio receiver (stereo... make 8-ch ones later)
 i2s_receiver dac_model(
+    .sample_clk(sample_clk),
+    .samples(samples),
     .bck(slotdata[5]),
     .lrck(slotdata[3]),
     .sdata(slotdata[4])

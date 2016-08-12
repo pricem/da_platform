@@ -99,6 +99,7 @@ module fifo_async_sv2 #(
 		wr_addr_bin <= 0;
 		wr_addr_gray <= 0;
 		
+		if (debug_display) $display("%t %m: reset, in.ready <= 1", $time);
 		in.ready <= 1;
 		count_in <= 0;
 

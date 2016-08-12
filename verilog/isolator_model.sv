@@ -52,7 +52,33 @@ assign slot_clk[3] = clksel[3] ? iso.clk1 : iso.clk0;
 
 //  Connect some fake modules to the slots
 
-//  Slot 0: empty
+logic sample_clk;
+FIFOInterface #(.num_bits(48)) samples_loopback(sample_clk);
+
+always_comb sample_clk = iso.mclk;
+
+//  Slot 0: ADC2
+slot_model_adc2 adc2_model(
+    .slotdata(iso.slotdata[5:0]),
+    .clk(slot_clk[0]),
+    .dmclk(iso.mclk),
+    .dmcs(dmcs[0]), 
+    .dmdi(iso.dmdi), 
+    .dmdo(iso.dmdo), 
+    .amclk(iso.mclk),
+    .amcs(amcs[0]), 
+    .amdi(iso.amdi), 
+    .amdo(iso.amdo), 
+    .dir(slot_dir[0]),
+    .chan(slot_chan[0]),
+    .hwcon(iso.acon[0]),
+    .aovfl(aovfl[0]),
+    .aovfr(aovfr[0]),
+    .srclk(iso.srclk),
+    .reset(iso.reset_out),
+    .sample_clk(sample_clk),
+    .samples(samples_loopback.in)
+);
 
 //  Slot 1: DAC2
 slot_model_dac2 dac2_model(
@@ -72,7 +98,9 @@ slot_model_dac2 dac2_model(
     .aovfl(aovfl[1]),
     .aovfr(aovfr[1]),
     .srclk(iso.srclk),
-    .reset(iso.reset_out)
+    .reset(iso.reset_out),
+    .sample_clk(sample_clk),
+    .samples(samples_loopback.out)
 );
 
 //  Slot 2: empty

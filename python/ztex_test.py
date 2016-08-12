@@ -112,6 +112,10 @@ class DAPlatformBackend(EZUSBBackend):
     SPI_WRITE_REG			= 0x60
     SPI_READ_REG			= 0x61
     SPI_REPORT			    = 0x62
+    SLOT_START_PLAYBACK     = 0x70
+    SLOT_STOP_PLAYBACK      = 0x71
+    SLOT_START_RECORDING    = 0x72
+    SLOT_STOP_RECORDING     = 0x73
 
     def __init__(self, num_slots=4):
         super(DAPlatformBackend, self).__init__()
@@ -128,7 +132,7 @@ class DAPlatformBackend(EZUSBBackend):
     
     def parse_report(self, new_packets=()):
         all_packets = numpy.concatenate([self.report_unparsed,] + list(new_packets))
-        #   print 'parse_report: %s' % all_packets
+        print 'parse_report: %s' % all_packets
         cur_index = 0
         N = all_packets.shape[0]
         parsing_valid = True
@@ -138,14 +142,16 @@ class DAPlatformBackend(EZUSBBackend):
                 #   Dumb: assume 1 word packet (SPI read seems to give this... needs to be fixed)
                 slot_id = all_packets[cur_index]
                 report_id = all_packets[cur_index + 1]
-                result_value = all_packets[cur_index + 2]
+                msg_length = (all_packets[cur_index + 2] << 16) + all_packets[cur_index + 3]
+                result_value = all_packets[cur_index + 4:cur_index + 4 + msg_length]
+                checksum = (all_packets[cur_index + 4 + msg_length] << 16) + all_packets[cur_index + 5 + msg_length]
                 if slot_id >= 0:
                     if report_id not in self.receive_state_slots[slot_id]:
                         self.receive_state_slots[slot_id][report_id] = []
                     self.receive_state_slots[slot_id][report_id].append(result_value)
                 else:
                     raise Exception('Warning, did not handle global response')
-                cur_index += 3
+                cur_index += 6 + msg_length
                 parsing_valid = True
     
     def update_receive_state(self):
@@ -310,11 +316,12 @@ class DSD1792Tester(object):
         msg = numpy.array([DAPlatformBackend.SPI_READ_REG, addr + 0x80], dtype=self.backend.dtype)
         self.transaction(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg), 100)
         
-        data = self.backend.receive_state_slots[slot][DAPlatformBackend.CMD_FIFO_REPORT]
+        data = self.backend.receive_state_slots[slot][DAPlatformBackend.CMD_FIFO_REPORT][0]
+        print data
         assert data[0] == DAPlatformBackend.SPI_REPORT
-        assert data[1] == addr + 0x80
-        result = data[2]
-        self.backend.receive_state_slots[slot][DAPlatformBackend.CMD_FIFO_REPORT] = []
+        assert data[2] == addr + 0x80
+        result = data[4]
+        self.backend.receive_state_slots[slot][DAPlatformBackend.CMD_FIFO_REPORT].pop(0)
         
         #	print 'Wrote command for SPI read: %s' % self.pprint(cmd)
         #	print 'Got response for SPI read: %s' % self.pprint(response)
@@ -336,6 +343,14 @@ class DSD1792Tester(object):
             print '%6s = %3d' % (key, val)
 
         return result_dict
+    
+    def start_recording(self, slot):
+        msg = numpy.array([DAPlatformBackend.SLOT_START_RECORDING, 0], dtype=self.backend.dtype)
+        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+    
+    def stop_recording(self, slot):
+        msg = numpy.array([DAPlatformBackend.SLOT_STOP_RECORDING, 0], dtype=self.backend.dtype)
+        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
     
     def audio_write_float(self, slot, data):
         data_int = (data * (1 << 24)).astype(numpy.int32)
@@ -373,7 +388,8 @@ if __name__ == '__main__':
     T = 10.
     N = F_s * T
     t = numpy.linspace(0, (N - 1) / F_s, N)
-    x = 0.00390625 * ((numpy.sin(2 * numpy.pi * F_sine * t) > 0) - 0.5)
+    x = 0.00390625 * ((numpy.sin(2 * numpy.pi * F_sine * t) >= 0) - 0.5)
+    #x = 0.1 * numpy.sin(2 * numpy.pi * F_sine * t)
     """
     #   Alt. try some WAV data (note: should scale, max vol would be * 256)
     (F_s, data) = scipy.io.wavfile.read('/mnt/hgfs/cds/Guster/Lost and Gone Forever/05 I Spy.wav')
@@ -382,19 +398,31 @@ if __name__ == '__main__':
     N = data.shape[0]
     x = data.astype(numpy.int32) * 0
     """
-    N = 128
-    chunk_size = 128
+    N = 68
+    chunk_size = min(1024, N)
     samples_written = 0
     while samples_written < N:
         chunk = x[samples_written:samples_written+chunk_size]
         this_chunk_size = chunk.shape[0]
         x_st = numpy.array([chunk, chunk]).T.flatten()
         tester.audio_write_float(1, x_st)
+        """
         if samples_written > 1000:
             time.sleep(this_chunk_size / F_s)
+        """
         #tester.audio_write(1, x_st)
         samples_written += this_chunk_size
         #print 'Wrote %d samples' % samples_written
+
+    #   Try some recording... (requires I2S lookup, or an ADC card to be installed) - slot 0
+    tester.start_recording(0)
+    samples_read = 0
+    chunk_size = 64
+    while samples_read < 1024:
+        data = tester.audio_read(0, chunk_size)
+        samples_read += data.shape[0]
+    tester.stop_recording(0)
+    pdb.set_trace()
     
     backend.close()
     
