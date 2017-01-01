@@ -234,6 +234,10 @@ delay_sv #(.num_bits(8)) rwa_delay(.cr(cr_mig), .in(read_words_align), .out(read
 //  wire #1 mig_read_data_valid_delay = mig_read_data_valid;
 wire mig_read_data_valid_delay = mig_read_data_valid;
 
+function logic [31:0] format_addr(input logic [31:0] base_addr);
+    return (base_addr * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+endfunction
+
 /*  Main sequential logic
     Note: all of this is on the mig_clk domain (200 MHz).
 */
@@ -383,7 +387,8 @@ else begin
             //	Submit burst read requests as long as we need more data and the read FIFO has space.
             mig_af_wr_en <= 1;
             mig_af_cmd <= INSTR_READ;
-            mig_af_addr <= ((cur_request.address - read_words_align_buf + read_words_requested) * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+            //  mig_af_addr <= ((cur_request.address - read_words_align_buf + read_words_requested) * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+            mig_af_addr <= format_addr(cur_request.address - read_words_align_buf + read_words_requested);
             read_words_requested <= read_words_requested + data_width * DDR3_BURST_LENGTH / 2 / nCK_PER_CLK / interface_width;
         end
 
@@ -398,7 +403,8 @@ else begin
             write_out.ready <= 0;
 
         //	This assignment is outside the following if statement in order to reduce critical path delay
-        mig_af_addr <= ((cur_request.address - write_words_align_buf + write_words_submitted) * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+        //  mig_af_addr <= ((cur_request.address - write_words_align_buf + write_words_submitted) * interface_width) / (data_width / DDR3_BURST_LENGTH) + PHYS_ADDR_OFFSET;
+        mig_af_addr <= format_addr(cur_request.address - write_words_align_buf + write_words_submitted);
         mig_wdf_data <= write_data_accum >> (write_burst_index * data_width);
         mig_wdf_mask <= write_data_accum_mask >> (write_burst_index * data_width / 8);
 

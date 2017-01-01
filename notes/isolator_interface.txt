@@ -1,0 +1,33 @@
+Interface between FPGA and isolator board
+Michael Price 8/3/2016
+------------------------------------------
+
+The interface is 40 pins, as follows.
+
+//  To be described
+inout [23:0] slotdata;
+
+output mclk;                //  Clock signal for SPI ports and (serial) shift registers
+
+output amcs;                //  Chip select for ADCs (serialized)
+output amdi;                //  MOSI for ADCs SPI port
+input amdo;                 //  MISO for ADCs SPI port
+
+output dmcs;                //  Chip select for DACs (serialized)
+output dmdi;                //  MOSI for DACs SPI port
+input dmdo;                 //  MISO for DACs SPI port
+
+input dirchan;              //  Conversion direction and number of channels (serialized)
+output [1:0] acon;          //  Hardware configuration data for ADCs (serialized)
+input aovf;                 //  Overflow flags for ADCs (serialized)
+input clk0;                 //  11.2896 MHz clock from low jitter oscillator
+output reset_out;           //  Reset signal to DAC/ADC boards (active low)
+output srclk;               //  Clock for (parallel) shift registers
+output clksel;              //  Selector between clocks for each DAC/ADC board (serialized)
+input clk1;                 //  24.576 MHz clock from low jitter oscillator
+
+
+Slot data is four 6-bit interfaces, one for each slot.  Typically these are I2S.
+Direction depends on whether slot has an ADC or DAC.
+
+

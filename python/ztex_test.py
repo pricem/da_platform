@@ -16,6 +16,7 @@ from datetime import datetime
 import numpy.random
 import scipy.io.wavfile
 import pdb
+from matplotlib import pyplot
 
 def get_elapsed_time(time_start):
     time_end = datetime.now()
@@ -51,10 +52,10 @@ class EZUSBBackend(object):
         self.handle.releaseInterface(0)
         self.handle.close()
 
-    def read(self, num_words, fail_on_timeout=False, display=False):
+    def read(self, num_words, fail_on_timeout=False, display=False, timeout=100):
         try:
             num_bytes = num_words * self.bytes_per_word
-            result = self.handle.bulkRead(MemFIFOBackend.EP_IN, num_bytes, 100)
+            result = self.handle.bulkRead(MemFIFOBackend.EP_IN, num_bytes, timeout)
         except usb1.USBErrorTimeout:
             result = ''
             if fail_on_timeout:
@@ -108,6 +109,7 @@ class DAPlatformBackend(EZUSBBackend):
     AOVF_REPORT             = 0x44
     ECHO_SEND		        = 0x45
     ECHO_REPORT			    = 0x46
+    RESET_SLOTS             = 0x47
     CHECKSUM_ERROR		    = 0x50
     SPI_WRITE_REG			= 0x60
     SPI_READ_REG			= 0x61
@@ -116,11 +118,15 @@ class DAPlatformBackend(EZUSBBackend):
     SLOT_STOP_PLAYBACK      = 0x71
     SLOT_START_RECORDING    = 0x72
     SLOT_STOP_RECORDING     = 0x73
+    SLOT_SET_ACON           = 0x80
 
     def __init__(self, num_slots=4):
         super(DAPlatformBackend, self).__init__()
         self.receive_state_global = {}
         self.receive_state_slots = [{} for i in range(num_slots)]
+        for i in range(num_slots):
+            for key in [DAPlatformBackend.AUD_FIFO_REPORT, DAPlatformBackend.CMD_FIFO_REPORT]:
+                self.receive_state_slots[i][key] = []
         self.report_unparsed = numpy.array([], dtype=self.dtype)
         
         #   TODO: Figure out
@@ -130,40 +136,67 @@ class DAPlatformBackend(EZUSBBackend):
         self.reset()
         time.sleep(0.4)
     
-    def parse_report(self, new_packets=()):
-        all_packets = numpy.concatenate([self.report_unparsed,] + list(new_packets))
-        print 'parse_report: %s' % all_packets
+    def receive_state_available(self, slot, key):
+        return (len(self.receive_state_slots[slot][key]) > 0)
+    
+    def parse_msg(self, slot_id, report_id, msg):
+        #   print 'parse_msg(%d, 0x%02x): %d words: %s ...' % (slot_id, report_id, msg.shape[0], msg)
+        if slot_id == DAPlatformBackend.GLOBAL_TARGET_INDEX:
+            if report_id not in self.receive_state_global:
+                self.receive_state_global[report_id] = []
+            self.receive_state_global[report_id].append(msg)
+        elif slot_id >= 0:
+            if report_id not in self.receive_state_slots[slot_id]:
+                self.receive_state_slots[slot_id][report_id] = []
+            self.receive_state_slots[slot_id][report_id].append(msg)
+
+    def parse_report(self, new_packet):
+        all_packets = numpy.concatenate([self.report_unparsed, new_packet])
+        #   print 'parse_report: %s' % all_packets
         cur_index = 0
         N = all_packets.shape[0]
         parsing_valid = True
         while parsing_valid:
             parsing_valid = False
             if N > cur_index + 2:
-                #   Dumb: assume 1 word packet (SPI read seems to give this... needs to be fixed)
+                #   Pull out metadata
                 slot_id = all_packets[cur_index]
                 report_id = all_packets[cur_index + 1]
                 msg_length = (all_packets[cur_index + 2] << 16) + all_packets[cur_index + 3]
-                result_value = all_packets[cur_index + 4:cur_index + 4 + msg_length]
+                if N < cur_index + 6 + msg_length:
+                    break
+                msg = all_packets[cur_index + 4:cur_index + 4 + msg_length]
                 checksum = (all_packets[cur_index + 4 + msg_length] << 16) + all_packets[cur_index + 5 + msg_length]
-                if slot_id >= 0:
-                    if report_id not in self.receive_state_slots[slot_id]:
-                        self.receive_state_slots[slot_id][report_id] = []
-                    self.receive_state_slots[slot_id][report_id].append(result_value)
-                else:
-                    raise Exception('Warning, did not handle global response')
+                
+                #   TODO: check checksum
+                
+                #   Call parse function
+                self.parse_msg(slot_id, report_id, msg)
+
                 cur_index += 6 + msg_length
                 parsing_valid = True
+        self.report_unparsed = all_packets[cur_index:]
     
-    def update_receive_state(self):
-        request_size = 1024
-        received_packet_size = -1
-        new_packets = []
-        while received_packet_size != 0:
-            data = self.read(request_size)
-            received_packet_size = data.shape[0]
-            new_packets.append(data)
-        self.parse_report(new_packets)
+    def update_receive_state(self, timeout=100, request_size=2048):
+        #   For up to 10 ms of CD audio, we need: 441 samples * 4 words/sample = ~1600
+        #   That would be 8 512-byte packets.
+        data = self.read(request_size)  #   , display=True
+        self.parse_report(data)
         #   print 'Receive state slots: %s' % self.receive_state_slots
+        
+        #   Provide the number of bytes received - some loops want to see if any new data showed up
+        return data.shape[0]
+
+    def flush(self, display=False):
+        """ Read from the device until there's nothing more to read.    """
+        num_words = 1
+        while num_words > 0:
+            num_words = self.update_receive_state()
+        if display:
+            print 'After flushing, remainder is %d words: %s' % (self.report_unparsed.shape[0], self.report_unparsed)
+
+    def pop_report_global(self, report_id):
+        return self.receive_state_global[report_id].pop(0)
 
 class FIFOTester(object):
     def __init__(self, backend):
@@ -268,6 +301,7 @@ class DSD1792Tester(object):
 
     def __init__(self, backend):
         self.backend = backend
+        self.backend.flush()
         
     def transaction(self, cmd, num_words):
         self.backend.write(cmd)
@@ -289,8 +323,8 @@ class DSD1792Tester(object):
         return msg
         
     def get_dirchan(self):
-        result = self.transaction(numpy.array([0xFF, 0x41], dtype=self.backend.dtype), 3)
-        dval = result[2]
+        self.transaction(numpy.array([0xFF, 0x41], dtype=self.backend.dtype), 3)
+        dval = self.backend.pop_report_global(DAPlatformBackend.DIRCHAN_REPORT)[0]
         for slot in range(4):
             dirslot = 1 * ((dval & (1 << slot)) > 0)
             chanslot = 1 * ((dval & (1 << (slot + 4))) > 0)
@@ -299,12 +333,15 @@ class DSD1792Tester(object):
 
     def get_aovf(self):
         result = self.transaction(numpy.array([0xFF, 0x43], dtype=self.backend.dtype), 3)
-        dval = result[2]
+        dval = self.backend.pop_report_global(DAPlatformBackend.AOVF_REPORT)[0]
         for slot in range(4):
             ovfl = 1 * ((dval & (1 << (slot * 2))) > 0)
             ovfr = 1 * ((dval & (1 << (slot * 2 + 1))) > 0)
             print 'Slot %d: Left overflow = %d, right overflow = %d' % (slot, ovfl, ovfr)
             #	print 'Result of get_aovf = %s' % self.pprint(result)
+
+    def reset_slots(self):
+        self.backend.write(numpy.array([0xFF, DAPlatformBackend.RESET_SLOTS], dtype=self.backend.dtype))
 
     def spi_write(self, slot, addr, data):
         checksum = 0x60 + addr + data
@@ -352,15 +389,55 @@ class DSD1792Tester(object):
         msg = numpy.array([DAPlatformBackend.SLOT_STOP_RECORDING, 0], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
     
+    def set_acon(self, slot, val):
+        msg = numpy.array([DAPlatformBackend.SLOT_SET_ACON, val], dtype=self.backend.dtype)
+        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+    
     def audio_write_float(self, slot, data):
         data_int = (data * (1 << 24)).astype(numpy.int32)
         self.audio_write(slot, data_int)
+        return data_int
     
     def audio_write(self, slot, data):
         #   2 byteswaps accomplishes a word-swap while preserving byte order within words
         #   print [hex(x) for x in data[:8]]
+        start_time = datetime.now()
         msg = numpy.fromstring(data.byteswap().tostring(), dtype=self.backend.dtype).byteswap()
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.AUD_FIFO_WRITE, msg))
+        print 'Wrote %d samples in %.2f ms' % (data.shape[0], get_elapsed_time(start_time) * 1e3)
+    
+    def audio_read(self, slot, num_samples, perform_update=True, timeout=100):
+        #   Timeout is in ms
+        #   TODO: Make much smarter
+        
+        start_time = datetime.now()
+        words_received = numpy.sum([x.shape[0] for x in self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT]])
+        samples_received = int(words_received / 2)
+        #   print 'Samples previously received = %d' % samples_received
+        
+        if perform_update:
+            time_float = 0
+            while samples_received < num_samples and time_float < 1e-3 * timeout:
+                self.backend.update_receive_state(timeout=timeout)
+                time_float = get_elapsed_time(start_time)
+                words_received = numpy.sum([x.shape[0] for x in self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT]])
+                samples_received = words_received / 2
+            print 'Got %d samples in %.2f ms' % (samples_received, (time_float * 1e3))
+        
+        if self.backend.receive_state_available(slot, DAPlatformBackend.AUD_FIFO_REPORT):
+            all_data = numpy.concatenate(self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT])
+            data = all_data[:num_samples * 2]
+            other_data = all_data[num_samples * 2:]
+            #   Save leftover samples back into receive state
+            self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT] = [other_data,]
+            
+            #   Convert to integer
+            #data = numpy.fromstring(data.byteswap().tostring(), dtype=numpy.int32).byteswap()
+            data = numpy.fromstring(data.tostring(), dtype=numpy.int32)
+        else:
+            data = numpy.array([], dtype=numpy.int32)
+
+        return data
     
 if __name__ == '__main__':
     """
@@ -377,19 +454,33 @@ if __name__ == '__main__':
     #   SPI experiments
     backend = DAPlatformBackend()
     tester = DSD1792Tester(backend)
+
+    #   tester.get_dirchan()
     
-    #tester.get_dirchan()
     #print tester.spi_read(1, 18)
     #tester.dsd1792_spi_summary(slot=1)
+    
+    #   8/12/2016
+    #   Set ACON
+    #tester.set_acon(0, 0x59)
+    #tester.reset_slots()
+    """
+    msg2 = tester.prepare_cmd(0, DAPlatformBackend.CMD_FIFO_WRITE, numpy.array([DAPlatformBackend.SLOT_SET_ACON, 0x59], dtype=backend.dtype))
+    msg1 = numpy.array([0xFF, DAPlatformBackend.RESET_SLOTS], dtype=backend.dtype)
+    backend.write(numpy.concatenate((msg1, msg2)))
+    pdb.set_trace()
+    """
     
     #   Try some audio (note: 44.1 kHz)
     F_s = 44100.
     F_sine = 100.
-    T = 10.
+    T = 1.
     N = F_s * T
     t = numpy.linspace(0, (N - 1) / F_s, N)
-    x = 0.00390625 * ((numpy.sin(2 * numpy.pi * F_sine * t) >= 0) - 0.5)
-    #x = 0.1 * numpy.sin(2 * numpy.pi * F_sine * t)
+    #x = 0.00390625 * ((numpy.sin(2 * numpy.pi * F_sine * t) >= 0) - 0.5)
+    #x = 0.00390625 * numpy.ones(t.shape)
+    #x = 0.1 * numpy.sin(2 * numpy.pi * F_sine * t) + 0.001
+    x = (1 + numpy.arange(N)).astype(float) * 2 / (1 << 24)
     """
     #   Alt. try some WAV data (note: should scale, max vol would be * 256)
     (F_s, data) = scipy.io.wavfile.read('/mnt/hgfs/cds/Guster/Lost and Gone Forever/05 I Spy.wav')
@@ -398,31 +489,128 @@ if __name__ == '__main__':
     N = data.shape[0]
     x = data.astype(numpy.int32) * 0
     """
-    N = 68
+    """
+    #N = 80
     chunk_size = min(1024, N)
     samples_written = 0
+    #   Just write samples continuously until interrupt
     while samples_written < N:
+    #while True:
+        #chunk = x[:chunk_size]
         chunk = x[samples_written:samples_written+chunk_size]
         this_chunk_size = chunk.shape[0]
         x_st = numpy.array([chunk, chunk]).T.flatten()
         tester.audio_write_float(1, x_st)
-        """
-        if samples_written > 1000:
-            time.sleep(this_chunk_size / F_s)
-        """
+        #if samples_written > 1000:
+        #    time.sleep(this_chunk_size / F_s)
         #tester.audio_write(1, x_st)
+        samples_written += this_chunk_size
+        print 'Wrote %d samples' % samples_written
+    
+    """
+    #   Try some recording... (requires I2S loopback, or an ADC card to be installed) - slot 0
+    """
+    #   1.  Fixed size
+    N = 80
+    tester.start_recording(0)
+    time.sleep(0.01)
+    chunk = x[:N]
+    x_st = numpy.array([chunk, chunk]).T.flatten()
+    x_int = tester.audio_write_float(1, x_st)
+    samples_read = 0
+    chunk_size = 512
+    rec_data = []
+    while samples_read < 4096:
+        print 'samples_read = %d' % samples_read
+        data = tester.audio_read(0, chunk_size)
+        rec_data.append(data)
+        samples_read += data.shape[0]
+    tester.stop_recording(0)
+    rec_data = numpy.concatenate(rec_data)
+    
+    #   Flush the backend
+    backend.flush(display=True)
+    tester.audio_read(0, 4096, perform_update=False)
+
+    rec_st = rec_data.reshape((rec_data.shape[0] / 2, 2))
+    nz_all = numpy.nonzero(rec_st)
+    nz_start = nz_all[0][0]
+    nz_end = nz_all[0][-1]
+    
+    #x_int = numpy.concatenate(x_int)
+    rec_st_nz = rec_st[nz_start:nz_end+1]
+    rec_nz = rec_st_nz.flatten()
+    n_err = numpy.sum(rec_nz != x_int)
+    print '%d/%d samples differ' % (n_err, x_int.shape[0])
+    if n_err > 0:
+        print 'Error inds: %s' % numpy.nonzero(rec_nz != x_int)
+    
+    print 'Done testing fixed data'
+    """
+    #   2. Continuous
+    N = int(F_s * T)
+    time_start = datetime.now()
+    tester.start_recording(0)
+    samples_written = 0
+    samples_read = 0
+    chunk_size = (1 << 8)
+    N = min(N, 5000)
+    #N = min(N, 10 * chunk_size)  #   uncomment to limit test to 1 chunk
+    rec_data = []
+    x_int = []
+    
+    while samples_written < N:
+        
+        chunk = x[samples_written:samples_written+chunk_size]
+        this_chunk_size = chunk.shape[0]
+        x_st = numpy.array([chunk, chunk + 1.0 / (1 << 24)]).T.flatten()
+        x_int.append(tester.audio_write_float(1, x_st))
         samples_written += this_chunk_size
         #print 'Wrote %d samples' % samples_written
 
-    #   Try some recording... (requires I2S lookup, or an ADC card to be installed) - slot 0
-    tester.start_recording(0)
-    samples_read = 0
-    chunk_size = 64
-    while samples_read < 1024:
-        data = tester.audio_read(0, chunk_size)
+        #   Read twice the chunk size--we have 2 channels
+        data = tester.audio_read(0, chunk_size * 2, timeout=10)
+        rec_data.append(data)
         samples_read += data.shape[0]
+        #print 'samples_read = %d' % samples_read
+
     tester.stop_recording(0)
-    pdb.set_trace()
+    
+    #   Flush the backend
+    backend.flush(display=True)
+    rec_data.append(tester.audio_read(0, 4096, perform_update=False))
+    rec_data = numpy.concatenate(rec_data)
+    
+    print 'Runtime: %.3f sec (T = %.3f sec / N = %d)' % (get_elapsed_time(time_start), T, N)
+    
+    #   Now we can fiddle with the data.... assuming it starts/ends with nonzero
+    rec_st = rec_data.reshape((rec_data.shape[0] / 2, 2))
+    nz_all = numpy.nonzero(rec_st)
+    nz_start = nz_all[0][0]
+    nz_end = nz_all[0][-1]
+    
+    x_int = numpy.concatenate(x_int)
+    rec_st_nz = rec_st[nz_start:nz_end+1]
+    rec_nz = rec_st_nz.flatten()
+    
+    #   Convert to 24-bit int
+    rec_nz[rec_nz >= 0x800000] -= 0x1000000
+    
+    print 'First nonzero sample = %d' % nz_start
+    n_err = numpy.sum(rec_nz[:(2 * N)] != x_int)
+    print '%d/%d samples differ' % (n_err, x_int.shape[0])
+    if n_err > 0:
+        print 'Error inds: %s' % numpy.nonzero(rec_nz[:(2 * N)] != x_int)
+
+    pyplot.figure()
+    pyplot.hold(True)
+    pyplot.plot(x_int[:10000], 'b')
+    pyplot.plot(rec_nz[:10000], 'r--')
+    pyplot.grid(True)
+    #pyplot.show()
+    pyplot.savefig('foo.pdf')
+
+    #pdb.set_trace()
     
     backend.close()
     

@@ -448,7 +448,7 @@ always @(posedge clk_core) begin
         current_cmd <= 0;
         current_report <= 0;
         
-        acon <= 8'h53;
+        acon <= 8'h51;  //  defaults for PCM1804
     end
     else begin
         ctl_wr_valid_int <= 0;
@@ -499,6 +499,10 @@ always @(posedge clk_core) begin
             end
             SLOT_STOP_RECORDING: begin
                 recording_enabled <= 0;
+                byte_counter <= 0;
+            end
+            SLOT_SET_ACON: begin
+                acon <= ctl_rd_data;
                 byte_counter <= 0;
             end
             endcase

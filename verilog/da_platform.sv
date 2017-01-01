@@ -44,7 +44,7 @@ module da_platform #(
 `include "commands.v"
 
 //  Internal FIFO log depth
-localparam M = 4;
+localparam M = 10;
 
 genvar g;
 
@@ -57,8 +57,11 @@ end
 
 //  Drive isolator reset line
 //  8/10/2016: DSD1792 reset is active low.
+logic reset_local;
+logic [7:0] reset_local_counter;
+localparam reset_local_timeout_cycles = 200;
 always_comb begin
-    iso.reset_out = !cr_core.reset;
+    iso.reset_out = !(cr_core.reset || reset_local);
 end
 
 //  MCLK generation, along with a reset synchronized to it
@@ -162,7 +165,6 @@ reg [7:0] current_report;
 reg [7:0] report_slot_index;
 reg [23:0] report_msg_length;
 reg [31:0] report_checksum;
-reg read_pending;
 reg [3:0] state;
 
 reg [7:0] report_data_waiting;
@@ -235,6 +237,9 @@ generate for (g = 0; g < num_slots; g++) always_comb begin
 end
 endgenerate
 
+logic [31:0] fifo_write_counters[num_slots * 2];
+logic [31:0] fifo_read_counters[num_slots * 2];
+
 fifo_arbiter #(.num_ports(num_slots * 2), .mem_width(mem_width)) arbiter(
     .cr_core(cr_core),
     /*
@@ -252,7 +257,10 @@ fifo_arbiter #(.num_ports(num_slots * 2), .mem_width(mem_width)) arbiter(
     .cr_mem(cr_mem),
     .mem_cmd(mem_cmd),
     .mem_read(mem_read),
-    .mem_write(mem_write)
+    .mem_write(mem_write),
+    
+    .write_counters(fifo_write_counters),
+    .read_counters(fifo_read_counters)
 );
 
 //  Master FIFO interfaces that the logic below deals with
@@ -270,7 +278,7 @@ FIFOInterface #(.num_bits(host_width)) ctl_in (cr_core.clk);
 logic host_in_ready_int;
 always_comb begin
     host_in_core.ready = host_in_ready_int;
-    if (state == STATE_HANDLE_INPUT) begin
+    if ((state == STATE_HANDLE_INPUT) && (slot_index != GLOBAL_TARGET_INDEX)) begin
         if ((current_cmd == AUD_FIFO_WRITE) && !aud_in_write.ready)
             host_in_core.ready = 0;
         if ((current_cmd == CMD_FIFO_WRITE) && !ctl_in.ready)
@@ -554,7 +562,6 @@ always @(posedge cr_core.clk) begin
         data_checksum_received <= 0;
         current_cmd <= 0;
         current_report <= 0;
-        read_pending <= 0;
         state <= STATE_IDLE;
         
         report_data_waiting <= 0;
@@ -582,6 +589,9 @@ always @(posedge cr_core.clk) begin
         ctl_out_fifo_write_active <= 0;
         ctl_out_fifo_read_active <= 0;
         ctl_out_fifo_timeout_counter <= 0;
+        
+        reset_local <= 0;
+        reset_local_counter <= 0;
     end
     else begin
         host_in_ready_int <= 0;
@@ -595,6 +605,13 @@ always @(posedge cr_core.clk) begin
         echo_wr_valid <= 0;
         echo_rd_ready <= 0;
         clk_inhibit <= 0;
+
+        if (reset_local) begin
+            if (reset_local_counter == reset_local_timeout_cycles - 1)
+                reset_local <= 0;
+            else
+                reset_local_counter <= reset_local_counter + 1;
+        end
 
         for (i = 0; i < 4; i = i + 1) begin
             if (reset_slots[i] && !clk_inhibit[i] && !reset_mclk) begin
@@ -619,98 +636,93 @@ always @(posedge cr_core.clk) begin
         STATE_IDLE: begin
             
             host_in_ready_int <= 1;
-            if (read_pending) begin
+
+            if (host_in_core.ready && host_in_core.enable) begin
+                slot_index <= host_in_core.data;
                 word_counter <= 0;
                 state <= STATE_HANDLE_INPUT;
-                read_pending <= 0;
             end
             else begin
-                if (host_in_core.ready && host_in_core.enable) begin
-                    slot_index <= host_in_core.data;
+                
+                if ((ctl_out_fifo_count == ctl_out_fifo_depth) || (ctl_out_fifo_timeout_counter == ctl_out_fifo_timeout_cycles)) begin
+                    //  If the control output FIFO has filled, go output it to the host.
+                    ctl_out_fifo_write_active <= 0;
+                    ctl_out_fifo_timeout_counter <= 0;
+                    report_slot_index <= ctl_out_fifo_slot;
+                    report_msg_length <= ctl_out_fifo_count;
+                    report_checksum <= 0;
                     word_counter <= 0;
-                    state <= STATE_HANDLE_INPUT;
+                    current_report <= CMD_FIFO_REPORT;
+                    state <= STATE_HANDLE_OUTPUT;
                 end
-                else begin
-                    
-                    if ((ctl_out_fifo_count == ctl_out_fifo_depth) || (ctl_out_fifo_timeout_counter == ctl_out_fifo_timeout_cycles)) begin
-                        //  If the control output FIFO has filled, go output it to the host.
-                        ctl_out_fifo_write_active <= 0;
-                        ctl_out_fifo_timeout_counter <= 0;
-                        report_slot_index <= ctl_out_fifo_slot;
-                        report_msg_length <= ctl_out_fifo_count;
-                        report_checksum <= 0;
-                        word_counter <= 0;
-                        current_report <= CMD_FIFO_REPORT;
-                        state <= STATE_HANDLE_OUTPUT;
-                    end
-                    else if ((audio_out_fifo_count == audio_out_fifo_depth) || (audio_out_fifo_timeout_counter == audio_out_fifo_timeout_cycles)) begin
-                        //  If the audio output FIFO has filled, go output it to the host.
-                        audio_out_fifo_write_active <= 0;
+                else if ((audio_out_fifo_count == audio_out_fifo_depth) || (audio_out_fifo_timeout_counter == audio_out_fifo_timeout_cycles)) begin
+                    //  If the audio output FIFO has filled, go output it to the host.
+                    audio_out_fifo_write_active <= 0;
+                    audio_out_fifo_timeout_counter <= 0;
+                    audio_out_lsb_pending <= 0;
+                    report_slot_index <= audio_out_fifo_slot;
+                    report_msg_length <= audio_out_fifo_count * (32 / host_width);
+                    report_checksum <= 0;
+                    word_counter <= 0;
+                    current_report <= AUD_FIFO_REPORT;
+                    state <= STATE_HANDLE_OUTPUT;
+                end
+
+                /*  Parallel part 1: audio FIFO management */
+                
+                //  Update cycle counter for timeout
+                if (audio_out_fifo_write_active) begin
+                    if (audio_out_fifo_in.enable)
                         audio_out_fifo_timeout_counter <= 0;
-                        audio_out_lsb_pending <= 0;
-                        report_slot_index <= audio_out_fifo_slot;
-                        report_msg_length <= audio_out_fifo_count * (32 / host_width);
-                        report_checksum <= 0;
-                        word_counter <= 0;
-                        current_report <= AUD_FIFO_REPORT;
-                        state <= STATE_HANDLE_OUTPUT;
-                    end
-
-                    /*  Parallel part 1: audio FIFO management */
-                    
-                    //  Update cycle counter for timeout
-                    if (audio_out_fifo_write_active) begin
-                        if (audio_out_fifo_in.enable)
-                            audio_out_fifo_timeout_counter <= 0;
-                        else if (audio_out_fifo_timeout_counter < audio_out_fifo_timeout_cycles)
-                            audio_out_fifo_timeout_counter <= audio_out_fifo_timeout_counter + 1;
-                    end
-                
-                    //  Start an audio output transfer if there is valid data at the next slot
-                    if (!audio_out_fifo_write_active) begin
-                        assert (audio_out_fifo_count == 0);
-                        if (arb_out_enable[num_slots + audio_out_fifo_slot]) begin
-                            audio_out_fifo_timeout_counter <= 0;
-                            audio_out_fifo_write_active <= 1;
-                        end
-                        else begin
-                            //  Cycle the slot index so we're always checking for data
-                            if (audio_out_fifo_slot == num_slots - 1)
-                                audio_out_fifo_slot <= 0;
-                            else
-                                audio_out_fifo_slot <= audio_out_fifo_slot + 1;
-                        end
-                    end
-
-
-                    /*  Parallel part 2: control FIFO management */
-                    
-                    //  Update cycle counter for timeout
-                    if (ctl_out_fifo_write_active) begin
-                        if (ctl_out_fifo_in.enable)
-                            ctl_out_fifo_timeout_counter <= 0;
-                        else if (ctl_out_fifo_timeout_counter < ctl_out_fifo_timeout_cycles)
-                            ctl_out_fifo_timeout_counter <= ctl_out_fifo_timeout_counter + 1;
-                    end
-                
-                    //  Start an audio output transfer if there is valid data at the next slot
-                    if (!ctl_out_fifo_write_active) begin
-                        assert (ctl_out_fifo_count == 0);
-                        if (ctl_slots_out_waiting[ctl_out_fifo_slot]) begin
-                            ctl_out_fifo_timeout_counter <= 0;
-                            ctl_out_fifo_write_active <= 1;
-                        end
-                        else begin
-                            //  Cycle the slot index so we're always checking for data
-                            if (ctl_out_fifo_slot == num_slots - 1)
-                                ctl_out_fifo_slot <= 0;
-                            else
-                                ctl_out_fifo_slot <= ctl_out_fifo_slot + 1;
-                        end
-                    end
-
+                    else if (audio_out_fifo_timeout_counter < audio_out_fifo_timeout_cycles)
+                        audio_out_fifo_timeout_counter <= audio_out_fifo_timeout_counter + 1;
                 end
+            
+                //  Start an audio output transfer if there is valid data at the next slot
+                if (!audio_out_fifo_write_active) begin
+                    assert (audio_out_fifo_count == 0);
+                    if (arb_out_enable[num_slots + audio_out_fifo_slot]) begin
+                        audio_out_fifo_timeout_counter <= 0;
+                        audio_out_fifo_write_active <= 1;
+                    end
+                    else begin
+                        //  Cycle the slot index so we're always checking for data
+                        if (audio_out_fifo_slot == num_slots - 1)
+                            audio_out_fifo_slot <= 0;
+                        else
+                            audio_out_fifo_slot <= audio_out_fifo_slot + 1;
+                    end
+                end
+
+
+                /*  Parallel part 2: control FIFO management */
+                
+                //  Update cycle counter for timeout
+                if (ctl_out_fifo_write_active) begin
+                    if (ctl_out_fifo_in.enable)
+                        ctl_out_fifo_timeout_counter <= 0;
+                    else if (ctl_out_fifo_timeout_counter < ctl_out_fifo_timeout_cycles)
+                        ctl_out_fifo_timeout_counter <= ctl_out_fifo_timeout_counter + 1;
+                end
+            
+                //  Start an audio output transfer if there is valid data at the next slot
+                if (!ctl_out_fifo_write_active) begin
+                    assert (ctl_out_fifo_count == 0);
+                    if (ctl_slots_out_waiting[ctl_out_fifo_slot]) begin
+                        ctl_out_fifo_timeout_counter <= 0;
+                        ctl_out_fifo_write_active <= 1;
+                    end
+                    else begin
+                        //  Cycle the slot index so we're always checking for data
+                        if (ctl_out_fifo_slot == num_slots - 1)
+                            ctl_out_fifo_slot <= 0;
+                        else
+                            ctl_out_fifo_slot <= ctl_out_fifo_slot + 1;
+                    end
+                end
+
             end
+
         end
         STATE_HANDLE_INPUT: begin
             /*
@@ -726,6 +738,7 @@ always @(posedge cr_core.clk) begin
                     current_cmd <= host_in_core.data;
                     data_checksum_calculated <= 0;
                     data_checksum_received <= 0;
+                    report_checksum <= 0;
                     case (host_in_core.data)
                     DIRCHAN_READ: begin
                         word_counter <= 0;
@@ -741,7 +754,18 @@ always @(posedge cr_core.clk) begin
                         current_report <= AOVF_REPORT;
                         state <= STATE_HANDLE_OUTPUT;
                     end
-                    
+                    FIFO_READ_STATUS: begin
+                        word_counter <= 0;
+                        report_slot_index <= GLOBAL_TARGET_INDEX;
+                        report_msg_length <= num_slots * 4 * 32 / host_width;
+                        current_report <= FIFO_REPORT_STATUS;
+                        state <= STATE_HANDLE_OUTPUT;
+                    end
+                    RESET_SLOTS: begin
+                        reset_local <= 1;
+                        reset_local_counter <= 0;
+                        state <= STATE_IDLE;
+                    end
                     endcase
                 end
                 else case (current_cmd)
@@ -818,11 +842,7 @@ always @(posedge cr_core.clk) begin
             end
         end
         STATE_HANDLE_OUTPUT: begin
-            if (host_in_core.ready && host_in_core.enable) begin
-                read_pending <= 1;
-                slot_index <= host_in_core.data;
-            end
-            else if (host_out_core.ready) begin
+            if (host_out_core.ready) begin
 
                 word_counter <= word_counter + 1;
                 host_out_core.enable <= 1;
@@ -869,6 +889,14 @@ always @(posedge cr_core.clk) begin
                     end
                     AOVF_REPORT: begin
                         host_out_core.data <= aovf_parallel;
+                    end
+                    FIFO_REPORT_STATUS: begin
+                        case ((word_counter - 4) % 4)
+                        0: host_out_core.data <= fifo_write_counters[(word_counter - 4) / 4][31:16];
+                        1: host_out_core.data <= fifo_write_counters[(word_counter - 4) / 4][15:0];
+                        2: host_out_core.data <= fifo_read_counters[(word_counter - 4) / 4][31:16];
+                        3: host_out_core.data <= fifo_read_counters[(word_counter - 4) / 4][15:0];
+                        endcase
                     end
                     CHECKSUM_ERROR: begin
                         //  TODO: Fix

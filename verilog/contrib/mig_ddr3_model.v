@@ -194,8 +194,8 @@ end
 //	Memory array (added by Michael Price 7/21/2012)
 //	256 bits / 32 bytes wide, and should be 32M deep for 1 GB
 //	Hard code 256 MB since for some reason, VCS thinks anything over 512 MB is greater than 2 GB?
-//  localparam MEM_DEPTH = 8388608;
-localparam MEM_DEPTH = 1048576;
+localparam MEM_DEPTH = (1 << 24);
+//  localparam MEM_DEPTH = 1048576;
 reg [MEM_WIDTH-1:0] mem[MEM_DEPTH-1:0];
 //	reg [MEM_WIDTH-1:0] mem[PAGE_SIZE * ROW_COUNT / (nCK_PER_CLK * 2) - 1:0];
 

@@ -28,6 +28,9 @@ localparam AOVF_READ             = 8'h43;
 localparam AOVF_REPORT           = 8'h44;
 localparam ECHO_SEND				= 8'h45;
 localparam ECHO_REPORT			= 8'h46;
+localparam RESET_SLOTS          = 8'h47;
+localparam FIFO_READ_STATUS     = 8'h48;
+localparam FIFO_REPORT_STATUS   = 8'h49;
 
 //  Errors
 localparam CHECKSUM_ERROR		= 8'h50;
@@ -41,6 +44,8 @@ localparam SLOT_START_PLAYBACK = 8'h70;
 localparam SLOT_STOP_PLAYBACK = 8'h71;
 localparam SLOT_START_RECORDING = 8'h72;
 localparam SLOT_STOP_RECORDING = 8'h73;
+
+localparam SLOT_SET_ACON = 8'h80;
 
 //  TODO: Digital filtering control
 

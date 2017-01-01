@@ -139,7 +139,7 @@ ezusb_io #(
 );
 
 //  MIG interfaces
-wire [23:0] app_addr;
+wire [27:0] app_addr;
 wire [2:0] app_cmd;
 wire app_en;
 wire app_wdf_wren;
@@ -262,7 +262,8 @@ mig_ddr3_model #(
     .sys_clk_p(clk200),
     .sys_rst(mig_model_reset),
     .ddr3_reset_n(ddr3_reset_n),
-    .app_addr({1'b0, app_addr, 3'b000}),
+    //  .app_addr({1'b0, app_addr, 3'b000}),
+    .app_addr(app_addr),
     .app_cmd(app_cmd),
     .app_en(app_en),
     .app_wdf_data(app_wdf_data),
@@ -301,13 +302,14 @@ mig_7series_0 mem0 (
     .ddr3_cke(ddr3_cke[0]),
     .ddr3_dm(ddr3_dm),
     .ddr3_odt(ddr3_odt[0]),
-    .app_addr({1'b0, app_addr, 3'b000}),	
+    //  .app_addr({1'b0, app_addr, 3'b000}),
+    .app_addr(app_addr),
     .app_cmd(app_cmd),
     .app_en(app_en),
     .app_rdy(app_rdy),
     .app_wdf_rdy(app_wdf_rdy), 
     .app_wdf_data(app_wdf_data),
-    .app_wdf_mask(16'h0000),
+    .app_wdf_mask(app_wdf_mask),
     .app_wdf_end(app_wdf_wren),
     .app_wdf_wren(app_wdf_wren),
     .app_rd_data(app_rd_data),
