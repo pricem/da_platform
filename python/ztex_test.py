@@ -24,7 +24,7 @@ def get_elapsed_time(time_start):
     return time_diff.seconds + 1e-6 * time_diff.microseconds
 
 #   Set to True for debugging
-IO_DISPLAY = True
+IO_DISPLAY = False
 
 class EZUSBBackend(object):
     def __init__(self, dtype=numpy.uint16):
@@ -63,7 +63,7 @@ class EZUSBBackend(object):
             result = ''
             if fail_on_timeout:
                 raise
-        
+
         result = numpy.fromstring(result, dtype=self.dtype)
         if display: print 'Got %d/%d words: %s' % (len(result), num_words, result)
         return result
@@ -187,7 +187,7 @@ class DAPlatformBackend(EZUSBBackend):
     def update_receive_state(self, timeout=100, request_size=2048):
         #   For up to 10 ms of CD audio, we need: 441 samples * 4 words/sample = ~1600
         #   That would be 8 512-byte packets.
-        data = self.read(request_size)  #   , display=True
+        data = self.read(request_size, timeout=timeout)  #   , display=True
         self.parse_report(data)
         #   print 'Receive state slots: %s' % self.receive_state_slots
         
@@ -388,6 +388,14 @@ class DSD1792Tester(object):
 
         return result_dict
     
+    def start_playback(self, slot):
+        msg = numpy.array([DAPlatformBackend.SLOT_START_PLAYBACK, 0], dtype=self.backend.dtype)
+        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+    
+    def stop_playback(self, slot):
+        msg = numpy.array([DAPlatformBackend.SLOT_STOP_PLAYBACK, 0], dtype=self.backend.dtype)
+        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+    
     def start_recording(self, slot):
         msg = numpy.array([DAPlatformBackend.SLOT_START_RECORDING, 0], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
@@ -406,6 +414,18 @@ class DSD1792Tester(object):
         msg = numpy.array([DAPlatformBackend.SLOT_SET_ACON, val], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
     
+    def fifo_status(self, display=False):
+        self.backend.write(numpy.array([0xFF, 0x48, 0x00], dtype=self.backend.dtype))
+        data = self.backend.read(38)
+        status = data[4:36].byteswap().view(numpy.uint32).byteswap().reshape((8, 2))
+        if display:
+            print 'DRAM FIFO status:'
+            for i in range(8):
+                if status[i, 0] != 0 or status[i, 1] != 0:
+                    print '  Port %d: Wrote %d samples, read %d samples' % (i, status[i, 0], status[i, 1])
+        
+        return status
+    
     def audio_write_float(self, slot, data):
         data_int = (data * (1 << 24)).astype(numpy.int32)
         self.audio_write(slot, data_int)
@@ -417,15 +437,11 @@ class DSD1792Tester(object):
         start_time = datetime.now()
         msg = numpy.fromstring(data.byteswap().tostring(), dtype=self.backend.dtype).byteswap()
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.AUD_FIFO_WRITE, msg))
-        print 'Wrote %d samples in %.2f ms' % (data.shape[0], get_elapsed_time(start_time) * 1e3)
+        #   print 'Wrote %d samples in %.2f ms' % (data.shape[0], get_elapsed_time(start_time) * 1e3)
     
     def audio_read(self, slot, num_samples, perform_update=True, timeout=100):
         #   Timeout is in ms
         #   TODO: Make much smarter
-        
-        #   Now we have to send a command to the device to get it to send us audio
-        msg = numpy.array([slot, DAPlatformBackend.AUD_FIFO_READ, num_samples / 65536, num_samples % 65536], dtype=numpy.uint16)
-        self.backend.write(msg)
         
         start_time = datetime.now()
         words_received = numpy.sum([x.shape[0] for x in self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT]])
@@ -435,11 +451,18 @@ class DSD1792Tester(object):
         if perform_update:
             time_float = 0
             while samples_received < num_samples and time_float < 1e-3 * timeout:
-                self.backend.update_receive_state(timeout=timeout)
+            
+                samples_needed = num_samples - samples_received
+            
+                #   Now we have to send a command to the device to get it to send us audio
+                msg = numpy.array([slot, DAPlatformBackend.AUD_FIFO_READ, samples_needed / 65536, samples_needed % 65536], dtype=numpy.uint16)
+                self.backend.write(msg)
+                num_words = samples_needed * 2 + 6
+                self.backend.update_receive_state(request_size=num_words, timeout=timeout)
                 time_float = get_elapsed_time(start_time)
                 words_received = numpy.sum([x.shape[0] for x in self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT]])
-                samples_received = words_received / 2
-            print 'Got %d samples in %.2f ms' % (samples_received, (time_float * 1e3))
+                samples_received = int(words_received / 2)
+                #   print 'Got to %d samples from %d words in %.2f ms' % (samples_received, num_words, (time_float * 1e3))
         
         if self.backend.receive_state_available(slot, DAPlatformBackend.AUD_FIFO_REPORT):
             all_data = numpy.concatenate(self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT])
@@ -491,13 +514,17 @@ if __name__ == '__main__':
     #   Try some audio (note: 44.1 kHz)
     F_s = 44100.
     F_sine = 100.
-    T = 1.
+    T = 10.
     N = F_s * T
     t = numpy.linspace(0, (N - 1) / F_s, N)
     #x = 0.00390625 * ((numpy.sin(2 * numpy.pi * F_sine * t) >= 0) - 0.5)
     #x = 0.00390625 * numpy.ones(t.shape)
-    #x = 0.1 * numpy.sin(2 * numpy.pi * F_sine * t) + 0.001
-    x = (1 + numpy.arange(N)).astype(float) * 2 / (1 << 24)
+    #x = (-1.0 / (1 << 24)) * numpy.ones(t.shape)
+    x = 0.45 * numpy.sin(2 * numpy.pi * F_sine * t) + 0.001
+    #x = (1 + numpy.arange(N)).astype(float) * 2 / (1 << 24)
+    #   1/2/2017 experiment
+    #x = numpy.zeros(t.shape)
+    #x[335:345] = 0.001
     """
     #   Alt. try some WAV data (note: should scale, max vol would be * 256)
     (F_s, data) = scipy.io.wavfile.read('/mnt/hgfs/cds/Guster/Lost and Gone Forever/05 I Spy.wav')
@@ -565,78 +592,119 @@ if __name__ == '__main__':
     print 'Done testing fixed data'
     """
     #   2. Continuous
-    N = int(F_s * T)
+    
+    #   Load a song
+    test_fn = "/mnt/hgfs/cds/Weezer/Weezer (Blue Album)/07 Say It Ain't So.wav"
+    (Fs_test, x_st_int) = scipy.io.wavfile.read(test_fn)
+    
+    #   Convert to 24-bit
+    if x_st_int.dtype == numpy.int16:
+        x_st_int = x_st_int.astype(numpy.int32) << 8
+    else:
+        raise Exception('Unexpected source data type: %s' % x_st_int.dtype)
+    
+    #N = int(F_s * T)
+    N = x_st_int.shape[0]
     time_start = datetime.now()
-    tester.block_slots()
     tester.start_recording(0)
-    started_flag = False
     samples_written = 0
     samples_read = 0
-    chunk_size = (1 << 3)
-    #N = min(N, 5000)
-    N = min(N, 4 * chunk_size)  #   uncomment to limit test to 1 chunk
+    start_flag = False
+    chunk_size = (1 << 12)
+    #N = min(N, 1100000)
+    #N = min(N, 4 * chunk_size)  #   uncomment to limit test to 1 chunk
     rec_data = []
     x_int = []
     
     while samples_written < N:
         
-        chunk = x[samples_written:samples_written+chunk_size]
+        chunk = x_st_int[samples_written:samples_written+chunk_size]
         this_chunk_size = chunk.shape[0]
-        x_st = numpy.array([chunk, chunk + 1.0 / (1 << 24)]).T.flatten()
-        x_int.append(tester.audio_write_float(1, x_st))
+        #x_st = numpy.array([chunk, chunk + 1.0 / (1 << 24)]).T.flatten()
+        
+        #x_int.append(tester.audio_write_float(1, x_st))
+        tester.audio_write(1, chunk.flatten())
+        x_int.append(chunk.flatten())
         samples_written += this_chunk_size
         #print 'Wrote %d samples' % samples_written
-        
-        if not started_flag:
-            tester.unblock_slots()
-            started_flag = True
 
-        #   Read twice the chunk size--we have 2 channels
-        data = tester.audio_read(0, chunk_size * 2, timeout=10)
-        rec_data.append(data)
-        samples_read += data.shape[0]
-        #print 'samples_read = %d' % samples_read
+        #   Delay first read so that we don't get a buffer underrun
+        if start_flag == False:
+            start_flag = True
+        else:
 
+            #   Read twice the chunk size--we have 2 channels
+            data = tester.audio_read(0, chunk_size * 2, timeout=200)
+            rec_data.append(data)
+            samples_read += data.shape[0]
+            #print 'samples_read = %d' % samples_read
+            
+        #tester.fifo_status(display=True)
+
+    
+    time.sleep(0.1) #   temporary... need to ensure everything actually gets played
+    tester.stop_playback(1) #  assists with triggering
     tester.stop_recording(0)
+    time.sleep(0.01)
+    
+    #   Get FIFO status and then retrieve any lingering samples
+    status = tester.fifo_status(display=True)
+    leftover_samples = status[4][0] - status[4][1]
+    rec_data.append(tester.audio_read(0, leftover_samples, perform_update=True, timeout=1000))
     
     #   Flush the backend
     backend.flush(display=True)
-    rec_data.append(tester.audio_read(0, 4096, perform_update=False))
+
     rec_data = numpy.concatenate(rec_data)
     
     print 'Runtime: %.3f sec (T = %.3f sec / N = %d)' % (get_elapsed_time(time_start), T, N)
     
-    #   Now we can fiddle with the data.... assuming it starts/ends with nonzero
+    #   Now we can fiddle with the data.... at least the nonzero part
     rec_st = rec_data.reshape((rec_data.shape[0] / 2, 2))
     nz_all = numpy.nonzero(rec_st)
-    if nz_all[0]:
+    nz_src = numpy.nonzero(x_st_int)
+    if nz_all[0].shape[0] > 0:
+        nz_start_src = nz_src[0][0]
+        nz_end_src = nz_src[0][-1]
+    
         nz_start = nz_all[0][0]
         nz_end = nz_all[0][-1]
         
         x_int = numpy.concatenate(x_int)
+        x_int_nz = x_int[(2 * nz_start_src):(2 * nz_end_src)]
         rec_st_nz = rec_st[nz_start:nz_end+1]
         rec_nz = rec_st_nz.flatten()
+        
+        Nsrc = x_int_nz.shape[0]
+        Ns = Nsrc
+        if rec_nz.shape[0] < Nsrc:
+            print 'Error: received %d/%d nonzero samples' % (rec_nz.shape[0], Ns)
+            Ns = rec_nz.shape[0]
         
         #   Convert to 24-bit int
         rec_nz[rec_nz >= 0x800000] -= 0x1000000
         
-        print 'First nonzero sample = %d' % nz_start
-        n_err = numpy.sum(rec_nz[:(2 * N)] != x_int)
-        print '%d/%d samples differ' % (n_err, x_int.shape[0])
+        print 'First nonzero sample = %d; last nonzero sample = %d' % (nz_start, nz_end)
+        n_err = numpy.sum(rec_nz[:Ns] != x_int_nz[:Ns])
+        print '%d/%d samples differ' % (n_err, Ns)
         if n_err > 0:
-            print 'Error inds: %s' % numpy.nonzero(rec_nz[:(2 * N)] != x_int)
+            print 'Error inds: %s' % numpy.nonzero(rec_nz[:Ns] != x_int_nz[:Ns])
 
+        #   Do the figure only if we have a "reasonable" number of samples
+        skip = 1
+        if Ns > 100000:
+            skip = int(Ns / 100000)
         pyplot.figure()
         pyplot.hold(True)
-        pyplot.plot(x_int[:10000], 'b')
-        pyplot.plot(rec_nz[:10000], 'r--')
+        pyplot.plot(x_int_nz[::skip], 'b')
+        pyplot.plot(rec_nz[::skip], 'r--')
         pyplot.grid(True)
-        #pyplot.show()
+        pyplot.show()
         pyplot.savefig('foo.pdf')
     else:
         print 'Error, did not receive any nonzero samples'
 
-    #pdb.set_trace()
+    pdb.set_trace()
     
     backend.close()
     

@@ -20,9 +20,12 @@ ClockReset cr_mem ();
 FIFOInterface #(.num_bits(65 /* $sizeof(MemoryCommand) */)) mem_cmd (cr_mem.clk);
 FIFOInterface #(.num_bits(mem_width)) mem_write (cr_mem.clk);
 FIFOInterface #(.num_bits(mem_width)) mem_read (cr_mem.clk);
+
 ClockReset cr_host ();
-FIFOInterface #(.num_bits(host_width)) host_in (cr_host.clk);
-FIFOInterface #(.num_bits(host_width)) host_out (cr_host.clk);
+wire tb_host_clk;
+FIFOInterface #(.num_bits(host_width)) host_in (tb_host_clk);
+FIFOInterface #(.num_bits(host_width)) host_out (tb_host_clk);
+
 IsolatorInterface iso ();
 logic [3:0] led_debug;
 
@@ -35,7 +38,7 @@ wire [13:0] ddr3_addr;
 wire [2:0] ddr3_ba;
 wire ddr3_ras_n;
 wire ddr3_cas_n;
-wire ddr3_we_n;
+wire ddr3_we_n; 
 wire ddr3_reset_n;
 wire [0:0] ddr3_ck_p;
 wire [0:0] ddr3_ck_n;
@@ -52,6 +55,8 @@ wire fx2_sloe;
 wire [1:0] fx2_fifoaddr;
 wire fx2_empty_flag;
 wire fx2_full_flag;
+
+assign tb_host_clk = fx2_ifclk;
 
 da_platform_wrapper dut(
     .fxclk_in(fx2_ifclk),
@@ -142,6 +147,9 @@ ddr3_model mem (
 
 `else
 //  Instantiate core DA Platform logic directly
+
+assign tb_host_clk = cr_host.clk;
+
 da_platform #(
     .mem_width(mem_width),
     .host_width(host_width)
@@ -185,7 +193,7 @@ logic [31:0] send_cmd_checksum;
 logic [15:0] send_cmd_data[1024];
 logic [9:0] receive_counter;
 logic [15:0] receive_data[1024];
-always @(posedge cr_host.clk) begin
+always @(posedge tb_host_clk) begin
     if (host_out.ready && host_out.enable) begin
         receive_data[receive_counter] = host_out.data;
         receive_counter++;
@@ -330,19 +338,19 @@ initial begin
         send_cmd_data[2 * i] = i / 256;
         send_cmd_data[2 * i + 1] = i % 256;
     end
-    send_cmd(8'h01, AUD_FIFO_WRITE, 32);
+    send_cmd(8'h01, AUD_FIFO_WRITE, 256);
 
     //  Now unblock ADC and DAC simultaneously
     send_cmd_data[0] = 4'b0011;
     send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
 
-    #250000 send_cmd_data[0] = SLOT_STOP_RECORDING;
+    #1500000 send_cmd_data[0] = SLOT_STOP_RECORDING;
     send_cmd_data[1] = 0;
     send_cmd(8'h00, CMD_FIFO_WRITE, 2);
 
     //  1/1/2017: Test audio FIFO read
     send_cmd_data[0] = 0;
-    send_cmd_data[1] = 16;
+    send_cmd_data[1] = 128;
     send_cmd_simple(8'h00, AUD_FIFO_READ, 2);
 
     //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
@@ -389,7 +397,7 @@ logic [31:0] cycle_counter;
 initial cycle_counter = 0;
 always @(posedge cr_host.clk) begin
     cycle_counter <= cycle_counter + 1;
-    if (cycle_counter > 100000) $finish;
+    if (cycle_counter > 1000000) $finish;
 end
 
 endmodule

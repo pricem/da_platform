@@ -50,7 +50,7 @@ localparam   STATE_WRITE_DATA = 4'h6;
 //  How many words (samples) are allocated to FIFO storage for each port?
 //  ZTEX module 2.13 has 256 MB of memory; with 8 ports, that's 32 MB (8M samples) per port.
 //  But for simulation/testing we can use less.
-localparam region_log_depth = 23;
+localparam region_log_depth = 6;
 //  Counters are restricted to twice the region depth.
 //  This allows us to distinguish between full and empty.
 localparam counter_mask = (1 << (region_log_depth + 1)) - 1;
