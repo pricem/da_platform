@@ -594,7 +594,8 @@ if __name__ == '__main__':
     #   2. Continuous
     
     #   Load a song
-    test_fn = "/mnt/hgfs/cds/Weezer/Weezer (Blue Album)/07 Say It Ain't So.wav"
+    #test_fn = "/mnt/hgfs/cds/Weezer/Weezer (Blue Album)/07 Say It Ain't So.wav"
+    test_fn = "/mnt/hgfs/cds/Weezer/Weezer (Blue Album)/05 Undone (the Sweater Song).wav"
     (Fs_test, x_st_int) = scipy.io.wavfile.read(test_fn)
     
     #   Convert to 24-bit
@@ -611,7 +612,7 @@ if __name__ == '__main__':
     samples_read = 0
     start_flag = False
     chunk_size = (1 << 12)
-    #N = min(N, 1100000)
+    #N = min(N, 110000)
     #N = min(N, 4 * chunk_size)  #   uncomment to limit test to 1 chunk
     rec_data = []
     x_int = []
@@ -699,12 +700,12 @@ if __name__ == '__main__':
         pyplot.plot(x_int_nz[::skip], 'b')
         pyplot.plot(rec_nz[::skip], 'r--')
         pyplot.grid(True)
-        pyplot.show()
+        #pyplot.show()
         pyplot.savefig('foo.pdf')
     else:
         print 'Error, did not receive any nonzero samples'
 
-    pdb.set_trace()
+    #pdb.set_trace()
     
     backend.close()
     

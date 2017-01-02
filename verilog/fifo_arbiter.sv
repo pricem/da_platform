@@ -50,7 +50,7 @@ localparam   STATE_WRITE_DATA = 4'h6;
 //  How many words (samples) are allocated to FIFO storage for each port?
 //  ZTEX module 2.13 has 256 MB of memory; with 8 ports, that's 32 MB (8M samples) per port.
 //  But for simulation/testing we can use less.
-localparam region_log_depth = 6;
+localparam region_log_depth = 23;
 //  Counters are restricted to twice the region depth.
 //  This allows us to distinguish between full and empty.
 localparam counter_mask = (1 << (region_log_depth + 1)) - 1;
@@ -107,6 +107,10 @@ function logic [31:0] space_remaining(input logic [$clog2(num_ports)-1:0] port);
     if (empty_flags[port]) return (1 << region_log_depth);
     else if (full_flags[port]) return 0;
     else return (last_read_addr[port] - last_write_addr[port]) & (counter_mask >> 1);
+endfunction
+
+function logic [31:0] read_gap(input logic [31:0] write_addr, input logic [31:0] read_addr);
+    return (write_addr - read_addr) & counter_mask;
 endfunction
 
 /*
@@ -313,10 +317,11 @@ always @(posedge cr_core.clk) begin
         end
         STATE_READ_INIT: begin
             //  Count the number of words we are going to read
-            if (last_write_addr[current_port_index] - last_read_addr[current_port_index] > ((1 << M_fr) - out_count[current_port_index]))
+            //if (last_write_addr[current_port_index] - last_read_addr[current_port_index] > ((1 << M_fr) - out_count[current_port_index]))
+            if (read_gap(last_write_addr[current_port_index], last_read_addr[current_port_index]) > ((1 << M_fr) - out_count[current_port_index]))
                 read_words_target <= (1 << M_fr) - out_count[current_port_index];
             else
-                read_words_target <= last_write_addr[current_port_index] - last_read_addr[current_port_index];
+                read_words_target <= read_gap(last_write_addr[current_port_index], last_read_addr[current_port_index]);
             read_words_count <= 0;
             state <= STATE_READ_CMD;
         end

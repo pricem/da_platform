@@ -334,29 +334,29 @@ initial begin
     send_cmd_simple(8'h00, FIFO_READ_STATUS);
     */
     //  Long audio loop: test that we can stall
-    for (int i = 0; i < 128; i++) begin
+    for (int i = 0; i < 256; i++) begin
         send_cmd_data[2 * i] = i / 256;
         send_cmd_data[2 * i + 1] = i % 256;
     end
-    send_cmd(8'h01, AUD_FIFO_WRITE, 256);
+    send_cmd(8'h01, AUD_FIFO_WRITE, 512);
 
     //  Now unblock ADC and DAC simultaneously
     send_cmd_data[0] = 4'b0011;
     send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
 
-    #1500000 send_cmd_data[0] = SLOT_STOP_RECORDING;
+    for (int i = 0; i < 4; i++) begin
+        #750000     //  1/1/2017: Test audio FIFO read
+        send_cmd_data[0] = 0;
+        send_cmd_data[1] = 64;
+        send_cmd_simple(8'h00, AUD_FIFO_READ, 2);
+    end
+
+    send_cmd_data[0] = SLOT_STOP_RECORDING;
     send_cmd_data[1] = 0;
     send_cmd(8'h00, CMD_FIFO_WRITE, 2);
 
-    //  1/1/2017: Test audio FIFO read
-    send_cmd_data[0] = 0;
-    send_cmd_data[1] = 128;
-    send_cmd_simple(8'h00, AUD_FIFO_READ, 2);
-
     //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
     #50000 send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
-    
-    
 
     //  Temporary
     //  #1000 $finish;
