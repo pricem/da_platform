@@ -192,10 +192,13 @@ always @(posedge cr_host.clk) begin
     end
 end
 
-task send_cmd_simple(input logic [7:0] destination, input logic [7:0] command);
+task send_cmd_simple(input logic [7:0] destination, input logic [7:0] command, input logic [23:0] data_length);
     host_in.write(destination);
     host_in.write(command);
-    host_in.write(0);
+    for (int i = 0; i < data_length; i++)
+        host_in.write(send_cmd_data[i]);
+    if (data_length == 0)
+        host_in.write(0);
 endtask
 
 task send_cmd(input logic [7:0] destination, input logic [7:0] command, input logic [23:0] data_length);
@@ -300,6 +303,10 @@ initial begin
     send_cmd(8'hFF, RESET_SLOTS, 0);
     */
     
+    //  Put a blocker on everyone
+    send_cmd_data[0] = 4'b0000;
+    send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
+    
     //  Enable recording
     send_cmd_data[0] = SLOT_START_RECORDING;
     send_cmd_data[1] = 0;
@@ -319,11 +326,29 @@ initial begin
     send_cmd_simple(8'h00, FIFO_READ_STATUS);
     */
     //  Long audio loop: test that we can stall
-    #100000 for (int i = 0; i < 128; i++) begin
+    for (int i = 0; i < 128; i++) begin
         send_cmd_data[2 * i] = i / 256;
         send_cmd_data[2 * i + 1] = i % 256;
     end
-    send_cmd(8'h01, AUD_FIFO_WRITE, 256);
+    send_cmd(8'h01, AUD_FIFO_WRITE, 32);
+
+    //  Now unblock ADC and DAC simultaneously
+    send_cmd_data[0] = 4'b0011;
+    send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
+
+    #250000 send_cmd_data[0] = SLOT_STOP_RECORDING;
+    send_cmd_data[1] = 0;
+    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+
+    //  1/1/2017: Test audio FIFO read
+    send_cmd_data[0] = 0;
+    send_cmd_data[1] = 16;
+    send_cmd_simple(8'h00, AUD_FIFO_READ, 2);
+
+    //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
+    #50000 send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
+    
+    
 
     //  Temporary
     //  #1000 $finish;
@@ -351,14 +376,14 @@ initial begin
     #100 cr_mem.reset = 0;
     cr_host.reset = 0;
 end
-
+/*
 `ifndef verilator
 initial begin
     $dumpfile("da_platform_tb.vcd");
     $dumpvars(0, da_platform_tb);
 end
 `endif
-
+*/
 //  Time limit
 logic [31:0] cycle_counter;
 initial cycle_counter = 0;

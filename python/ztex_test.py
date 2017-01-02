@@ -23,6 +23,9 @@ def get_elapsed_time(time_start):
     time_diff = time_end - time_start
     return time_diff.seconds + 1e-6 * time_diff.microseconds
 
+#   Set to True for debugging
+IO_DISPLAY = True
+
 class EZUSBBackend(object):
     def __init__(self, dtype=numpy.uint16):
         self.context = usb1.USBContext()
@@ -52,7 +55,7 @@ class EZUSBBackend(object):
         self.handle.releaseInterface(0)
         self.handle.close()
 
-    def read(self, num_words, fail_on_timeout=False, display=False, timeout=100):
+    def read(self, num_words, fail_on_timeout=False, display=IO_DISPLAY, timeout=100):
         try:
             num_bytes = num_words * self.bytes_per_word
             result = self.handle.bulkRead(MemFIFOBackend.EP_IN, num_bytes, timeout)
@@ -65,7 +68,7 @@ class EZUSBBackend(object):
         if display: print 'Got %d/%d words: %s' % (len(result), num_words, result)
         return result
     
-    def write(self, data, display=False):
+    def write(self, data, display=IO_DISPLAY):
         num_bytes = self.handle.bulkWrite(MemFIFOBackend.EP_OUT, data.tostring())
         assert num_bytes == data.shape[0] * self.bytes_per_word
         num_words = num_bytes / self.bytes_per_word
@@ -100,6 +103,7 @@ class DAPlatformBackend(EZUSBBackend):
     GLOBAL_TARGET_INDEX     = 0xFF
     AUD_FIFO_WRITE          = 0x10
     AUD_FIFO_REPORT         = 0x11
+    AUD_FIFO_READ           = 0x12
     CMD_FIFO_WRITE          = 0x20
     CMD_FIFO_REPORT         = 0x21
     SELECT_CLOCK            = 0x40
@@ -110,6 +114,9 @@ class DAPlatformBackend(EZUSBBackend):
     ECHO_SEND		        = 0x45
     ECHO_REPORT			    = 0x46
     RESET_SLOTS             = 0x47
+    FIFO_READ_STATUS        = 0x48
+    FIFO_REPORT_STATUS      = 0x49
+    UPDATE_BLOCKING         = 0x4A
     CHECKSUM_ERROR		    = 0x50
     SPI_WRITE_REG			= 0x60
     SPI_READ_REG			= 0x61
@@ -389,6 +396,12 @@ class DSD1792Tester(object):
         msg = numpy.array([DAPlatformBackend.SLOT_STOP_RECORDING, 0], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
     
+    def block_slots(self):
+        self.backend.write(numpy.array([0xFF, 0x4A, 0x00], dtype=self.backend.dtype))
+    
+    def unblock_slots(self):
+        self.backend.write(numpy.array([0xFF, 0x4A, 0x0F], dtype=self.backend.dtype))
+    
     def set_acon(self, slot, val):
         msg = numpy.array([DAPlatformBackend.SLOT_SET_ACON, val], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
@@ -409,6 +422,10 @@ class DSD1792Tester(object):
     def audio_read(self, slot, num_samples, perform_update=True, timeout=100):
         #   Timeout is in ms
         #   TODO: Make much smarter
+        
+        #   Now we have to send a command to the device to get it to send us audio
+        msg = numpy.array([slot, DAPlatformBackend.AUD_FIFO_READ, num_samples / 65536, num_samples % 65536], dtype=numpy.uint16)
+        self.backend.write(msg)
         
         start_time = datetime.now()
         words_received = numpy.sum([x.shape[0] for x in self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT]])
@@ -550,12 +567,14 @@ if __name__ == '__main__':
     #   2. Continuous
     N = int(F_s * T)
     time_start = datetime.now()
+    tester.block_slots()
     tester.start_recording(0)
+    started_flag = False
     samples_written = 0
     samples_read = 0
-    chunk_size = (1 << 8)
-    N = min(N, 5000)
-    #N = min(N, 10 * chunk_size)  #   uncomment to limit test to 1 chunk
+    chunk_size = (1 << 3)
+    #N = min(N, 5000)
+    N = min(N, 4 * chunk_size)  #   uncomment to limit test to 1 chunk
     rec_data = []
     x_int = []
     
@@ -567,6 +586,10 @@ if __name__ == '__main__':
         x_int.append(tester.audio_write_float(1, x_st))
         samples_written += this_chunk_size
         #print 'Wrote %d samples' % samples_written
+        
+        if not started_flag:
+            tester.unblock_slots()
+            started_flag = True
 
         #   Read twice the chunk size--we have 2 channels
         data = tester.audio_read(0, chunk_size * 2, timeout=10)
@@ -586,29 +609,32 @@ if __name__ == '__main__':
     #   Now we can fiddle with the data.... assuming it starts/ends with nonzero
     rec_st = rec_data.reshape((rec_data.shape[0] / 2, 2))
     nz_all = numpy.nonzero(rec_st)
-    nz_start = nz_all[0][0]
-    nz_end = nz_all[0][-1]
-    
-    x_int = numpy.concatenate(x_int)
-    rec_st_nz = rec_st[nz_start:nz_end+1]
-    rec_nz = rec_st_nz.flatten()
-    
-    #   Convert to 24-bit int
-    rec_nz[rec_nz >= 0x800000] -= 0x1000000
-    
-    print 'First nonzero sample = %d' % nz_start
-    n_err = numpy.sum(rec_nz[:(2 * N)] != x_int)
-    print '%d/%d samples differ' % (n_err, x_int.shape[0])
-    if n_err > 0:
-        print 'Error inds: %s' % numpy.nonzero(rec_nz[:(2 * N)] != x_int)
+    if nz_all[0]:
+        nz_start = nz_all[0][0]
+        nz_end = nz_all[0][-1]
+        
+        x_int = numpy.concatenate(x_int)
+        rec_st_nz = rec_st[nz_start:nz_end+1]
+        rec_nz = rec_st_nz.flatten()
+        
+        #   Convert to 24-bit int
+        rec_nz[rec_nz >= 0x800000] -= 0x1000000
+        
+        print 'First nonzero sample = %d' % nz_start
+        n_err = numpy.sum(rec_nz[:(2 * N)] != x_int)
+        print '%d/%d samples differ' % (n_err, x_int.shape[0])
+        if n_err > 0:
+            print 'Error inds: %s' % numpy.nonzero(rec_nz[:(2 * N)] != x_int)
 
-    pyplot.figure()
-    pyplot.hold(True)
-    pyplot.plot(x_int[:10000], 'b')
-    pyplot.plot(rec_nz[:10000], 'r--')
-    pyplot.grid(True)
-    #pyplot.show()
-    pyplot.savefig('foo.pdf')
+        pyplot.figure()
+        pyplot.hold(True)
+        pyplot.plot(x_int[:10000], 'b')
+        pyplot.plot(rec_nz[:10000], 'r--')
+        pyplot.grid(True)
+        #pyplot.show()
+        pyplot.savefig('foo.pdf')
+    else:
+        print 'Error, did not receive any nonzero samples'
 
     #pdb.set_trace()
     

@@ -15,6 +15,7 @@ localparam GLOBAL_TARGET_INDEX   = 8'hFF;
 //  Commands pertaining to audio data
 localparam AUD_FIFO_WRITE        = 8'h10;
 localparam AUD_FIFO_REPORT       = 8'h11;
+localparam AUD_FIFO_READ         = 8'h12;
 
 //  Commands pertaining to command data
 localparam CMD_FIFO_WRITE        = 8'h20;
@@ -31,6 +32,7 @@ localparam ECHO_REPORT			= 8'h46;
 localparam RESET_SLOTS          = 8'h47;
 localparam FIFO_READ_STATUS     = 8'h48;
 localparam FIFO_REPORT_STATUS   = 8'h49;
+localparam UPDATE_BLOCKING      = 8'h4A;
 
 //  Errors
 localparam CHECKSUM_ERROR		= 8'h50;

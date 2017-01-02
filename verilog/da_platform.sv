@@ -296,6 +296,10 @@ always_comb begin
 end
 */
 
+//  Global enable - used to atomically start/stop groups of slots
+//  in order to get perfect output synchronization
+logic [num_slots - 1 : 0] slot_fifo_en;
+
 //  New experiment for slot muxing - 8/9/2016
 logic ctl_slots_in_ready[num_slots];
 logic ctl_slots_out_ready[num_slots];
@@ -421,7 +425,8 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         .chan(slot_chan), 
         .acon(slot_acon), 
         .aovf(slot_aovf),
-        .spi_state(slot_spi_state)
+        .spi_state(slot_spi_state),
+        .fifo_en(slot_fifo_en[g])
     );
 
 end
@@ -440,6 +445,7 @@ logic [$clog2(audio_out_fifo_depth):0] audio_out_fifo_count;
 logic [1:0] audio_out_fifo_slot;
 logic audio_out_fifo_write_active;
 logic audio_out_fifo_read_active;
+logic [15:0] audio_out_fifo_write_count;
 
 logic [15:0] audio_out_lsb_word;
 logic audio_out_lsb_pending;
@@ -582,6 +588,7 @@ always @(posedge cr_core.clk) begin
         audio_out_fifo_write_active <= 0;
         audio_out_fifo_read_active <= 0;
         audio_out_fifo_timeout_counter <= 0;
+        audio_out_fifo_write_count <= 0;
         audio_out_lsb_pending <= 0;
         audio_out_lsb_word <= 0;
         
@@ -589,6 +596,9 @@ always @(posedge cr_core.clk) begin
         ctl_out_fifo_write_active <= 0;
         ctl_out_fifo_read_active <= 0;
         ctl_out_fifo_timeout_counter <= 0;
+        
+        //  Start out with all slots enabled to reduce confusion
+        slot_fifo_en <= '1;
         
         reset_local <= 0;
         reset_local_counter <= 0;
@@ -655,6 +665,8 @@ always @(posedge cr_core.clk) begin
                     current_report <= CMD_FIFO_REPORT;
                     state <= STATE_HANDLE_OUTPUT;
                 end
+                /*
+                //  Experimenting with new audio FIFO discharge method - 1/1/2017
                 else if ((audio_out_fifo_count == audio_out_fifo_depth) || (audio_out_fifo_timeout_counter == audio_out_fifo_timeout_cycles)) begin
                     //  If the audio output FIFO has filled, go output it to the host.
                     audio_out_fifo_write_active <= 0;
@@ -667,8 +679,8 @@ always @(posedge cr_core.clk) begin
                     current_report <= AUD_FIFO_REPORT;
                     state <= STATE_HANDLE_OUTPUT;
                 end
-
-                /*  Parallel part 1: audio FIFO management */
+                
+                //  Parallel part 1: audio FIFO management
                 
                 //  Update cycle counter for timeout
                 if (audio_out_fifo_write_active) begin
@@ -693,7 +705,7 @@ always @(posedge cr_core.clk) begin
                             audio_out_fifo_slot <= audio_out_fifo_slot + 1;
                     end
                 end
-
+                */
 
                 /*  Parallel part 2: control FIFO management */
                 
@@ -785,8 +797,9 @@ always @(posedge cr_core.clk) begin
                                 current_report <= CHECKSUM_ERROR;
                                 state <= STATE_HANDLE_OUTPUT;
                             end
-                            else
+                            else begin
                                 state <= STATE_IDLE;
+                            end
                         end
                     end
                     else begin
@@ -802,14 +815,46 @@ always @(posedge cr_core.clk) begin
                             end
                             aud_in_write.data <= {aud_in_write.data, host_in_core.data};
                         end
-                        else begin // if (current_cmd == CMD_FIFO_WRITE)
+                        else if (current_cmd == CMD_FIFO_WRITE) begin
                             ctl_in.enable <= 1;
                             ctl_in.data <= host_in_core.data;
                         end
+                        /*
+                        else begin  // if (current_cmd == AUD_FIFO_READ)
+                            if (word_counter - cmd_length_words - 1 == 0) begin
+                                audio_out_fifo_slot <= 
+                            end
+                        end
+                        */
                         
                         //  Update checksum
                         data_checksum_calculated <= data_checksum_calculated + host_in_core.data;
                     end
+                end
+                
+                AUD_FIFO_READ: begin
+                    //  Added 1/1/2017
+                    //  2 words: the number of samples to read
+                    fifo_read_length <= {fifo_read_length, host_in_core.data};
+                    if (word_counter == 2) begin
+                        audio_out_fifo_write_active <= 1;
+                        audio_out_fifo_write_count <= 0;
+                        audio_out_fifo_slot <= slot_index;
+                        audio_out_lsb_pending <= 0;
+                        report_slot_index <= slot_index;
+                        report_msg_length <= {fifo_read_length, host_in_core.data} * (32 / host_width);
+                        report_checksum <= 0;
+                        word_counter <= 0;
+                        current_report <= AUD_FIFO_REPORT;
+    
+                        state <= STATE_HANDLE_OUTPUT;
+                    end
+                end
+                
+                UPDATE_BLOCKING: begin
+                    //  We only care about the first word...
+                    slot_fifo_en <= host_in_core.data;
+                    state <= STATE_IDLE;
                 end
 
                 ECHO_SEND: begin
@@ -842,6 +887,16 @@ always @(posedge cr_core.clk) begin
             end
         end
         STATE_HANDLE_OUTPUT: begin
+        
+            //  Monitor audio output FIFO and stop it once we collected the right number of samples
+            if (audio_out_fifo_write_active) begin
+                if (audio_out_fifo_in.ready && audio_out_fifo_in.enable) begin
+                    audio_out_fifo_write_count <= audio_out_fifo_write_count + 1;
+                    if (audio_out_fifo_write_count == fifo_read_length - 1)
+                        audio_out_fifo_write_active <= 0;
+                end
+            end
+        
             if (host_out_core.ready) begin
 
                 word_counter <= word_counter + 1;

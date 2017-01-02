@@ -194,7 +194,8 @@ end
 //	Memory array (added by Michael Price 7/21/2012)
 //	256 bits / 32 bytes wide, and should be 32M deep for 1 GB
 //	Hard code 256 MB since for some reason, VCS thinks anything over 512 MB is greater than 2 GB?
-localparam MEM_DEPTH = (1 << 24);
+localparam mem_log_depth = 22;
+localparam MEM_DEPTH = (1 << mem_log_depth);
 //  localparam MEM_DEPTH = 1048576;
 reg [MEM_WIDTH-1:0] mem[MEM_DEPTH-1:0];
 //	reg [MEM_WIDTH-1:0] mem[PAGE_SIZE * ROW_COUNT / (nCK_PER_CLK * 2) - 1:0];
@@ -665,6 +666,9 @@ reg     [2:0]   mem_offset;
         mk_mem_index = {base_mem_idx[31 : 2], mem_offset[1:0]};
     else
         mk_mem_index = {base_mem_idx[31 : 3], mem_offset[2:0]};
+
+    //  Limit depth - Michael Price 1/1/2017
+    mk_mem_index = mk_mem_index[0 +: mem_log_depth];
 
     burst_cnt = burst_cnt + 1;
     end

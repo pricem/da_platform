@@ -5,7 +5,7 @@ module slot_controller(clk_core, reset,
     aud_wr_valid, aud_wr_data, aud_wr_ready,
     spi_ss_out, spi_ss_in, spi_sck, spi_mosi, spi_miso,
     slot_data, slot_clk, mclk, dir, chan, acon, aovf,
-    spi_state, ctl_wr_waiting
+    spi_state, ctl_wr_waiting, fifo_en
 );
 
 `include "commands.v"
@@ -45,6 +45,10 @@ input [1:0] aovf;
 
 output [3:0] spi_state;
 output ctl_wr_waiting;
+
+//  This is a general "blocking" bit which determines whether the slot should
+//  produce or consume samples 
+input fifo_en;
 
 reg [5:0] slot_data_val;
 
@@ -182,8 +186,8 @@ always @(reset, adc_pbck) begin
 end
 
 //  Synchronizers for playback/record enable
-delay #(.Nc(2)) pe_delay(.clk(slot_clk), .reset(reset), .sig_in(playback_enabled), .sig_out(playback_enabled_sync));
-delay #(.Nc(2)) re_delay(.clk(adc_pbck), .reset(fifo_reset), .sig_in(recording_enabled), .sig_out(recording_enabled_sync));
+delay #(.Nc(2)) pe_delay(.clk(slot_clk), .reset(reset), .sig_in(playback_enabled && fifo_en), .sig_out(playback_enabled_sync));
+delay #(.Nc(2)) re_delay(.clk(adc_pbck), .reset(fifo_reset), .sig_in(recording_enabled && fifo_en), .sig_out(recording_enabled_sync));
 
 
 //  SPI controller
@@ -308,7 +312,7 @@ always @(posedge adc_pbck) begin
         audio_tx_fifo_wr_data <= adc_sample_left;
     end
     else if (!adc_plrck && adc_lrck_last) begin
-        recording_enabled_synclr <= recording_enabled;
+        recording_enabled_synclr <= recording_enabled_sync;
         adc_cycle_counter <= 0;
         adc_sample_left <= 0;
         adc_left_not_right <= 1;
@@ -354,7 +358,7 @@ always @(posedge slot_clk) begin
         if (audio_clk_counter == audio_clk_ratio - 1) begin
             audio_clk_counter <= 0;
             //  Latch playback enabled before falling edge
-            playback_enabled_synclr <= playback_enabled;
+            playback_enabled_synclr <= playback_enabled_sync;
         end
         else
             audio_clk_counter <= audio_clk_counter + 1;
