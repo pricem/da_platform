@@ -5,3 +5,57 @@ Get PMOD DAC working over USB - drive headphones
 Get full complement of regulators working - +/- 15, +5, +3.3D, +3.3A
 
 
+Jan 2017
+--------
+
+Goals for initial stereo:
+- Support 3 synchronized 2-ch DAC cards, or just 1 (i.e. allow digital/analog crossover comparison)
+- Allow DAC board revision for good fidelity (i.e. FPGA interface not the limiting factor)
+- Allow packaging up cleanly (e.g. ribbon cables to power supply) - PCB for power supply stuff would be good
+- Allow development of other DAC/ADC modules and firmware support
+- Reliable enough to connect to amp inputs directly - test various contingencies
+- Rudimentary SW (streaming controlled over SSH from laptop?)
+
+Plan for what to get done with FPGA before next HW revision:
+- Get 2-channel loopback working
+    - Add "read audio" command/response
+    - Add playback/recording blocking register that is atomically updated for all slots
+- Measure audio performance of current 2-ch DAC/IV stage
+- Figure out what was wrong
+- Try out 8-ch ADC and DAC to see what insights can be learned
+
+
+
+Next revision ideas below:
+
+a) Software/host
+
+Once USB I/O via Python script is going:
+Goal is to have a streaming box with the following capabilities:
+- Play CD/DVD/BD from attached drive
+- Play Netflix or other online streaming (HDMI out for video)
+- Play WAV or other audio format hosted on another computer (Ethernet/Wifi)
+- Remote control via a tablet ("casting"?)
+
+Vague plan for achieving this goal:
+- Get a small/cheap Linux PC with HDMI/USB, and a cheap Android tablet
+- Figure out how to to get the PC to do what the tablet tells it to do
+
+Stretch goal:
+- Add Windows / Mac support so it can be used like a normal USB sound card (audio class driver?)
+
+
+b) Hardware
+
+First HW rev will not include PC in same chassis.  Just a USB soundcard.
+
+PCB redesign ideas:
+- Consider all errata from first rev.
+- Include regs onboard?
+- Include footprint for ZTEX FPGA board and JTAG connector.  Supply power to the FPGA.
+- Have plug-in cards be horizontal with two 0.1" headers for better mechanical contact.  Space is cheap.
+- Use coax/twisted-pair to I/O RCA and XLR connectors, or figure out some other cabling.
+- Improve clock buffering/distribution.  Experiment: SMA vs. LVDS-over-PCB e.g. FIN1001 / FIN1002 (ADI has a TX: ADN4661)
+- Add Logicport debug connector
+- Come up with some way to allow different clocks (e.g. Tentlabs vs. Crystek vs. other)
+

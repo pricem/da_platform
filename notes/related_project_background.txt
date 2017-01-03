@@ -1,0 +1,100 @@
+Notes on alternative DIY projects for USB-I2S DAC/ADC
+
+- WaveIO by Lucian Luckit
+http://www.diyaudio.com/forums/digital-source/188902-xmos-based-asynchronous-usb-i2s-interface.html
+296 pages
+
+XMOS processor
+2 channel DACs only; this board is assembled in a chassis with other I2S DAC modules
+Includes I2S isolator but some report better sound without it
+
+
+- Audiowidget by Borge Strand-Bergesen, Alex Lee, George Boudreau, Demian Martin, et al.
+http://www.diyaudio.com/forums/digital-source/185761-open-source-usb-interface-audio-widget.html
+235 pages
+
+Atmel AVR32 processor
+Built all in one USB DAC boards, various DAC chips including ES9023 and PCM5102 have been used
+Has now evolved into a product: Henry Audio USB DAC 128 mkII (AK4430)
+Previous: QNKTC AB-1.0, AB-1.1, AB-1.2
+
+Good collaboration between several people experimenting with different aspects of the project (DAC, power supply, etc.)
+    and thinking about the packaging/marketing options and cost issues (i.e. how many boards needed?)
+
+Borge was very dedicated in tracking down and fixing problems in the firmware, e.g. occasional noises at different sample rates
+    and when the host is under load.
+
+
+- Exa U2I?
+http://www.diyaudio.com/forums/exadevices/183374-exau2i-multi-channel-asynchronous-usb-i2s-interface.html
+138 pages
+
+Looks commercial.   http://www.exadevices.com/
+It looks like this is a startup company founded after the DIYaudio project.  Nice.
+They got good ratings in Stereophile.  D28 DAC sells for $3300.
+
+I guess I wouldn't have heard about this since it was started in 2011.
+Uses FPGA - any more details?
+
+
+Many people used this I2S interface in conjunction with Twisted Pear Audio Buffalo DACs
+But it was rumored that TPA was making their own I2S interface and saw this as a competitor
+    As of 2016, it looks like TPA resells the Amanero I2S interface: http://amanero.com/
+    There is a Xilinx chip on there... for what?  The schematic doesn't show it
+    USB is handled by Atmel microcontroller
+    2-channel only
+So the interactions between Exa and TPA were interesting
+    Note: TPA is Brian Donegan and Russ White of West Newbury, MA (between Haverhill and Newburyport)
+    
+Around the beginning of 2012 they offered to develop a revised version of the U2I board for DIYers, then withdrew.
+Around the beginning of 2014 they did another manufacturing run of U2I boards and then stopped.
+
+Favorite quote (tsiros #1161): "there is no facepalm big enough. "
+
+
+- Async I2S FIFO
+http://www.diyaudio.com/forums/digital-line-level/192465-asynchronous-i2s-fifo-project-ultimate-weapon-fight-jitter.html
+427 pages
+
+iancanada develops his own FIFO platform with Altera FPGA and an SRAM chip?
+    This guy is incredibly thoughtful, and generous (losing money on the group buy, adding features based on 1 request)
+    Also a very good PCB designer and assembler.
+
+The concept is that it is I2S (or SPDIF) input, to connect to an existing CD player type transport.
+    The problem is that there is no feedback for input rate, so there can be a clock frequency difference between the source and FIFO
+    But at 100ppm, it will take a long time to underflow/overflow if it's filled halfway at start
+
+Also, a guy named simmconn chipped in to show a custom board he had made with Spartan-3: DAKS (Digital Audio Kitchen Sink)
+
+Another guy Steve Nugent. (audioengr; nugent@empiricalaudio.com) says he designed his own in port #57
+He called it the Pacecar
+He also mentioned the Genesis Digital Lens
+
+simmconn raises concerns about using a relay to switch between the 44.1/48 multiple clocks  - #61
+    Clock switching and distribution needs be thought about, especially for driving a variable number of loads.
+
+Demian Martin (1audio) #68: suggests phase noise matters between 10 Hz to 200 kHz
+    AES only cares down to 100 Hz but he's suspicious of the impact on audibility
+    Switching oscillators on/off frequently may hurt performance
+
+In post #100, Ian resigns himself to running 2 XOs at the same time, using U.FL to connect clocks.
+
+Jonathan Carr points out a similar effort in Japanese in post #103
+
+Technical docs on post #248 (24 Feb 2012)
+
+Also, Demian has a regulator design specific to XO power supply (focused on noise, not output impedance).  Worth looking into.
+
+Fun random post: "Egad! Intra-Oz flaming. "
+
+Some discussion around pg 36--40 about making it handle different non-I2S DACs with its output format
+
+Post #505 (14 May 2012) shows integration with Buffalo III
+
+Some discussion about clock selection   
+    Generic choice seems to by Crystek CCHD something
+    But Ian also did some experiments with the Si570 programmable synthesizer, and this site shows good performance:
+        http://www.cliftonlaboratories.com/si570_kit_from_k5bcq.htm
+        Si570 is also less expensive, but more power-hungry (100 mA) and poor PSRR
+    Might be interesting to figure out a measurement setup for clock jitter (requires ref. source close to test frequency, and mixer)
+    

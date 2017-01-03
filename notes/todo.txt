@@ -1,0 +1,31 @@
+DA platform to-do
+
+Sep 21, 2014
+
+- Fix errors in CellRAM sim
+
+- Create behavioral model of FPGALink so that it's easy to test 
+  by supplying an input data file on the command line
+  (contents of this file should be relayed over USB)
+
+- Create a basic read/write test of CellRAM
+  (command can either read or write variable number of bytes)
+    - Get working in simulation
+    - Get working on Nexys2
+
+
+
+Jan 18, 2015
+- Received ZTEX USB-FPGA Module 2.13a (FPGA board with Artix-7)
+- Switching from earlier CellRAM/Nexys2 to [DDR3] DRAM and Xilinx MIG
+
+Mar 1, 2015
+- Earlier demonstrated FIFO app using ZTEX board
+- Currently working on test of DRAM based FIFO arbitrator
+
+No easy way to simulate the memory
+- Micron provides a plain Verilog model of DDR3 chips, but
+- Xilinx MIG requires Xilinx encrypted primitives
+--> Do most design work with a MIG model, and use VCS once it's working to simulate the full system
+
+

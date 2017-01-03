@@ -1,0 +1,84 @@
+Connectors
+----------
+Consider polarized headers from Futurlec
+
+Isolator to audio slots: 30-pin 0.05" x 0.05"
+Vertical SMD receptacle 	609-1551-ND
+Right-angle T/H header      609-3174-ND
+
+Isolator to power regulators: 3-pin 0.1" breakaway
+Vertical T/H receptacle 36  929850E-01-36-ND
+Right-angle T/H header 36   S1111E-36-ND
+Vertical T/H header 36     	S1011E-36-ND
+
+FX2 receptacle:     FX2-100S-1.27DS(71)    H10644-ND
+
+Chips
+-----
+ADuM3400                ADUM3400CRWZ-ND
+ADuM3401                ADUM3401CRWZ-ND (2 samples ordered)
+ADuM3402                ADUM3402CRWZ-ND
+DSD1792A                296-21534-1-ND (2 samples ordered)
+PCM1804                 PCM1804DB-ND (2 samples ordered)
+AD1934                  AD1934YSTZ-ND (2 samples ordered)
+AD1974                  AD1974YSTZ-ND (2 samples ordered)
+ADG1436                 ADG1436YRUZ-ND (not available)
+74VHC164 (8-bit SIPO)   TC74VHC164FTMCT-ND
+74VHC165 (8-bit PISO)   TC74VHC165FTMCT-ND
+74FCT2574 (8-bit D)     296-13635-1-ND
+74LTVH574 (8-bit D)     296-8736-1-ND
+AD844                   AD844JRZ-16-ND
+LM358 (cheap opamp)     LM358MXFSCT-ND
+74VHC02 quad NOR        74VHC02MTCXCT-ND
+LM317 D2PAK             LM317D2TGOS-ND
+
+LM329 (6.9 V) TO-92     LM329DZ-ND
+ADR441 (2.5 V) MSOP-8   ADR441ARMZ-ND       
+
+Actives
+-------
+BC856B PNP SOT-23       BC856BMTFCT-ND
+BC846B NPN SOT-23       BC846BMTFCT-ND
+D44H11 DPAK             MJD44H11TMCT-ND
+D45H11 DPAK             MJD45H11TMCT-ND
+
+MSR860 soft recovery    MSR860GOS-ND
+
+1N5235B (DO-35 6.8V)    1N5235BFSCT-ND         
+1N5225B (DO-35 3.0V)    1N5225B-TPCT-ND 
+
+Green LED SMD 1206      160-1169-1-ND
+
+Passives
+--------
+
+PSU filter caps
+0.1u 50V SMD 1206 ceramic           399-1248-1-ND
+10u 20V SMD 6032-28 (6x3mm) tant    718-1043-1-ND
+22u 6.3v SMD 3216-18 tant           478-3865-1-ND
+47u 6.3v SMD (4.3x4.3mm) lytic      PCE3863CT-ND            Panasonic Size Code B
+120u 6.3V SMD (6.60mm x 6.60mm)     493-2985-1-ND           Panasonic Size Code C
+120u 25V FC radial              	P10270-ND    
+
+
+Ferrites
+Bead SMD 1206                       732-1625-1-ND
+
+Resistors
+10k 1/4w SMD 1206 thick film        RHM10.0KFCT-ND
+
+
+Film signal caps
+0.1u 50V SMD 1913 film              PCF1561CT-ND
+1n SMD 1206 film
+
+
+
+
+Power
+-----
+AC receptale            Q212-ND
+
+Other things to get
+-------------------
+Electret capsule        P9965-ND        (Note: perform Linkwitz 3-wire mod)

@@ -1,0 +1,19 @@
+Common commands:
+
+- Firmware programming
+flcli -v 1443:0005 -i 1443:0005 -d D7+
+
+- FPGA building
+cd builds/cellram_demo/verilog
+hdlmake.py -c
+hdlmake.py -t ../templates/boards -b nexys2-500 -p fpga
+flcli -v 1443:0005 -p J:D0D2D3D4:fpga.xsvf
+
+- Python testing
+cd python
+python cellram_demo.py
+
+
+
+** FPGA building of simple loopback example
+

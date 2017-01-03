@@ -1,0 +1,122 @@
+Notes for dealing with ZTEX FPGA board
+
+Location of MemFIFO SW: D:\programs\ztex\examples\usb-fpga-2.13\2.13a\memfifo
+Location of FWLoader SW: D:\programs\ztex\java\FWLoader
+Location of MemFIFO HDL: D:\programs\ztex\examples\usb-fpga-2.13\2.13a\memfifo\fpga
+Location of bitfile: D:\programs\ztex\examples\usb-fpga-2.13\2.13a\memfifo\fpga\memfifo.runs\impl_1\memfifo.bit
+
+To load bitfile: 
+D:\programs\ztex\java\FWLoader> D:\programs\ztex\java\FWLoader>java -cp FWLoader.jar FWLoader -uf D:\programs\ztex\examples\usb-fpga-2.13\2.13a\memfifo\fpga\memfifo.runs\impl_1\memfifo.bit
+
+To test functionality:
+D:\programs\ztex\examples\usb-fpga-2.13\2.13a\memfifo>java -cp MemFifo.jar MemFifo
+
+Problems:
+
+libusb0 driver problem?
+
+D:\programs\ztex\examples\usb-fpga-2.13\2.13a\memfifo>java -cp MemFifo.jar MemFifo
+Firmware upload time: 151 ms
+FPGA configuration time: 129 ms
+Warning (try 1): libusb0-dll:err [control_msg] sending control message failed, w
+in error: The system cannot find the file specified.
+
+
+Error: bus=bus-0  device=\\.\libusb0-0002--0x221a-0x0100: Set test mode: libusb0
+-dll:err [submit_async] submitting request failed, win error: The device does no
+t recognize the command.
+
+
+Trying newest SDK version 160513
+------------------
+Compilation issue: tons of Java errors
+Solution: change colons (:) in CLASSPATH to semicolons (;)
+
+Runtime issue (FWLoader): 
+D:\programs\ztex-160513\java\FWLoader>java -cp FWLoader.jar FWLoader -h
+Exception in thread "main" java.lang.NoClassDefFoundError: ztex/CapabilityException
+        at java.lang.Class.getDeclaredMethods0(Native Method)
+        at java.lang.Class.privateGetDeclaredMethods(Unknown Source)
+        at java.lang.Class.getMethod0(Unknown Source)
+        at java.lang.Class.getMethod(Unknown Source)
+        at sun.launcher.LauncherHelper.getMainMethod(Unknown Source)
+        at sun.launcher.LauncherHelper.checkAndLoadMain(Unknown Source)
+Caused by: java.lang.ClassNotFoundException: ztex.CapabilityException
+        at java.net.URLClassLoader$1.run(Unknown Source)
+        at java.net.URLClassLoader$1.run(Unknown Source)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at java.net.URLClassLoader.findClass(Unknown Source)
+        at java.lang.ClassLoader.loadClass(Unknown Source)
+        at sun.misc.Launcher$AppClassLoader.loadClass(Unknown Source)
+        at java.lang.ClassLoader.loadClass(Unknown Source)
+        ... 6 more
+        
+Also a problem with MemFIFO?   
+        --> Fixed by rebuilding in a better bash shell
+
+After fixing all that stuff: still USB issues when running MemFIFO
+May as well stick with the new version, unless some other issue comes up...
+Try a different example?
+    ucecho: Seems to work.  Uses low-speed interface.
+
+Wrong libusb version?
+    I used zadig to install the driver.  It was version 1.2.6.
+    ZTEX includes a libusb-win32 DLL/SYS... also 1.2.6.0
+
+At least MemFifo errors appear to be consistent.
+    Error: bus=bus-0  device=\\.\libusb0-0001--0x221a-0x0100: Set/get GPIO's: libusb0-dll:err [control_msg] sending control message failed, win error: The device does not recognize the command.
+    Commenting out GPIO stuff -> errors just happen in a different place (for example, sending reset signal).
+
+Poke around in Python with USB commands to see what's going wrong?
+    This could help understand how the ZTEX firmware works, anyway.
+    But first, need to reconstruct the sequence of requests.
+    Presumably, there are some USB commands going on, in order to program the FPGA.
+    So which commands fail?
+        Getting FPGA configuration (request 0x30 for 8 bytes) fails with LIBUSB_ERROR_IO - should be able to get this going.
+        But maybe libusb-win32 is to blame there?  ...libusbK causes hang
+        Using pyusb which explicitly supports libusb 0.1 : same error, though faster when using vendor request type
+        -> should be able to go back to usb1 (either)
+    Wait, it looks like all of the default interface commands work (in Python)
+        No.  Writing the GPIOs is the problem.  
+        There is vendor request 0x61 for reading GPIOs, works, but doing a write to 0x61 fails.  Doing it wrong?
+        No.  From USB's perspective it's always a read.  The mask/value params are used to update reg.
+    So where's the Java going wrong?
+        Try to debug (remote?)
+        If I skip configuring the FPGA, we can at least move on to the next stage.
+        (But then we get data read error: unknown error -116)
+        If I add a delay after configuring the FPGA, we get an error claiming the interface.
+       
+Ugh.  Trying Linux (but VMs suck...)
+    VMWare... works
+    After building everything, and hassling with udev, still a problem:
+price@ubuntu:~/software/ztex/examples/memfifo$ ./memfifo.sh 
+Found ZTEX USB-FPGA Module 2.13a,  using bitstream fpga-2.13/memfifo.runs/impl_2_13a/memfifo.bit
+FPGA configuration time: 154 ms
+Setting configuration to 1 failed: could not set config 1: Broken pipe
+Error: Claiming interface 0 failed: could not claim interface 0: No such device
+price@ubuntu:~/software/ztex/examples/memfifo$ ./memfifo.sh 
+Found ZTEX USB-FPGA Module 2.13a,  using bitstream fpga-2.13/memfifo.runs/impl_2_13a/memfifo.bit
+FPGA configuration time: 151 ms
+Setting configuration to 1 failed: could not set config 1: Broken pipe
+Warning (try 1): error sending control message: Cannot send after transport endpoint shutdown
+Warning (try 2): error sending control message: No such device
+Warning (try 3): error sending control message: No such device
+Warning (try 4): error sending control message: No such device
+Warning (try 5): error sending control message: No such device
+Warning (try 6): error sending control message: No such device
+Warning (try 7): error sending control message: No such device
+Warning (try 8): error sending control message: No such device
+Warning (try 9): error sending control message: No such device
+Warning (try 10): error sending control message: No such device
+Error: bus=001  device=018: Set/get GPIO's: error sending control message: No such device
+
+Something to do with the USB device resetting after the FPGA is reconfigured?  Try better power supply?
+
+FUCK.  It was the power supply.
+    And to add insult to injury, the better power supply was still plugged in to the power strip.
+    But it's good I tried Linux.  It seems that on Windows, the USB R/W speed test deadlocks.
+    Slower on Linux though: 9 MB/s vs 39 MB/s
+    Linux also seems to get hung up at end?  After all data's been transferred (but only sometimes)
+
+
+    

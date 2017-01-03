@@ -1,0 +1,36 @@
+Measurements on DA platform
+
+1/2/2017
+--------
+
+"Good" channel distortion vs input level
+Level shown by Arta seems to be -5.9 dB relative to 0 dBFS on DAC input (note: unbalanced)
+Power supply noise floor is at about -79 dB rel 0 dBFS (not good...)
+
+Level       THD         THD (dB)    THD+N       Notes
+-----       ---         -----       -----       ----
+-60 dB      0.39%       -48.2 dB    11.24%      
+-40 dB      0.031%      -70.2 dB    1.13%       May be confusing THD and noise at this level and below?
+-30 dB      0.0092%     -80.7 dB    0.36%
+-25         0.0054%
+-22         0.0042%
+-20 dB      0.0034%     -89.4 dB    0.11%
+-18         0.0045%
+-15         0.0077%
+-10 dB      0.019%      -74.4 dB    0.040%
+-6 dB       0.028%      -71.1 dB    0.034%
+-3 dB       0.033%      -69.6 dB    0.033%
+-1 dB       0.035%      -69.1 dB    0.034%
+0 dB        0.037%      -68.6 dB    0.034%      THD up to 0.13% at 5 kHz, 0.06% at 28 Hz
+
+"Bad" channel
+-40 dB at 1k: THD = 0.80%, output = -61.5 dB (-16 rel. good channel)
+
+Try again: 0.034%, -46.0
+-> just had to remove that stupid resistor
+-60 dB: THD = 0.45, THD+N=11.72
+0 dB: THD = 0.0080, THD+N=0.014
+-20 dB: THD = 0.0024
+
+-> Removing 1k resistors on the "good" channel improves its THD further, now below -80 dB at full scale
+

@@ -1,0 +1,288 @@
+Protocol and design notes
+
+
+
+Command packet format
+Byte 0: header byte (0xFF default)
+Byte 1: port ID (0x00 - 0x03)
+Byte 2-3: command
+
+Data packet format
+Byte 0: header byte (0xFF default)
+Byte 1: port ID (0x00 - 0x03)
+Bytes 2-3: length in bytes
+
+
+
+Jan 18, 2015
+
+- Micron DDR3 sim testbench
+
+D:\projects\cdp\libs\micron_ddr3>iverilog -g2012 -Dsg125 -Dx16 -Dden2048Mb tb.v ddr3.v -o ddr3_tb
+
+D:\projects\cdp\libs\micron_ddr3>vvp ddr3_tb
+ERROR: $urandom_range requires two arguments.
+ERROR: $urandom_range requires two arguments.
+ERROR: $urandom_range requires two arguments.
+-> fixed, added 0 as 2nd arg in subtest.vh
+
+Confusing pins on DDR:
+    cs_n - can tie low
+    dm_tdqs - connect to dm
+    tdqs_n - can be high impedance
+
+
+Compiling FIFO-DDR testbench:
+D:\projects\cdp\fpga_projects\usb_fifo_ddr>iverilog -g2012 -Dsg125 -Dx16 -Dden2048Mb -o usb_fifo_ddr_tb -I "D:\projects\cdp\libs\micron_ddr3" -y "C:\Xilinx\Vivado\2014.4\data\verilog\src\unisims" -y "C:\Xilinx\Vivado\2014.4\data\verilog\src\retarget" -s usb_fifo_ddr_tb -f sources.txt -f mig_sources.txt
+
+D:\projects\cdp\fpga_projects\usb_fifo_ddr>iverilog -g2012 -Dsg125 -Dx16 -Dden2048Mb -o usb_fifo_ddr_tb -I "D:\projects\cdp\libs\micron_ddr3" -y "C:\Xilinx\Vivado\2014.4\data\verilog\src\unisims" -y "C:\Xilinx\Vivado\2014.4\data\verilog\src\retarget" -s usb_fifo_ddr_tb -f sources.txt -f mig_sources.txt
+
+Aug 1--12, 2016
+---------------
+See paper notes packet on "DA platform resumption"
+Much progress was made: basic audio output on ZTEX platform working, but there are glitches
+ADC hardware is probably bad; so is DAC I/V conversion
+Started working on an I2S loopback test to get that aspect working (slot 1 has DAC, slot 0 has ADC)
+
+Dec 30, 2016
+------------
+Resurrecting project (again).  Keeping electronics notes since they last longer.
+
+Startup procedure:
+- Ensure that boards are hooked up
+- program FPGA using FWLoader or Vivado
+- run python ztex_test.py
+
+Current state:
+- can (most of the time) write/read one chunk of a small number of samples (80)
+- can't do anything after that (hard lockup), even after reset_slots
+    Note: reset_slots work but slot write FIFO command doesn't
+    which indicates that top level I/O might be alright, but slot isn't
+
+Short term: review I/O protocol to see what the device is supposed to be doing
+    Looks like we're doing the right thing; short global commands don't have checksum like per-slot commands
+
+ILA debug
+    When SW gets stuck, main module is in state 2 (handle output) with write_counter 0xf4
+    That doesn't seem right... let's check after the small initial test -> state 0, word counter 1
+    Receiving the start-recording command goes alright
+    Then we get some output... maybe we started writing samples and read samples came back at the same time?
+        No, I never trigger the handle input state after recording started
+        Was I2S running, or was there some buffer with samples left in it?
+    It's possible to read 512 samples before even writing anything.
+        -> Yes, I2S is left running.
+        It looks like this is by design.  I2S outputs for DAC are always running and the data is all zeros.
+    There is probably some problem parsing the ADC audio messages in SW
+    After testing fixed data, there is a 22 word message left in report_unparsed
+        It is an incomplete ADC audio packet
+        That's because we were flushing by using low-level read() and not update_receive_state()
+        Using a new flush() function seems to get rid of the leftovers, most of the time?
+        This allows us to at least proceed to continuous test
+    Continuous test: gets through 3 chunks (768 samples each way) then hangs
+        It seems there is too much data waiting to be read
+        Try, for now, reading more data than we wrote
+        See if we can at least get continuous operation...
+        If I read 4x as many samples as I write, it runs without crashing... but there are tons of zeros
+        How to get things running at the same rate?  Big FIFOs?
+        It looks like there are basically no FIFOs internally.  da_platform has 16 word FIFOs, and connects directly to EZ-USB.
+        -> Increase size of da_platform FIFOs... trying 1k words
+        With 1k FIFOs, still need to read at 2x write speed to avoid lockup... why?
+        Bringing chunk up to 256 and reducing read timeout to 10 allows continuous operation
+    Now time to investigate sample errors
+        First 256 samples look good, then there are 186 zeros, then 256 more samples, then more zeros
+        In general, it looks like there are some hiccups at beginning and eventually it gets "into a rhythm"
+        First 178 samples OK, then samples 178--255 are a repeat of samples 0--77; then we have a string of zeros before correct samples resume
+        Run to run, the exact number of samples varies (e.g. 176, 246)
+        Note: switched to ramp input (i.e. count 1 to 44100) to avoid ambiguity.
+    Trying ILA debug in arbiter to see if that has anything to do with it.
+    Could this be done in simulation?
+        Once we have a more detailed sense of the problem.  No sense wandering aimlessly in sim.
+    Experimenting with smaller chunks, to see if the error can be tracked down
+        With chunk size = 128, caught error on Logicport. (Lesson: DAC output is messed up.)
+        After sample 88, left channel outputs 89 then right channel 0, both channels 0, then both channels 1
+        Error is hard/impossible to trigger with a chunk size of less than 120
+        But I saw it happen as early as sample 67
+        Arbiter FIFOs have a 64 word capacity (1 word = 32 bits = 1 sample for 1 channel)
+        Read side of DAC port has 80 word capacity.  
+        Arbiter fills that up, then writes short bursts of typ. 9 words at a time to RAM FIFO
+    Try another ILA test looking more at arbiter port 1
+        In the "bad" case, it looks like samples get read during the write burst?
+        Sim has a problem I haven't seen in reality: 1 word gets dropped from host input, leading to 16-bit shift in audio samples
+            This seems to be caused by a modeling issue - main I/O had a repeated word, but I don't think this happens in reality
+        Look at data going into arbiter's main write FIFO?
+        arbiter.ports_dup[1].write_fifo output doesn't wrap around
+        Main write FIFO in doesn't wrap around... need to look at main read FIFO out
+        Read FIFO output does wrap around.
+        -> Problem seems to be in either those FIFOs or the DRAM FIFO
+            Mem write FIFO doesn't wrap around (i.e. main write FIFO out)
+            Mem read FIFO does wrap around (i.e. main read FIFO in)
+        Confusion between slots, maybe?
+        Check internal FIFOs within MIG adapter.
+            Write side: Not wrapping around
+            Read side: Wrapping around
+        -> MIG adapter must be getting confused between the two ports somehow.
+        Try disabling recording. -> no wraparound on MIG read
+        So what exactly is happening, with recording enabled?
+            When ADC is writing 0x12e, DAC is reading 0x21
+            So when ADC was writing 0x21, what was DAC doing?
+            When DAC was writing 0x1ca, ADC was writing 0x003 to location 0x161 [wraparound at sample 0x160]
+            And DAC was reading 0x57...
+        Errors seem to happen whenever the ADC starts to get nonzero samples
+            i.e. DAC errors start as soon as ADC samples are nonzero
+            If DAC-ADC latency is larger than entire signal, then we don't notice errors
+            Actually, this isn't DAC-ADC latency, this is software latency from start_recording to write_audio
+            So something goes wrong as soon as DAC and ADC are going at the same time
+            Memory address aliasing?  (ADC data overwrites DAC data)
+    -> There was a memory aliasing issue. 2 bugs:
+        Memory address app_addr was coded as [23:0], needed to be [27:0]
+        Address was zero-padded going into MIG, which cut off the upper bits
+        
+On to the next set of problems
+    First 512 samples recorded are fine, but then there are gaps
+    The gaps are especially large near the beginning, but they don't entirely go away with time
+    Software shows that the time to write each packet goes down
+    -> Is this purely an issue of software-lag in sending samples?
+        Writes only (no recording) takes 40-50% of real time at chunk size 256, 20% at 2048, 7-10% at 32k+
+        It would be reasonable to assume that when you add reading, you're too slow
+        Some slowdown is probably due to the VM, but still.  
+        This is just 44.1 kHz stereo (32 bit = 352.8 kB/s), it should work fast.
+        Right now it's about 4.6 MB/s at most, and it should be 40.  (ZTEX test of VM clocked at 9 MB/s.)
+        Maybe this is a problem for later.
+    So, should reads be at the request of the host?  How does the system know when to read out data from a particular port?
+        Imagine that it isn't at request of the host. We can
+            a) Wait for a certain number of samples to accumulate in the mem FIFO
+            b) If idle, wait for a certain number of idle cycles to discharge the next port (round robin)
+        Currently we are doing (b)
+        The problem is, the host doesn't know when to read.  
+            It could be trying to write when there is read data being sent (which wouldn't work).
+        Let's look at how USB device drivers (audio class) do it.
+            First, it looks like these are meant to be stereo out / mono in only.  Not so versatile.
+            In USB, the source and sink endpoints are independent.  In other words, it can send and receive audio concurrently/independently.
+
+Some background research
+    ALSA
+        has an "external plugin interface" that could be used to create a user space PCM driver
+        already has a "file" plugin which can pipe a stream to a file or to a shell command (i.e. Python audio playing script)
+        A plugin, once created, can be used by putting the right stuff in the .asoundrc file
+        A plugin can also act as a signal source
+    -> It is alright to work purely in user-space for now; ALSA will allow a user-space program to connect to other Linux apps
+    Windows
+        There is a user-mode driver framework, but it's apparently no good for drivers
+        Tim Roberts of Probo recommends AVStream, but an easier method is a Directshow source filter
+        Microsoft has an updated driver example: https://github.com/Microsoft/Windows-driver-samples/tree/master/audio/sysvad
+        More documentation on MSDN
+        But Windows programming is hard.
+    USB audio class
+        Seems to not be what we need.  But sometime down the line, it would be possible to alter the hardware architecture
+        to comply with this spec.  (Multiple endpoints)
+    Strategy for now (1/1/2017): make the hardware as simple as possible, do everything in userspace (i.e. request data from ADCs)
+
+Implementing audio read request
+    First test: send separate msg instead of read request at end of write msg
+        No ILA
+        Looks like we get data back, but even with blocking slots there's a big batch of audio at beginning - why?
+        Also, we get an extra word received which throws off receive parsing
+        In all, we don't get any valid samples back (maybe with a larger chunk we get one chunk?)
+        After making audio_read use update_receive_state and requesting exact number of words: it takes 100 ms to receive even 32 samples (same for 64 samples) -- something in the USB chain?
+        Larger chunk size fixes that, but:
+        - Received data starts around 500 - is there a lag when unblocking slots, or lost samples?
+           (Stop using slot-blocking for now)
+        - FIFO status shows what you'd expect: massive number of ADC samples piling up and not being read
+        - With a long enough timeout, it's possible to retrieve all of those samples at the end
+        - As you'd expect, in the recording there are wide gaps between the chunks of valid samples, due to the long latency as seen by software
+        -> Latency was being artificially supported by pktend_timeout input to ezusb_io
+           Setting that to min. reduces latency from 100 ms to 1.3 ms
+        Now, there are some performance issues in the software (multiple roundtrips).  Need to fix later.
+        But by making the chunk size large enough (2k samples / 45 ms) we can close the loop in real-time.
+        Now we see additional artifacts:
+        1. Dropped samples (gap of 2 sample periods with 0 values, then signal resumes as if it "forgot" one sample)
+           Note: sometimes there are gaps spaced by just 1 valid (mono) sample:. we drop LR then have a good L sample then drop RL
+        2. Wrong samples (word swap?) - look into later
+        Simulation probably isn't going to reveal these artifacts, but in the testbench there was a clock bug.  Could we be seeing a clock bug?
+            Current clock structure: 
+            - ifclk (generated by ezusb_io) used as host interface and core clock
+            - fxclk used to generate 200/400 MHz memory clocks within da_platform_wrapper
+        Example of bug: 2k chunk size, gap from 1703-1707 with first nonzero = 1224, or 679-683 with 971, 679-683/1138
+        The gaps show up at the exact same places (679, 1703, ...), plus or minus a couple of samples
+        Sometimes the gaps appear to have a regular pattern (every 512 samples?) but not always
+        Are these gaps in playback or recording?  Try playing ones and looking at ILA
+        Can't see since ILA only gets about 3 ms / 130 samples, while first gap is around 340
+        Seems data dependent: if I change from a ramp to something else, errors go away
+        -> So why not make the ILA trigger on the data?
+    With the ILA, things actually get better... don't see errors at 680 again
+        Look for something regular though
+        Sometimes there are errors on a chunk boundary, e.g. 4k
+        It took many tries to get a gap within a single chunk : 13654/16k/1382
+        Seems possible to get error at 10920
+        These errors aren't sufficiently repeatable.  Try different input patterns.
+        -> To investigate async FIFO issues, could use ifclk instead of fxclk to generate mem clock (then it would be 192 rather than 200 MHz... close enough?)
+        DAC sample == 0 didn't trigger when there was a gap in the output, so this is *probably* on the recording side
+        Bad I2S connection? Fiddling with the wires made the problem worse.
+        -> Try soldering I2S wires
+        That's where the glitches within a chunk were coming from; probably parasitics, rather than bad connection
+            (since moving the wires around makes more difference than soldering)
+        Now we have to deal with gaps between chunks
+        -> Was buffer underrun.  Just writing 1 chunk before starting reads fixes that, though smarter SW arch will help in the future.
+        
+    Time for a song test (4 minutes / 11M samples)
+        First run: there was a 64 sample long error at 16M/22M
+        This corresponds with 2^24 samples since the start of recording
+        -> Explore in sim with region depth of 64 samples
+        In sim, data after 171 is a bunch of zeros, followed by 107 (only) then 108--171, e.g 64 samples of errors?
+        At least debug the sim...
+    -> Clean results on 2 different songs (4-5 min each); no longer term testing yet
+    
+Now, try listening and measuring.
+    Yuck.
+    Lots of gain.
+    Left channel distorts really fast
+    Right channel may be a bit cleaner, but both have lots of spiky artifacts?
+    At idle there are lots of spiky artifacts, i.e. 0s going into I2S
+    Rate of spiky artifacts goes up significantly when music is playing
+    Let's see if the loopback test still works, then disconnect I2S jumpers.  I2S could be coupling into I/V.
+    -> Aha. Millions of errors.
+    Disabled recording; shoved I2S wires out of the way.  Now fewer artifacts, but still some.
+    -> Try to desolder them now.
+    Left channel has way more gain than right (test at some point by exchanging I/V boards)
+        Confirmed, this is with S/N 1 on left, S/N 2 on right; swapping I/V boards changes the gain
+        Scope app confirms: gain difference is about 6, or 16 dB
+    I2S wires removed: still clicking artifacts, but less than before
+    For now, use the louder channel and try to fix clicking
+        THD doesn't look so bad, if you ignore the clicking
+        Clicking is scaled down in left channel, so it's present in the DAC output (not IV induced), and seems to happen on the same samples in L/R channels
+        Probably 1-sample spike with pre- and post-ringing due to lowpass
+        I2S signals themselves are probably fine.  
+        Low quality of clock reaching DAC?
+        When I did the I2S loopback test I was probing the I2S lines after the register.  And since those were fine, my guess is the DAC is having issues with the clock.
+    Also try slot 0?
+    -> Much better.  Must have been something wrong with slot 1 (probably clock distribution)--check soldering and layout.
+    No spikes, though there is some hum (not too bad
+    Back to the FFT.
+        See measurements.txt.  SNR 79 dB, THD is generally around -70 dB though better around -20 dBFS
+        Good enough for now.  Let's fix that other channel.
+
+S/N 2 I/V stage debug
+    Bias checks....
+        Output: -39 mV on left, +196 mV on right (note: L- output is 86 mV)
+        Inputs: R 5.6/5.3 mV, L 3.7/5.4 mV
+        Current source (base): R 13.58/-13.63, L 13.52/-13.61
+    Inspection.  Differences:
+        R13 and R16 = 82.5 (L) / 47.5 (R)
+        R12 = 1k (L) / 82.5 (R)
+        The lower channel (neg out) is consistent with pos
+    So what do those differences mean?
+        a) R12
+            This sets bias current for Q12.  With 82.5 ohm, expect 10.5 mA.  With 1k, expect much less (and clipping).
+            Is this dependent on the zero point of the DAC?
+            Datasheet says the center current is -6.2 mA.  Maybe I had the sign wrong?
+        b) R13/R16
+            This sets bias current for MOS output follower
+            47.5 -> 18 mA
+            82.5 -> 11 mA
+            Why not leave these as is and see which channel is better
+            (Maybe I changed that value for Sourcemeter testing?)
+            
+            
+        
+    
+    
