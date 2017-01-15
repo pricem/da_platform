@@ -79,9 +79,32 @@ slot_model_adc2 adc2_model(
     .sample_clk(sample_clk),
     .samples(samples_loopback.in)
 );
-
+/*
 //  Slot 1: DAC2
 slot_model_dac2 dac2_model(
+    .slotdata(iso.slotdata[11:6]),
+    .clk(slot_clk[1]),
+    .dmclk(iso.mclk),
+    .dmcs(dmcs[1]), 
+    .dmdi(iso.dmdi), 
+    .dmdo(iso.dmdo), 
+    .amclk(iso.mclk),
+    .amcs(amcs[1]), 
+    .amdi(iso.amdi), 
+    .amdo(iso.amdo), 
+    .dir(slot_dir[1]),
+    .chan(slot_chan[1]),
+    .hwcon(iso.acon[0]),
+    .aovfl(aovfl[1]),
+    .aovfr(aovfr[1]),
+    .srclk(iso.srclk),
+    .reset(iso.reset_out),
+    .sample_clk(sample_clk),
+    .samples(samples_loopback.out)
+);
+*/
+//  Slot 1: DAC8
+slot_model_dac8 dac8_model(
     .slotdata(iso.slotdata[11:6]),
     .clk(slot_clk[1]),
     .dmclk(iso.mclk),

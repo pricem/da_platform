@@ -364,7 +364,7 @@ always @(posedge slot_clk) begin
             audio_clk_counter <= audio_clk_counter + 1;
 
         //  2 channel mode
-        if (dir && !chan) begin
+        if (dir /* && !chan */) begin
             
             //  Digital filtering in DSD1792
             //  Audio serial port
@@ -466,25 +466,26 @@ always @(posedge clk_core) begin
             else case (current_cmd)
             SPI_WRITE_REG: begin
                 case (byte_counter)
-                1: spi_request_addr_contents[7:0] <= ctl_rd_data;
-                2: spi_request_data_contents[7:0] <= ctl_rd_data;
+                1: {spi_request_addr_bytes, spi_request_data_bytes} <= ctl_rd_data[1:0];
+                2: spi_request_addr_contents[15:8] <= ctl_rd_data;
+                3: spi_request_addr_contents[7:0] <= ctl_rd_data;
+                4: spi_request_data_contents[15:8] <= ctl_rd_data;
+                5: spi_request_data_contents[7:0] <= ctl_rd_data;
                 endcase
-                if (byte_counter == 2) begin
+                if (byte_counter == 5) begin
                     spi_request_isread <= 0;
-                    spi_request_addr_bytes <= 0;
-                    spi_request_data_bytes <= 0;
                     spi_request_valid <= 1;
                     byte_counter <= 0;
                 end
             end
             SPI_READ_REG: begin
                 case (byte_counter)
-                1: spi_request_addr_contents[7:0] <= ctl_rd_data;
+                1: {spi_request_addr_bytes, spi_request_data_bytes} <= ctl_rd_data[1:0];
+                2: spi_request_addr_contents[15:8] <= ctl_rd_data;
+                3: spi_request_addr_contents[7:0] <= ctl_rd_data;
                 endcase
-                if (byte_counter == 1) begin
+                if (byte_counter == 3) begin
                     spi_request_isread <= 1;
-                    spi_request_addr_bytes <= 0;
-                    spi_request_data_bytes <= 0;
                     spi_request_valid <= 1;
                     byte_counter <= 0;
                 end

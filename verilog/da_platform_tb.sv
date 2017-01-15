@@ -241,28 +241,33 @@ task transaction(input logic [7:0] destination, input logic [7:0] command, input
 endtask
 
 //  This task is based around SPI format for DSD1792 - 8 bit addr and data
-task spi_read(input logic [7:0] destination, input logic [7:0] addr, output logic [7:0] data);
+task spi_read(input logic [7:0] destination, input logic addr_size, input logic data_size, input logic [15:0] addr, output logic [15:0] data);
 /*
     checksum = 0x61 + addr + 0x80
 	cmd = numpy.array([slot, 0x20, 0x00, 0x00, 0x02, 0x61, addr + 0x80, checksum / 256, checksum % 256], dtype=numpy.uint8
 */	
     logic [9:0] receive_length;
     send_cmd_data[0] = SPI_READ_REG;
-    send_cmd_data[1] = addr + 8'h80;
-    transaction(destination, CMD_FIFO_WRITE, 2, 1000, receive_length);
+    send_cmd_data[1] = {6'h00, addr_size, data_size};
+    send_cmd_data[2] = addr[15:8];
+    send_cmd_data[3] = addr[7:0];
+    transaction(destination, CMD_FIFO_WRITE, 4, 1000, receive_length);
     
-    $display("%t spi_read(addr %h): receive length = %d, data[4] = %h", $time, addr, receive_length, receive_data[4]);
+    $display("%t spi_read(addr %h): receive length = %d, data[4] = %h, data[5] = %h", $time, addr, receive_length, receive_data[4], receive_data[5]);
 endtask
 
-task spi_write(input logic [7:0] destination, input logic [7:0] addr, input logic [7:0] data);
+task spi_write(input logic [7:0] destination, input logic addr_size, input logic data_size, input logic [15:0] addr, input logic [15:0] data);
 /*
     checksum = 0x61 + addr + 0x80
 	cmd = numpy.array([slot, 0x20, 0x00, 0x00, 0x02, 0x61, addr + 0x80, checksum / 256, checksum % 256], dtype=numpy.uint8
 */	
     send_cmd_data[0] = SPI_WRITE_REG;
-    send_cmd_data[1] = addr;
-    send_cmd_data[2] = data;
-    send_cmd(destination, CMD_FIFO_WRITE, 3);
+    send_cmd_data[1] = {6'h00, addr_size, data_size};
+    send_cmd_data[2] = addr[15:8];
+    send_cmd_data[3] = addr[7:0];
+    send_cmd_data[4] = data[15:8];
+    send_cmd_data[5] = data[7:0];
+    send_cmd(destination, CMD_FIFO_WRITE, 6);
     
     $display("%t spi_write(addr %h)", $time, addr);
 endtask
@@ -292,12 +297,28 @@ initial begin
     //  and for SS chip selects to be all deasserted (clock startup; ser/des) 
     #10000 ;
     
-    /*
-    //  Try some SPI setup stuff
-    spi_write(8'h01, 8'h29, 8'hA3);
-    spi_read(8'h01, 8'h19, spi_receive_data);
-    spi_read(8'h01, 8'h29, spi_receive_data);
+    //  Test clock select
+    send_cmd_data[0] = 8'h0D;
+    send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
     
+    #10000 ;
+    
+    //  Try some SPI setup stuff.  First, 16 bit transactions (8-bit addr/data).
+    spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    spi_write(8'h00, 0, 0, 8'h29, 8'hA3);
+    spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
+    spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    
+    //  Now, 24 bit transactions, 16 bit addr + 8 bit data.
+    spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
+    spi_write(8'h01, 1, 0, 16'h0829, 8'hA3);
+    spi_read(8'h01, 1, 0, 16'h0819, spi_receive_data);
+    spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
+    
+    //  Stop early
+    #10000 $finish;
+    
+    /*
     //  Set ACON
     send_cmd_data[0] = SLOT_SET_ACON;
     send_cmd_data[1] = 8'h64;

@@ -16,6 +16,7 @@ from datetime import datetime
 import numpy.random
 import scipy.io.wavfile
 import pdb
+import sys
 from matplotlib import pyplot
 
 def get_elapsed_time(time_start):
@@ -26,8 +27,8 @@ def get_elapsed_time(time_start):
 #   Set to True for debugging
 IO_DISPLAY = False
 
-SLOT_DAC = 0    #   default = 1
-SLOT_ADC = 1    #   default = 0
+SLOT_DAC = 1    #   default = 1
+SLOT_ADC = 0    #   default = 0
 
 class EZUSBBackend(object):
     def __init__(self, dtype=numpy.uint16):
@@ -279,35 +280,7 @@ class FIFOTester(object):
                 print self.read_data
                 pdb.set_trace()
 
-class DSD1792Tester(object):
-
-    REG_CONFIG = {
-        'ATL': (16, 0, 8),
-        'ATR': (17, 0, 8),
-        'MUTE': (18, 0, 1),
-        'DME': (18, 1, 1),
-        'DMF': (18, 2, 2),
-        'FMT': (18, 4, 3),
-        'ATLD': (18, 7, 1),
-        'INZD': (19, 0, 1),
-        'FLT': (19, 1, 1),
-        'DFMS': (19, 2, 1),
-        'ZOE': (19, 3, 1),
-        'OPE': (19, 4, 1),
-        'ATS': (19, 5, 2),
-        'REV': (19, 7, 1),
-        'OS': (20, 0, 2),
-        'CHSL': (20, 2, 1),
-        'MONO': (20, 3, 1),
-        'DFTH': (20, 4, 1),
-        'DSD': (20, 5, 1),
-        'SRST': (20, 6, 1),
-        'PCMZ': (21, 0, 1),
-        'DZ': (21, 1, 2),
-        'ZFGL': (22, 0, 1),
-        'ZFGR': (22, 1, 1),
-        'ID': (23, 0, 5),
-    }
+class TesterBase(object):
 
     def __init__(self, backend):
         self.backend = backend
@@ -353,44 +326,33 @@ class DSD1792Tester(object):
     def reset_slots(self):
         self.backend.write(numpy.array([0xFF, DAPlatformBackend.RESET_SLOTS], dtype=self.backend.dtype))
 
-    def spi_write(self, slot, addr, data):
-        checksum = 0x60 + addr + data
-        cmd = numpy.array([slot, 0x20, 0x00, 0x00, 0x03, 0x60, addr, data, checksum / 65536, checksum % 65536], dtype=self.backend.dtype)
-        self.write(cmd)
-        #	print 'Wrote command for SPI write: %s' % self.pprint(cmd)
+    def spi_write(self, slot, addr_size, data_size, addr, data):
+        config_word = (addr_size << 1) + data_size
+        msg = numpy.array([DAPlatformBackend.SPI_WRITE_REG, config_word, addr / 256, addr % 256, data / 256, data % 256], dtype=self.backend.dtype)
+        cmd = self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg)
+        self.backend.write(cmd)
+        #print 'Wrote command for SPI write: %s' % cmd
 
-    def spi_read(self, slot, addr):
-        msg = numpy.array([DAPlatformBackend.SPI_READ_REG, addr + 0x80], dtype=self.backend.dtype)
-        self.transaction(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg), 100)
+    def spi_read(self, slot, addr_size, data_size, addr, add_offset=True):
+        #   Previous version added 0x80 to address to force a read.  But not all peripherals need this.
+        if add_offset:
+            addr += 0x80
+        config_word = (addr_size << 1) + data_size
+        msg = numpy.array([DAPlatformBackend.SPI_READ_REG, config_word, addr / 256, addr % 256], dtype=self.backend.dtype)
+        cmd = self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg)
+        #print 'Wrote command for SPI read: %s' % cmd
+        self.transaction(cmd, 100)
         
         data = self.backend.receive_state_slots[slot][DAPlatformBackend.CMD_FIFO_REPORT][0]
-        print data
+        #print data
         assert data[0] == DAPlatformBackend.SPI_REPORT
-        assert data[2] == addr + 0x80
+        #assert data[2] == addr + 0x80
         result = data[4]
         self.backend.receive_state_slots[slot][DAPlatformBackend.CMD_FIFO_REPORT].pop(0)
         
-        #	print 'Wrote command for SPI read: %s' % self.pprint(cmd)
-        #	print 'Got response for SPI read: %s' % self.pprint(response)
+        #print 'Got response for SPI read: %s' % data
         return result
 
-    def dsd1792_spi_summary(self, slot=0):
-        reg_base = 16
-        vals = [self.spi_read(slot, x) for x in range(16, 24)]
-        result_dict = {}
-        keys = DSD1792Tester.REG_CONFIG.keys()
-        keys.sort()
-        for key in keys:
-            (reg_index, start_bit, num_bits) = DSD1792Tester.REG_CONFIG[key]
-            bit_mask = 0
-            for i in range(num_bits):
-                bit_mask |= (1 << (start_bit + i))
-            val = (vals[reg_index - reg_base] & bit_mask) >> start_bit
-            result_dict[key] = val
-            print '%6s = %3d' % (key, val)
-
-        return result_dict
-    
     def start_playback(self, slot):
         msg = numpy.array([DAPlatformBackend.SLOT_START_PLAYBACK, 0], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
@@ -481,7 +443,63 @@ class DSD1792Tester(object):
             data = numpy.array([], dtype=numpy.int32)
 
         return data
+        
+        
+class DSD1792Tester(TesterBase):
+
+    REG_CONFIG = {
+        'ATL': (16, 0, 8),
+        'ATR': (17, 0, 8),
+        'MUTE': (18, 0, 1),
+        'DME': (18, 1, 1),
+        'DMF': (18, 2, 2),
+        'FMT': (18, 4, 3),
+        'ATLD': (18, 7, 1),
+        'INZD': (19, 0, 1),
+        'FLT': (19, 1, 1),
+        'DFMS': (19, 2, 1),
+        'ZOE': (19, 3, 1),
+        'OPE': (19, 4, 1),
+        'ATS': (19, 5, 2),
+        'REV': (19, 7, 1),
+        'OS': (20, 0, 2),
+        'CHSL': (20, 2, 1),
+        'MONO': (20, 3, 1),
+        'DFTH': (20, 4, 1),
+        'DSD': (20, 5, 1),
+        'SRST': (20, 6, 1),
+        'PCMZ': (21, 0, 1),
+        'DZ': (21, 1, 2),
+        'ZFGL': (22, 0, 1),
+        'ZFGR': (22, 1, 1),
+        'ID': (23, 0, 5),
+    }
+
+    def dsd1792_spi_summary(self, slot=0):
+        reg_base = 16
+        vals = [self.spi_read(slot, 0, 0, x) for x in range(16, 24)]
+        result_dict = {}
+        keys = DSD1792Tester.REG_CONFIG.keys()
+        keys.sort()
+        for key in keys:
+            (reg_index, start_bit, num_bits) = DSD1792Tester.REG_CONFIG[key]
+            bit_mask = 0
+            for i in range(num_bits):
+                bit_mask |= (1 << (start_bit + i))
+            val = (vals[reg_index - reg_base] & bit_mask) >> start_bit
+            result_dict[key] = val
+            print '%6s = %3d' % (key, val)
+
+        return result_dict
     
+
+class AD1934Tester(TesterBase):
+    def ad1934_spi_summary(self, slot=0):
+        print 'SPI summary for AD1934 in slot %d' % slot
+        vals = [self.spi_read(slot, 1, 0, 0x0900 + x, add_offset=False) for x in range(17)]
+        for x in range(17): print '%04s  %08d' % (x, int(bin(vals[x])[2:]))
+
+
 if __name__ == '__main__':
     """
     backend = MemFIFOBackend()
@@ -496,11 +514,29 @@ if __name__ == '__main__':
     #   8/10/2016
     #   SPI experiments
     backend = DAPlatformBackend()
-    tester = DSD1792Tester(backend)
+    #tester = DSD1792Tester(backend)
+    
+
+    
+    tester = AD1934Tester(backend)
+
+    #   Try something: switch all slots except the DAC slot to clock 1 (24.576 MHz - not connected)
+    #   to decrease loading on CLK0A net
+    backend.write(numpy.array([0xFF, DAPlatformBackend.SELECT_CLOCK, 0x00], dtype=backend.dtype))
 
     #   tester.get_dirchan()
+
+    SLOT_DAC = 1    #   default = 1
+
+    print tester.ad1934_spi_summary(slot=SLOT_DAC)
+    #tester.spi_write(SLOT_DAC, 1, 0, 0x0800, 0x99)  #   turn off MCLKO pin and PLL
+    #tester.spi_write(SLOT_DAC, 1, 0, 0x0801, 0x03)  #   select external MCLK source
+    tester.spi_write(SLOT_DAC, 1, 0, 0x0800, 0xA0) #    enable MCLK, and select LRCK as PLL source
+    #tester.spi_write(SLOT_DAC, 1, 0, 0x0800, 0x80)  #   enable MCLK, select MCLK as PLL source
+    time.sleep(0.1)
+    print tester.ad1934_spi_summary(slot=SLOT_DAC)
     
-    #print tester.spi_read(1, 18)
+    #print tester.spi_read(1, 0, 0, 18)
     #tester.dsd1792_spi_summary(slot=1)
     
     #   8/12/2016
@@ -516,14 +552,14 @@ if __name__ == '__main__':
     
     #   Try some audio (note: 44.1 kHz)
     F_s = 44100.
-    F_sine = 1000.
-    T = 600.
+    F_sine = 250.
+    T = 100.
     N = F_s * T
     t = numpy.linspace(0, (N - 1) / F_s, N)
     #x = 0.00390625 * ((numpy.sin(2 * numpy.pi * F_sine * t) >= 0) - 0.5)
     #x = 0.00390625 * numpy.ones(t.shape)
     #x = (-1.0 / (1 << 24)) * numpy.ones(t.shape)
-    level_db = -60
+    level_db = -20
     x = 0.5 * numpy.sin(2 * numpy.pi * F_sine * t) * (10 ** (level_db / 20.0))
     #x = (1 + numpy.arange(N)).astype(float) * 2 / (1 << 24)
     #   1/2/2017 experiment
@@ -642,7 +678,7 @@ if __name__ == '__main__':
         tester.audio_write(SLOT_DAC, chunk.flatten())
         x_int.append(chunk.flatten())
         samples_written += this_chunk_size
-        print 'Wrote %d samples' % samples_written
+        #print 'Wrote %d samples' % samples_written
 
         #   Delay first read so that we don't get a buffer underrun
         if start_flag == False:

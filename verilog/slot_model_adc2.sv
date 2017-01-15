@@ -40,7 +40,10 @@ assign aovfl = 0;
 assign aovfr = 0;
 
 //  SPI interface
-spi_slave ctl_model(
+spi_slave #(
+   .address_bits(8), 
+   .data_bits(8)
+) ctl_model(
     .clk(clk), 
     .reset(!reset), 
     .sck(amclk), 
