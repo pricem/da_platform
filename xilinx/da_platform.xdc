@@ -94,6 +94,10 @@ set_property PACKAGE_PIN T3 [get_ports {iso\.slotdata[2]}]
 set_property PACKAGE_PIN U1 [get_ports {iso\.slotdata[1]}]
 set_property PACKAGE_PIN V1 [get_ports {iso\.slotdata[0]}]
 
+#   Make it clear that clk0 and clk1 are clocks at up to 25 MHz.
+create_clock -period 40 -name clk0 [get_ports {iso\.clk0}]
+create_clock -period 40 -name clk1 [get_ports {iso\.clk1}]
+
 #   Unused pins of isolator interface go to unused IOs
 set_property PACKAGE_PIN U6 [get_ports {iso\.slotdata[23]}]
 set_property PACKAGE_PIN V5 [get_ports {iso\.slotdata[22]}]

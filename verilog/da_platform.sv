@@ -58,6 +58,7 @@ end
 //  Drive isolator reset line
 //  8/10/2016: DSD1792 reset is active low.
 logic reset_local;
+logic reset_local_hold;
 logic [7:0] reset_local_counter;
 localparam reset_local_timeout_cycles = 200;
 always_comb begin
@@ -378,8 +379,11 @@ generate for (g = 0; g < num_slots; g++) begin: slots
     wire [1:0] slot_aovf = aovf_parallel[(g+1)*2-1:g*2];
     
     wire [7:0] slot_acon;
-    assign acon0_parallel = ((slot_dir == 0) && (g == 0)) ? slot_acon : 8'bzzzzzzzz;
-    assign acon1_parallel = ((slot_dir == 0) && (g == 2)) ? slot_acon : 8'bzzzzzzzz;
+    //  assign acon0_parallel = ((slot_dir == 0) && (g == 0)) ? slot_acon : 8'bzzzzzzzz;
+    //  assign acon1_parallel = ((slot_dir == 0) && (g == 2)) ? slot_acon : 8'bzzzzzzzz;
+    //  Slot 0 ADC takes precedence over slot 1 for setting ACON (same for 2 over 3)
+    assign acon0_parallel = ((slot_dir == 0) && ((g == 0) || ((g == 1) && dirchan_parallel[0]))) ? slot_acon : 8'bzzzzzzzz;
+    assign acon1_parallel = ((slot_dir == 0) && ((g == 2) || ((g == 3) && dirchan_parallel[2]))) ? slot_acon : 8'bzzzzzzzz;    
 
     wire slot_spi_ss_out;
     assign amcs_parallel[g] = !((slot_dir == 0) && (slot_spi_ss_out == 0));
@@ -601,6 +605,7 @@ always @(posedge cr_core.clk) begin
         slot_fifo_en <= '1;
         
         reset_local <= 0;
+        reset_local_hold <= 0;
         reset_local_counter <= 0;
     end
     else begin
@@ -619,7 +624,7 @@ always @(posedge cr_core.clk) begin
         if (reset_local) begin
             if (reset_local_counter == reset_local_timeout_cycles - 1)
                 reset_local <= 0;
-            else
+            else if (!reset_local_hold)
                 reset_local_counter <= reset_local_counter + 1;
         end
 
@@ -775,7 +780,18 @@ always @(posedge cr_core.clk) begin
                     end
                     RESET_SLOTS: begin
                         reset_local <= 1;
+                        reset_local_hold <= 0;
                         reset_local_counter <= 0;
+                        state <= STATE_IDLE;
+                    end
+                    ENTER_RESET: begin
+                        reset_local <= 1;
+                        reset_local_hold <= 1;
+                        reset_local_counter <= 0;
+                        state <= STATE_IDLE;
+                    end
+                    LEAVE_RESET: begin
+                        reset_local_hold <= 0;
                         state <= STATE_IDLE;
                     end
                     endcase
@@ -881,7 +897,7 @@ always @(posedge cr_core.clk) begin
                     clksel_parallel <= host_in_core.data;
                     state <= STATE_IDLE;
                 end
-                
+
                 endcase
                 
             end

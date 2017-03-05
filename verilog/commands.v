@@ -33,6 +33,8 @@ localparam RESET_SLOTS          = 8'h47;
 localparam FIFO_READ_STATUS     = 8'h48;
 localparam FIFO_REPORT_STATUS   = 8'h49;
 localparam UPDATE_BLOCKING      = 8'h4A;
+localparam ENTER_RESET          = 8'h4B;
+localparam LEAVE_RESET          = 8'h4C;
 
 //  Errors
 localparam CHECKSUM_ERROR		= 8'h50;
