@@ -26,6 +26,8 @@ class DAPlatformBackend(EZUSBBackend):
     FIFO_READ_STATUS        = 0x48
     FIFO_REPORT_STATUS      = 0x49
     UPDATE_BLOCKING         = 0x4A
+    ENTER_RESET             = 0x4B
+    LEAVE_RESET             = 0x4C
     CHECKSUM_ERROR		    = 0x50
     SPI_WRITE_REG			= 0x60
     SPI_READ_REG			= 0x61

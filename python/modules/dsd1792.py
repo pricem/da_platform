@@ -47,4 +47,7 @@ class DSD1792Module(ModuleBase):
             print '%6s = %3d' % (key, val)
 
         return result_dict
-    
+     
+    def num_channels(self):
+        return 2
+

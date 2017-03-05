@@ -3,6 +3,7 @@ import numpy
 from datetime import datetime
 
 from backends.da_platform import DAPlatformBackend
+from utils import get_elapsed_time
 
 class ModuleBase(object):
 
@@ -32,11 +33,20 @@ class ModuleBase(object):
     def get_dirchan(self):
         self.transaction(numpy.array([0xFF, 0x41], dtype=self.backend.dtype), 3)
         dval = self.backend.pop_report_global(DAPlatformBackend.DIRCHAN_REPORT)[0]
+        dir_vals = numpy.zeros((4,), dtype=bool)
+        chan_vals = numpy.zeros((4,), dtype=bool)
         for slot in range(4):
             dirslot = 1 * ((dval & (1 << slot)) > 0)
             chanslot = 1 * ((dval & (1 << (slot + 4))) > 0)
             print 'Slot %d: Direction = %d, Channels = %d' % (slot, dirslot, chanslot)
+            dir_vals[slot] = dirslot
+            chan_vals[slot] = chanslot
             #	print 'Result of get_dirchan = %s' % self.pprint(result)
+        return (dir_vals, chan_vals)
+
+    def num_channels(self):
+        #   TODO: Should be able to figure this out from dir/chan
+        raise NotImplementedError
 
     def get_aovf(self):
         result = self.transaction(numpy.array([0xFF, 0x43], dtype=self.backend.dtype), 3)
@@ -49,6 +59,12 @@ class ModuleBase(object):
 
     def reset_slots(self):
         self.backend.write(numpy.array([0xFF, DAPlatformBackend.RESET_SLOTS], dtype=self.backend.dtype))
+
+    def enter_reset(self):
+        self.backend.write(numpy.array([0xFF, DAPlatformBackend.ENTER_RESET], dtype=self.backend.dtype))
+        
+    def leave_reset(self):
+        self.backend.write(numpy.array([0xFF, DAPlatformBackend.LEAVE_RESET], dtype=self.backend.dtype))
 
     def spi_write(self, slot, addr_size, data_size, addr, data):
         config_word = (addr_size << 1) + data_size
@@ -168,3 +184,7 @@ class ModuleBase(object):
 
         return data
         
+    def setup(self, *args, **kwargs):
+        #   Can be overridden by subclasses
+        pass
+

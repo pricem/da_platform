@@ -9,7 +9,7 @@ from modules.dsd1792 import DSD1792Module
 from modules.ad1934 import AD1934Module
 from utils import get_elapsed_time
 
-SLOT_DAC = 0
+SLOT_DAC = 1
 
 backend = DAPlatformBackend()
 dac = DSD1792Module(backend)
@@ -23,6 +23,10 @@ def play_file(filename):
     if x_st_int.dtype == numpy.int16:
         #   << 8 for 0 dBFS, << 4 for -24 dbFS
         x_st_int = x_st_int.astype(numpy.int32) << 8
+    elif x_st_int.dtype == numpy.int32:
+        #   fine, accept int32 as if it's 24 bit
+        #   hopefully it isn't actually 32 bit
+        pass
     else:
         raise Exception('Unexpected source data type: %s' % x_st_int.dtype)
     
