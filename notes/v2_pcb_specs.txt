@@ -1,0 +1,64 @@
+
+Specs for things to include on v2 PCBs
+=========================================
+
+
+PSU
+---
+Lowest reverse-recovery diodes possible
+    Why not Schottkys?
+12-pin connector to isolator
+
+Carrier (shared)
+----------------
+
+Footprint for upside down RPi
+JST power connector for 5 V (probably from ext wall wart)
+
+Carrier option A - ZTEX FPGA
+---------
+FPGA board footprint (no mounting holes)
+JTAG connector
+
+Carrier option B - {USB, Mini}streamer
+---------
+Mechanical scheme for mounting streamer board
+Header for attaching streamer board connections (put streamer upside down?)
+
+Isolator
+--------
+
+Stuffing option for resistors instead of ADUM isolators
+Debug header that is outside shadow of carrier
+
+
+Jung discrete regs under center of board
+Stuffing option for low cost 3 terminal regs for +/- 15, 5, 3.3 V
+
+Clock
+-----
+Clock source support (stuffing options):
+    Crystek CCHD-957
+    Tentlabs XO
+    Some other decent inexpensive osc.
+    SMA input (SE CMOS level), as if from an arrogant module
+Differential driver support:
+    LVDS - low cost
+        FIN1001 type driver
+    CML - high performance
+        ADCLK948 driver
+        AD9515 receiver
+Debug connections for:
+    Clock sources - SMA
+    Clock select input
+
+Series resistance for CMOS clock outputs (10 to 22 ohm?)
+Good supply decoupling / ferrite beads
+Stuffing option for local supply regulation
+
+    
+
+Modules
+--------
+Module adapter for testing v1 modules before v2 modules are designed
+

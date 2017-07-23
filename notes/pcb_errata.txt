@@ -8,6 +8,7 @@ Positive regulator can't be used for +5 V supply with its 6.9 V reference
 	(have to use LDO version for this application)
 Maybe these regulators could all be built using the same PCB layout and different stuffing?
 R7 on LDO is too large, 475 ohms works (was 1k)
+    -> 4/2/2017: R7 needs to be shorted and Q3 needs to be removed.
 PCBs are too tall I think
 Mechanical alignment/stability is not very good with 3 pin male/female headers
 
@@ -21,24 +22,82 @@ No mounting holes
 Slot 0 PCB collides with socket for clock oscillator
 Why separate SPI ports for DACs and ADCs?
 SPI CS muxing is annoying due to the delays that it causes
+    -> But probably better than the alternatives?
 AGND and DGND are isolated, but clock select circuitry crosses boundary without isolator
 	Hack of adding 10 ohm resistor between input terminals worked for now
+    TODO: Map out grounding scheme before designing boards
 Clock oscillators use AGND (is this right?)
 Sense of ADG1436 is reversed (e.g. CLK0 and CLK1 swapped) - easy workaround
+ADG1436 is not the right clock switch to use--way too much capacitance (consider other clock dist methods)
 
 Modules
 -------
-I/V stage - op amp should be marked NE5534 (unless there is a good reason for something else)
-I/V is biased for opposite of actual DSD1792 current; change balancing CS resistors top/bottom
-I/V output follower biased too hot - increase CS resistors from 47.5 to 82.5 (20 mA to 12 mA)
-I/V has no lowpass filter, and way too much bandwidth (>1 MHz)
-	Add 1 nF cap across IV resistor to limit bandwidth to ~200 kHz, but this causes DC offset?
-	Also consider making a real antialiasing filter (TI has 2.2 nF across same 750 ohm, plus)
-DAC board should probably have balanced to unbalanced converter
+
+2-ch IV stage:
+    I/V stage - op amp should be marked NE5534 (unless there is a good reason for something else)
+    I/V is biased for opposite of actual DSD1792 current; change balancing CS resistors top/bottom
+    I/V output follower biased too hot - increase CS resistors from 47.5 to 82.5 (20 mA to 12 mA)
+    I/V has no lowpass filter, and way too much bandwidth (>1 MHz)
+        Add 1 nF cap across IV resistor to limit bandwidth to ~200 kHz, but this causes DC offset?
+        Also consider making a real antialiasing filter (TI has 2.2 nF across same 750 ohm, plus)
+    Should probably have balanced to unbalanced converter (single ended line driver)
+    Try to lower distortion from -80 to -100 dB.  Without feedback?  Think about it.
+
+8-ch scaler:
+    Serious DC offset problem from mismatched MOSFETs (up to 1 V)
+    Distortion is not as low as it should be - some may be due to coupling caps.
+    Use box film caps, not silly SMT polystyrene caps.  Or maybe they're fine?
+
+2-ch ADC:
+    WTF is a -2.5 V common mode doing?  With the gain you have, it should be +1.734 V 
+        (and by the way, the ADC gives this as an output that should be used in a smarter circuit)
+    Antialiasing filter is missing
+    It wants buffering of the I2S outputs close to the chip.  (Ferrite bead for supply isolation of buffer?)
+
+2-ch DAC:
+    Board layout may be contributing some distortion not the fault of the IV stage.
+        Right channel has more distortion than right (-94 vs -97)
 
 General
 -------
 There needs to be a PCB for the power supply (the unregulated one with rectifiers and caps)
 	with one multi-conductor cable from it to the isolator PCB
 Need ECC for audio data - really do not want corruption for any reason
+Put in more debug connectors for Logicport et al; it's impossible to probe traces on the boards (later revisions can remove them, or not populate them).  Worst regarding ACON on the ADC board.
 
+===================================
+Errata for version 2 (2017)
+===================================
+
+Mechanicals:
+    PSU is bunched up close to transformers, and transformer wiring is a bit tight (with crimp connectors).
+    Think about whether to solder/crimp and also if it's feasible to adjust board placement.
+    What about a (beefy) 7-pin header that attaches to a 7-conductor ribbon cable soldered to the transformer terminals?
+
+2-ch IV stage (version 2):
+    LED as voltage reference had wrong voltage.  Bias currents too high.
+
+PSU (version 2)
+    Need high value bleeder resistors to discharge everything when power is removed.
+    4.7k across each LV output (1.5 mA / 10 mW), 10k from each MV output to ground (2.5 mA / 50 mW)
+        -> A bit slow on the +/- 22 V, but don't want to waste too much power.
+    Add an indicator LED (through hole) that the power is on
+    Consider separating the grounds for the +/- supplies (i.e. not supporting center tap)
+        although this would be incompatible with my strategy of using a cap across the rails to limit ripple currents on ground
+    
+    
+Clock test board
+    SMA connector for output of ECL receiver is too close to PSU header - collides
+        (Of course, I can use indiv. wires to PSU to rectify this)
+
+Regulators
+    FIXED Small transistor footprint in Jung regs. is narrower than BC807 - check package (the BC817 is fine)
+    FIXED MAX6220 reg doesn't work for +5 or +3.3 V - replace with AD4525 and remove NR cap
+    FIXED Remove 100 uF input cap C32/C50 for +5 and +3.3 V regs
+    FIXED Replace AD825 with LME49710 to save money.  Performance is fine as confirmed by Walton.
+    FIXED Feedback resistor dividers should be adjusted to match 500 ohm source resistance of reference.
+    -- Note 7/5/2017: Above changes made on isolator_v2.sch.  regtest_v2.sch is original design as built for testing.
+
+Carrier
+    Hole for JST connector locating pin is on wrong side of footprint (currently left of notch, needs to be right)
+    

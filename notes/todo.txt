@@ -29,3 +29,11 @@ No easy way to simulate the memory
 --> Do most design work with a MIG model, and use VCS once it's working to simulate the full system
 
 
+Jan 2, 2017
+
+See planning.txt for more details
+    Figure out software side of 2-ch setup
+    Do listening eval
+    Try 8-ch DAC and/or ADC?  Fix 2-ch ADC?
+    Begin PCB design rev
+

@@ -63,6 +63,7 @@ PSU filter caps
 
 Ferrites
 Bead SMD 1206                       732-1625-1-ND
+    -> 7/9/2017: Should use 732-1623-1-ND instead, higher current
 
 Resistors
 10k 1/4w SMD 1206 thick film        RHM10.0KFCT-ND

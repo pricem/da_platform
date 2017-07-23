@@ -34,3 +34,11 @@ Try again: 0.034%, -46.0
 
 -> Removing 1k resistors on the "good" channel improves its THD further, now below -80 dB at full scale
 
+Supply noise floor might have been mostly from the sound card:
+- Removing the isolation transformer makes SNR horrible; 60% THD+N at -60 dB
+- Adding isolation transformer with amp makes it much quieter; hum about the same level as hiss (XLS1500 cranked to max)
+- In the stereo, haven't had a problem
+
+-> Warrants further investigation, i.e. adding preamp or distortion magnifier
+
+

@@ -159,6 +159,9 @@ On to the next set of problems
             First, it looks like these are meant to be stereo out / mono in only.  Not so versatile.
             In USB, the source and sink endpoints are independent.  In other words, it can send and receive audio concurrently/independently.
 
+1/1/2017
+--------
+
 Some background research
     ALSA
         has an "external plugin interface" that could be used to create a user space PCM driver
@@ -178,6 +181,10 @@ Some background research
     Strategy for now (1/1/2017): make the hardware as simple as possible, do everything in userspace (i.e. request data from ADCs)
 
 Implementing audio read request
+
+1/2/2017
+--------
+
     First test: send separate msg instead of read request at end of write msg
         No ILA
         Looks like we get data back, but even with blocking slots there's a big batch of audio at beginning - why?
@@ -281,8 +288,3002 @@ S/N 2 I/V stage debug
             82.5 -> 11 mA
             Why not leave these as is and see which channel is better
             (Maybe I changed that value for Sourcemeter testing?)
-            
-            
+    -> Removed R12, it looks like I had the wrong sign on the datasheet current offset.
+    THD is better without R12 esp. at high output (see measurements.txt)
+
+At this point, the hacky setup is working as 2-channel DAC (see pictures).
+    Stereo output (with isolation transformer) is reasonably clean.  
+    THD < -80 dB in both channels at -30 dB and up
+    Added to rack and configured Michelle's laptop for testing with speakers
+    Initial listening impressions: (comparing to memory of modified RCD-855 CD player)
+        Reasonably relaxed, haven't been driven out of the room.
+        Midrange a little more spacious?
+        Bass is lean (good) and clean, but perhaps doesn't have as much impact as RCD-855
+        Treble: noticeably drier, doesn't have the same body as before
+            This might motivate a voicing adjustment on the speakers?
+            Clean and detailed, though something might be missing.
+        Better than Ezra track 12 was beautiful.
+    Second listening (note: a little sick)
+        More polite, peaceful.  Kind of sleepy? (Bela Fleck, Lumineers)
+        Easier to follow the melody of the secondary instruments
+        Missing the sense of body and impact (at moderate levels)
+
+== End of sprint winter break 2016/2017 ==
+
+Revisions to try on initial setup
+- IV stage antialias filter (1st order: 3.3 nF cap to ground from IVOUT node of 750 ohm resistor)
+- Different clock or clock distribution
+
+
+1/4/2017
+--------
+Tried music server setup
+    MPD on Linux VM
+    Files shared over Samba (host: Windows PC)
+    MPDroid on Android tablet
+Seems to work, but didn't check audio output
+    Wish list: album art?
+Plan is to run MPD on a Raspberry Pi 3, should have a footprint for it on PCB
+
+
+1/6/2017
+--------
+Trying IV stage antialias filter
+First try, blew up IV stage output buf with shorted output (maybe some protection would be nice...)
+Replaced MOSFET
+Second try, got a lot of the clicking artifacts (bad clk/I2S signal integrity? more debug needed)
+-> Needs more debug, and probably a hardware rev
+
+1/7/2017
+--------
+Started bringing up DAC 8 ch board
+Refreshed memory on the circuit.  Distortion performance may need improvement.
+Plugged it in and turned on - nothing blew up.  
+SV changes:
+    - open up 8 channel I2S port support (when dir=1 chan=1) -- done
+    - will need to support different SPI formats - currently only 16 bit (8 bit addr, 8 bit data) for DSD1792
+        AD1934 needs 24 bit (8 bit global addr +RW, 8 bit reg addr, 8 bit data)
+      in theory, there is a way to do this (in spi_master interface) but slot_controller hardcodes the bits.
+      Just spend some time in the sim to prototype.
+
+Note:
+    When you have SPI working, carefully go through registers in the datasheet and make sure the settings make sense.
+        i.e. read all regs, see initial vals, reprogram and reread
+    Reg 0 bit 7 is internal MCLK enable - needs to be set to 1 for DAC to work?
+    Reg 0 bit [4:3] is MCLKO pin - we can disable (set to 11) since MCLKO is NC
+    Reg 1 bit 0 and 1 select between PLL (0) and MCLK (1)
+    Try internal PLL, see if it helps over direct input
+
+1/14/2017
+---------
+Modified SPI command handling in slot controller - new msg format needs to be migrated to Python code
+Seems to do something, although the bits of each byte read are shifted left one, and bit 0 is then repeated
+
+Soldered a pigtail for 4 channels (no matter, with only 1 scaler board we can only get 2 channels)
+
+Examining output of first 2 channels - DC offset
+    1L  170 mV
+    1R  640 mV
+    -> bad
+    DC level of DAC output pins is 1.58 V - same as CM
+
+Now check AC...
+    1L  ~40 mV (wandering... just hook up and see)
+    1R  ~90 mV
+    
+8-ch I2S: Looks like it's working, according to ILA
+
+Need to look at 
+a) DC operating point of scaler
+b) Whether DAC outputs are doing anything
+    No.  Probing output 2L gives const ~50 mV
+    Probably jibberish because of no clock lock
+
+Viewing on  scope:
+    1L output does... nothing, but noise and offset
+    
+OK, alt. strategy: try using the PLL
+    If I leave registers in default config, AC on output goes away; supplyign audio doesn't do anything
+    Now turn on MCLK?
+    I can see a little signal at the output... and not as horrible noise.
+    Hey, a 400 Hz sine wave!  But it's really small, and doesn't register on the multimeter (AC volts) either.
+    That's because the level was set in SW at -60 dB.  -40 is bigger.  Big enough to look clean.
+    Definitely some clipping - 1.2% THD at 1 kHz full scale
+    At -20 dB?  0.1%.  Not horrible, but mediocre.
+    Some may be coming from transformer due to DC offset.  But yay, DAC is working!
+        Nope, still 0.1% when bypassing transformer.  0.3% at -10 dB, 0.08% at -30
+        1% at full scale... Hmm.
+        According to LTspice it should be 0.1%, and most of it is coming from the diff pair.
+        But my diff pair bias is at 6 V instead of 8 V - 12 mA instead of 9?
+        Main diff pair should be 20 mA if the right resistors were used.  Increasing bias doesn't hurt distortion in LTspice.
+        0 dB FS spectrum really looks like clipping the sound card.  Back off..
+        At -3 dB, No more clipping, but still 0.8% THD.  Fund at -3, H2 at -45, H3 at -74
+            -> mostly 2nd harmonic, 3rd harmonic is in line with expectations
+    Definitely 2 problems: DC offset due to poor MOS matching, and crappy SMD caps that leak?
+        The caps could be the cause of the HD also?  Maybe not.
         
     
+So, need to fix the scaler.
+    DC offset may just be down to MOSFET matching.  Vgs is supposed to be 0.8-2.4 V, and I made no effort to match.
+    though there's a creepy 300 mV voltage drop across the gate resistors - why is there DC current? (bad soldering/bad caps?)
     
+Do all 4 channels work?  (Test and write THD at -20 dBFS)
+    1L: Yes, 0.11%
+    1R: Yes, 0.03%
+-> NM, scaler isn't plugged in.  Need more scalers.  But can test 8 DAC channels by moving scaler once fixed.
+
+Also, note that the DAC does not work when external MCLK is selected or when MCLK is used as the PLL source.
+But how do the I2S signals get in?  maybe there is a bad connection.
+
+1/15/2017
+---------
+Viewed the 11.2896 MHz clock at the DAC board on the scope today
+Note: scope probe adds additional ~10 pF load; scope itself has 20 pF, but it's a 10x probe
+
+With scope hooked up to clock, PLL recovering LRCK may not work as reliably? Not sure.
+
+Waveform obs:
+    Freq looks OK, but there might be a massive amount of jitter?  Can't resolve waveform properly on my scope.  Trigger settings seem to impact display.
+    Exponential decay rising.  No flat top.  Looks like a sawtooth almost.
+    Voltage range = 0.2 to 2.6 V
+    Slew (1-2 V) time = 12 ns (note: scope bandwidth may be coming into play)
+    
+
+Probe elsewhere to see if the wave shape changed?
+    At the oscillator, it's much sharper, 0 to 5 V, 4 V rise in 10 ns -> scope isn't the main factor
+    
+    With DAC in slot 0, it looks, possibly, a little less jitter, but peaks at 2.5 V
+
+Note: 74VHC04 output current specced at 4 mA for 3.0 V supply
+    So, with 20 pF load, that's a slew rate of 0.2 V/ns or 5 ns/V
+    We see 12 ns/V which would mean the load is closer to 50 pF? 
+
+Switching CLKSEL = 0x0D on other channels to other clock makes a difference
+Faster rise time, but harder to trigger; why?
+Closer to 8 ns/V; voltage range now 0--2.9 V
+    e.g. we went from 50 pF to 35 pF
+But then the DAC doesn't work (recovering from LRCK).
+
+Wait: ADG1436 has some significant cap.
+    Cs (off) = 23 pF
+    Cd (off) = 50 pF
+    Cd+Cs (on) = 120 pF
+    ???
+    So maybe the 7404 is fine and we're just loading the crap out of it.
+
+Multimeter shows 195 pF from CLK0A to gnd, minus 31 pF from holding wire nearby -> 164 pF
+
+What about from SCLK1 (output side of switch)?
+    115 pF (minus about 20 from holding wire) - with DAC8 board in place
+    100 pF without DAC8 board
+    
+Wow.  Alright, clock switching needs to be rethought.
+No "smoking gun" for PLL clock and clicking issues, but it's pretty strong circumstantial evidence.
+
+So what's the plan?  Some options (non-exclusive):
+    a) Rev the scaler and IV boards for better analog performance with same DAC2/DAC8 boards.  (Need more scalers anyway...)
+        This will make me feel better since I don't want DC offset going into the amps or into the analog XO input transformers
+        Also provides a warmup for Eagle, PCB ordering and assembly (get the necessary tools for SMT)
+    b) Do mods to the current isolator board to improve clk reliability i.e. cut/jump (say, eliminating clock switching; 44.1 OK for now)
+    c) Try to get the 8 channel ADC working
+        Note: LRCLK PLL trick won't work since I2S pin direction is set jointly for all 6 slot data pins
+        So, if we want the ADC to output SDATA, it has to also output BCK and LRCK (i.e. I2S master)
+        meaning the FPGA cannot supply LRCK
+    -> This is unlikely to work given the current clock situation
+       So, abandon ADC plans until next isolator rev.
+    d) Try to get DAC2 and DAC8 working at same time
+        Ideally this would make digital XO and analog XO possible without reconfiguring hardware--just move connectors
+    e) While prototype is working with DAC2/8, design next isolator rev.
+    
+-- Plan selected: (a), (b), (d), (e) in that order
+
+
+1/15/2017 (Later that day)
+----------
+
+Experimenting with I/V stage.
+Using ideal current sources to identify fundamental distortion sources
+
+Baseline signal is 6dB at 1k, dist is -78 dB at 2k (-84 dB), -114 dB at 3k
+    Not bad, but let's see if we can knock down the 2nd harmonic
+
+Does Wilson current mirror help?
+    No.
+    
+How about a regular cascoded current mirror?
+    No.
+    
+So what's the nonlinearity from?
+    Base current?  Varies between 21-48 uA at full scale
+
+Try 10x current.. (and 10x power supply)
+    Now base current is 390-435 uA
+    OK, that made a small difference in THD... 2nd harmonic is down to -81... obviously not worth it
+    
+Try 1/10 voltage gain (75 ohm resistor instead of 750)... same 10 mA bias
+    This gives -14 dB signal and -109 H2 = -95 dB
+    So maybe a second stage would help.
+    BTW, with 20 mA bias, H2 is same
+    So it's not the current but the voltage swing that seems to be causing the distortion
+    Nonlinear Vce cap?
+    Try boosting supply voltage, see if that's related
+    30 V supply, H2 at -111, 2 dB improvement for 2x the supply voltage
+    Try 1/5 voltage gain (150 ohm res)... H2 = -100, sig = -8 (-92)
+    Looking at Q1 (closest to input), the emitter current is a sinewave, but collector current has distortion -94 dB down (150 ohm or 750 ohm)
+    So there is some base current, and that is nonlinear
+    Base voltage is moving up and down (as it should)... 88 uV
+    Ic from 6-14 mA, Ib from 21-48u -> Beta = 500
+    -> Darlington connect?
+        This severely raises the floor of the FFT.  Why?
+        Compression doesn't affect it
+        Tightening abstol makes sim really slow.  Loosening it... makes no difference
+        Ah. changed to save sim data starting at 1 ms, maybe there was some transient at the beginning
+        Now we're talking.  H2 at -116 with 750 ohm / 10 mA (-122 rel.)
+        H3 is a little higher? -134 ... so still better, just not relative to H2.
+
+Now add the MOS follower output buffer, which will probably get replaced eventually.
+    V(ivout): Signal at +6 H2 at -115 H3 at -125 (hmm.. higher H3 especially, from loading?)
+    V(out):   Signal at +6 H2 at -107 H3 and higher under the numerical floor (-118)
+    numerical issue (need to wait more?)
+    Wait 10 ms instead of 1.... doesn't help.  Waah?  Simulation accuracy is a pain.
+    For some reason, we're good at IVOUT but not on the other side of the cap.
+
+Darlington might be too much gain, see how it introduces higher harmonics?
+    -> Deal with this later.  Buy some space first.
+
+Time for bed.  But one problem has been solved (current buffer nonlinearity).  Try the other 3 tomorrow:
+    2) Output buffer without DC offset
+    3) 2nd order or steeper antialias filter
+    4) Practical implementation of current sources that were made ideal for this experiment
+    1) Numerical problems preventing accurate sim
+
+Also, what transistor to use?  Want high current gain that's flat with current, and low noise.
+    May still have some 2SC2240 lying around.  NXP claims BC849/850 is low noise.  (BC849 = 30 V, BC850 = 45 V, C version has better current gain)
+    Borbely recommends 2SC3329/2SA1316
+    rljones: 2SA1015L and 2SC1815L
+    Bob Cordell: 2N4401/4403
+    Salas: "2N4401/4403 will come at circa 0.9nVrtHz and they are a dime a dozen. "
+    Maybe noise isn't an issue here since the swing is so big.  It's not a phono stage input.
+
+
+
+1/16/2017
+---------
+LTspice: examine MOS follower distortion
+Bias = 1 mA, driving 10k load: not good
+Bias = 10 mA, driving 10k load: good, sig -6 H2 -106 H3 -146
+    But it probably won't be able to drive heavier loads: H2 = -52 H3 = -68
+    -> Output needs to be complementary e.g. diamond-buffer
+    Or what about a BJT?
+    Nope doesn't help.
+Now looking at diamond buffer with BJTs. 600 ohm load
+    1 mA bias not enough
+    10 mA bias: H2 -83 H3 -75
+    Note: into 600 ohm, 2 V RMS = 2.83 V peak = 4.7 mA peak
+    Now, with 100 ohm emitter resistors in 1st stage and 10 ohm in 2nd stage: H2 -89 H3 -101
+        Note: bias currents are 2 mA and 14 mA
+    I think that's good enough given the load.  With 10k: H2 -90 H3 -117
+        Hmm, anyway to get H2 down a bit?  (Where does it come from?)
+        
+Mirroring around the input current seems hard? (what am I missing... I get -70 dB dist even with Darlingtons)
+
+OK, for now, I give up and just hook the load resistor to the supply.
+Performance simulated:
+    THD in 600 ohm: H2 -97 H3 -110 (rel +6)
+    THD in 10k: H2 -99 H3 -115 (rel +6)
+    THD in 10k, -26 dBFS: H2 -151, others not visible (rel -20)
+    Supply current: about 60 mA (1.8 W)
+        Note: much of this is in output stage, can be reduced...
+        Biasing = 2 mA
+        DAC 16 mA neg, 11 mA pos
+        Interstage buffer 4 mA
+        Diamond buffer first stage 3 mA
+        Diamond buffer second stage 25 mA
+    Freq response
+        (-3 dB) 1.6 Hz to 55k Hz
+        (-0.1 dB) 11 Hz to 20k Hz
+        3rd order rolloff
+        70 dB stopband suppression (1--100 MHz, no parasitics)
+    PSRR
+        Pos supply: 0 dB (Adding RC filter just filters HF; cap has to be quite large for LF audio performance to be helped)
+            Adding Darlington capacitance multiplier with 10k/10u gets us to 26 dB in most of band (21 dB at 20 Hz)
+            MOSFET is same.
+            However, this dramatically increases distortion because of the finite output impedance
+                14 dbohm = 5 ohm, so 2.5 mA RMS gives us 7.5 mV RMS -> more than -60 dB distortion
+            Power the two halves of the differential circuit from the same cap multiplier?
+                With ideal current sourec there's about 500 uV left, and distortion is fine.
+                -> A viable idea, I think.  Can't complain about 26 dB PSRR.
+        Neg supply: 1 dB (why? current sources somehow)
+            Yes.  Biasing is proportional to supply.
+            Switch to LED based current sources -> 40 dB from neg supply, not bad.
+            Still needs to be clean however.
+            
+            
+Choosing output stage bias
+    Decreasing the current makes THD go down with 10k load.
+    3.5 mA is enough
+    So what loads are we going to support?
+    May also want power reduction in other places
+    But deal with this later. PSRR first.  Leave at 3/20 mA (diamond 1/2) for now = 26 total for output.
+    Default version: -95 -107 -140 -145 into 600 ohm, -97 -114 -140 -146 into 10k
+        R16/R17 = 475 current = 2/20 mA
+    Reduced version: -83 -63 -117 -99 into 600 ohm, -108 -115 -140 -146 into 10k
+        R16/R17 = 2.2k current  = 0.5/2 mA
+    So, choose based on whether you want heavy load drive or not.
+    Also, don't overdrive internal buffer stage (or maybe you should to get more H2).  Reducing bias to gives -112 -115 -140 -146.
+        R10 = 1k -> 1 mA
+    Can we save any power on the input stage? (without hurting distortion)
+    Not really.
+    For now, compromised with 1/8 mA output stage, 2 mA internal buffer. 10k gets -101 -115 -140 -146 
+        600 ohm load gets -96 -89 -141 -129
+    Total power = 1.3 W -> 5.2 W for stereo DAC module
+    
+Noise is currently about 25 nV/rt(Hz).  -> 5 uV at output, or 112 dB SNR
+    Most of this appears at V(IVOut). -> 24 nV
+    What's the noise of a 750 ohm resistor? About 4 nV
+    R19 and R20 are big contributors.  Investigate tomorrow.
+    Interestingly, increasing them decreases the noise.  But does it have any other side-effects?
+    Can get down to about 3 uV noise (116 dB SNR) with 220 ohms; doesn't seem to affect linearity (plenty of power burning headroom)
+
+Adding some big decoupling caps on high impedance nodes helps...
+    Down to 11.5 nV/sqrt(Hz) in mid/high freqs.  Knee around 100 Hz.  30 nV at 10 Hz. -> ~1.7 uV out, 120 dB SNR
+    But that destroys PSRR.  Can't put any cap to ground on Vc node driving current mirror.
+    With other caps, PSRR is now around 40 dB on both rails.  But output noise is back to 20 nV/sqrt(Hz).
+    With Big Vc cap to negative rail it might work...22 uF (different values do different things)
+        + PSRR now degrades at LF... still -26 dB at 20 Hz
+        - PSRR is still good
+        Noise is good
+    -> We have a winner.
+    
+Also, we should survive an output short circuit for a time.  ~120 mA on supplies means 3.6 W for the channel with the shorted output.
+    
+TODO: See how much capacitance to load cap multiplier with
+But otherwise this is ready to go, I think
+    -> No cap needed due to filtering
+    PSRR remains at 26 dB (+), 40 dB (-)
+
+Noise is
+
+
+2/11/2017
+---------
+Want to design an op amp I/V to compare to DSD1792 discrete version
+But what op amp/topology to use?
+
+AD844 - recommended by Pedja with TZ node loaded by resistor to reduce gain
+But there are potential problems:
+    1) Input stage linearity?  someone mentioned 0.03-0.07% THD which showed up in Ayre CDP output.  Stereophile review of CX-7e
+    2) Buffer is bad.  Pedja said 0.5% THD.  So you'd need a buffer IC or discrete from the TZ pin.
+
+What's wrong with AD844 or other fast CFB opamp used the standard way (resistor feedback)?
+    Jocko Homo and Elso Kwak didn't like CFB 10 years ago.  Said it sounded bad.
+    
+Avnet has AD844 slightly cheaper than Digikey.
+
+What to do for the lowpass filter?
+    Only get 1 pole with the AD844
+    Need a std op amp buffer.  georgehifi from diyaudio.com uses AD825 for 3rd order filter and likes it.  But likes discrete buffer (complementary JFET follower) better.
+    Just use ADA4001-2 for the 2 differential halves.
+
+By the way, how about AD812? Cheaper, plus 2 op amps per package.
+    Specs?
+    OL transresistance is 800k, -In resistance 65 ohm
+    145 MHz unity gain bandwidth, 1.6 V/ns slew rate at +/- 15 V
+    THD of -90 dB at 1 MHz, but fig 20 shows < -120 dB in audio band (and 2nd above 3rd)
+    3.5 nV/sqrt(Hz) voltage noise, 18 pA/sqrt(Hz) current noise -> 13 nV/sqrt(Hz) at output for 2 V RMS single-ended
+    This looks like the way to go
+
+Should cancel current offset with a resistor from supply.  
+    Experiment with different values?
+    But the nominal should balance the 6.2 mA DC output
+    And there is a DC blocking cap going into the LP filter also.
+    
+-> Plan. AD812 configured as recommended by AD844 datasheet for IV conv.  Then ADA4001-2 LPF with same components as discrete version.
+
+
+2/12/2017
+----------
+3 PCBs have been designed:
+    1. I/V for DSD1792 - discrete version (4 layer) 1.48 x 2.22 = 3.29 in^2
+    2. I/V for DSD1792 - opamp version (2 layer) 1.48 x 1.285 = 1.90 in^2
+    3. Voltage scaler/filter for AD1934 - opamp version (2 layer) 2.084 x 1.637 = 3.41 in^2
+
+All boards DRC clean in EAGLE, CAM processed for OSHPARK
+
+When to order boards?
+    As soon as I'm confident I will be able to use boards in stereo for long term testing
+    Prereqs:
+        DAC2 and DAC8 working smoothly/reliably (no clock or major noise/distortion issues)
+    Not prereqs:
+        RPi music server (i.e. laptop hack is OK)
+        ADC2 and/or ADC8 operation
+
+What to do before ordering boards?
+    1) Test DAC2/DAC8 in as-is configuration.  A) one at a time, B) both
+    2) Try clock switch mod
+    
+Notes on the bringup process
+DAC2:
+    Lots of nasty noise (-66 dB) and a little sinewave (-40 dB) at 0 dBFS
+    0.5 V DC offset... no, 1.15 V / 0.99 V
+    Check DC op point: Where is the offset coming from?
+        Supplies are OK
+        Current inputs at -30, -40, -70, -180 mV
+        Try reseating everything... still messy
+        Try giving slots 1-3 CLK1 instead of CLK0.  OK, now I get a big sinewave with a lot of glitches.
+        And the idle output is full of glitches.
+        But this is a separate issue from the DC offset.
+        Op amp issues with the cap there?
+            LTSpice doesn't see a problem.  And I don't either since it doesn't affect feedback.  Except for stray cap.
+            Check DC blocking.  Gate of MOS - either side of big resistor. R17/R27
+            R17.  Top side 2.15/1.84 bottom side 2.39/2.10 top side
+            R27.  2.08/1.86 bot 2.40/2.14
+        Whatever.  Let's deal with clock issue first.
+
+DAC8:
+    DC offset looks familiar - 0.16 V in 1 ch, 0.76 V in other
+    Got it working in slot 1 - 0.1% THD at -20 dB, 1% at 0 dB (right) 0.035%/1% at 0 dB (left)... not sure of L/R ordering
+    with LRCK recovery.  Smooth operation otherwise.
+    -> More confidence that clock dist is the main issue.
+    
+Notes on the clock hacking
+    Plan: Remove IC35/36 (ADG1436), solder mini-wires across pads (adjacent) connecting CLK1
+        (which is the one we are using now, it looks like... 0, 1 what's the difference)
+    Got IC35 off, took several of the pads with it...
+    Fortunately SCLK0/1 both have vias.  As does CLK1A.  Destruction is now accepted.
+    IC36: Cleaner job the 2nd time around...
+    Now we're ready to wirewrap.
+        FROM: CLK1A via connected to top copper T-junction, corner of IC10
+        TO: SCLK0 and SCLK1 vias - under what was IC35
+        
+After clock hacking mod
+    Trying DAC8 in slot 1
+    DC offsets about same as before
+    SPI read/write fails - try reprogramming FPGA.  That fixed it.  (Bitfile stored in flash didn't support 16 bit SPI addr)
+    Now we have analog out.... for a second at a time, it looks like.
+    On the plus side, it looks like we can lock to MCLK as the PLL source (or LRCK)
+    Audio cutting in/out might be more frequent when using LRCK?  Suggests bad connection on I2S or something.  
+    More EMI floating around with faster clock edges?
+    Glitches still happen after removing debug wires
+    Try slot 0? -> SPI doesn't work.  Weird.
+    This is slightly sad.  Try DAC2 in same slot.
+        Output looks reliable, but lots of noise/HD - 2-3% at -20 dB.  Worse as ampl increases.  (But ampl is correct.)
+        Probably offset related.
+    Try DAC2 in slot 0
+        SPI is broken.  Analog output is the same.
+        -> So, it's time to fix the offset issue.
+    Try both: DAC2 in slot 0, DAC8 in slot 1
+        Either one works, to the same degree it worked before.
+        DAC8 continuity?  Looks good.  Maybe it suppressed clock ringing or something to have them both plugged in?
+        
+Time to figure out what happened to DAC2 I/V (for now removed DAC8)
+    Try removing antialiasing cap?  Just for giggle.  (One channel)
+    Removed caps from board SN 2, and now offset is 0.21 V.  Huh?
+    Check distortion..  Yeah, noise floor and distortion are lower in the right channel, which is the one I removed the cap from.
+    But they are still not great (not what they were originally, in measurements.txt).  Figure out, what is going on?
+    Now removed caps from SN 1.  Boom, 0.01% THD in both channels.
+    Definitely a major screw-up going on with those caps.
+    Try alternate mounting, one channel/polarity only?
+    Tried on SN 2 (right), neater soldering under the board.  Now all kinds of shit shows up in the RTA.  0.6% distortion and some sidebands.
+    Parasitics?  Offset is also back up.
+    May have to do with supply somehow, but I'm not going to bother finding out.
+    -> Giving up on antialias caps.  May need to leave them off 2nd version also, and use 2nd order antialias filter only.  If problem continued
+    Well, what about putting them on the M1 gate?  Would that be better?
+        Less offset, but still worse distortion - 0.22%
+        Is it related to the kind of cap?
+        Tried 1 nF polyprop cap instead.  Now we have 0.04%.  Still not right.  Backing out.
+        
+Installed Jung regs in all slots - seems fine
+DAC2 only setup back in stereo
+Listening impressions:
+    Clean.  Midrange is relaxed as it should be.  Maybe a little hard (nasal?) on Eva Cassidy's voice.
+    But I haven't listened in a while, and might be sick.  Ears need to warm up.
+    Treble balance seems slightly off, but it's not grainy like I remember.  (Regulators?)
+    Dynamics are at least making an effort.
+
+Need to buy stuff.
+    DONE PCBs (Oshpark for I/Vs-$42, ITEAD for scalers-$20)
+        Except ITEAD is verifying the Gerbers for the scaler.
+    DONE Parts
+    DONE Tweezers
+    DONE Hot air station
+    DONE Raspberry Pi
+
+
+2/14/2017
+---------
+
+Listening notes: 
+    Alabama
+        Voice sounds a little funky when loud and not in the sweet spot.  Not too familiar with the record, maybe this is baffle effects from the speaker?  Also studio processing.
+        Bass sounds surprisingly lively and clean.  Again, unfamiliar record.
+    Tom Harrell (trumpet jazz)
+        Not grainy anymore (due to regulators, or clock changes?).  Still pretty chill, highs a little recessed.
+        There is just a little edge missing, like the band is playing from within a cloud.
+        The "air" is cool, like a more "analog" sound but it sounds a little fake.
+
+Next up: Raspberry Pi music server setup for DAC2 and some software cleanup.
+
+2/16/2017
+---------
+DAC doesn't work, suspecting clock issue.
+
+2/17/2017
+----------
+Turns out the 5V LDO reg (which BTW has 21 V in) was putting out 1 V.  
+Temporarily, replaced it with a 7805.  Listening impressions:
+    Tone is more neutral, it seems.  Highs missing the fake air.  A little crisper.  
+    Dynamics not impressive (but only listened to a couple of tracks).
+    Overall pretty clean.  Maybe the 5 V reg was causing problems and it's got potential to be better?
+
+Will have to debug the reg eventually.
+Anyway, more important things to do: Raspberry Pi is here
+
+2/18/2017
+---------
+Raspberry Pi is running (password = strawberry)
+Running Python in a virtualenv might be a bad move
+
+Got streaming working, controlled by MPDroid.  
+    ALSA PCM file output piping to Python script
+    Rearranged Python scripts to be more organized (SVN r116)
+    
+This is fun to use.  Problems:
+1. Albums don't appear.  MPD thinks the only album is a Nine Days album that was MP3 instead of WAV.
+    Hypothesis was that the tag parsing (ID3 format) was only being done on MP3 files.
+    But WAV can contain ID3, and Windows Explorer seems to think the WAV files are properly annotated.
+    -> Can try converting an album to MP3 and see if it gets picked up.
+    Tried compiling latest version of MPD.  No change.
+2. No volume control from the app
+    Is this a client limitation or an MPD limitation?
+    Long term, may need to write a separate app for controlling the configuration, volume, filters etc.
+
+Sound seems same as before (hopefully)
+    Hypothesis:
+    - Using 78xx regs for +/- 15 V supply was causing grainy sound due to bad I/V PSRR
+    - Bad 5V discrete reg was causing "fake air" on treble (but should probably listen to Tom Harrell again)
+    - Any difference caused by clock risetime?
+
+Need to think about the next steps, given hardware debug situation on the original DAC/ADC boards and isolator (and reg...).
+
+2/19/2017
+----------
+Order of operations after thinking about planning:
+1.  Try ADC boards and debugging other issues (SPI, 5 V reg) with current setup
+2.  Assemble and test new DAC output boards
+3.  Figure out Netflix streaming and other practical needs (i.e. Michelle's phone)
+4.  Try digital crossover - work on speakers library
+
+General goal: Get as far as you can with current platform, and do some extra SW/integration work for:
+a) Risk reduction
+b) So it's fun to use while working on next HW platform
+
+Also consider working on measurement tools, e.g. noise amp to examine supplies/outputs.  Would help understand where problems are.
+
+2/20/2017
+---------
+Listening notes: The Jayhawks
+    Clean, balanced, easy to follow the counterpoint
+    Highs may be a bit "crisper" than I'm used to, but not fatiguing at the low levels I listened at.
+The Wallflowers
+    Laid back at 80 dB.
+    Didn't notice the same crispiness, but treble is generally softer on this album.
+    Compressed.  Firm sound, though.  I think this is making the best of the record.
+Eva Cassidy
+    Amazing as always.  Hard to say anything about the sound.
+Beethoven piano concerto
+    Piano more engaging than I remember it.  Maybe this is just a lower noise floor (or masking?)
+    Soundstage a bit unbalanced on this track (violins all seem to come from one place?)
+    Acceptable microdynamics.  Overall dry sound which you'd expect from the speakers.
+    
+Overall, it was a very good evening.
+Good time to take it down for ADC testing.
+
+2/21/2017
+----------
+ADC debugging
+
+Notes
+    ACON should be 0x59 but I think I knew that already.
+    Python script: runs fine, doesn't receive any audio
+    Once I got a USB overflow error suggesting there was audio (intermittent if any, can't reproduce)?
+    Probing nodes: 
+        RST is high (good, it's active low)
+        LRCK is high, BCK is low, SDATA is low
+        This would seem to indicate lack of lock
+    OK, the problem is that the 5 V rail is low.  Why?
+        Overcurrent protection.  Why?
+        Because the CM level of the input buffer is wrong.
+        -2.5 V is dragging the op amp output negative, turning on the ESD clamps in the ADC.
+        So the op amps are getting hot and the ADC is getting hot.
+        Fixed, sort of.  Won't really be fixed until a PCB revision gives a proper input buffer.
+    Now I can record samples.  But the frequency looks wrong.
+    Stim freq = 1k Hz
+    Recorded period = 15 samples?  Should be 44.1.. (using 500 Hz gives period = 30, same issue)
+    What I do with ACON seems to not matter.  100 Hz, period = 146.8 indicating Fs = 14.68 kHz (44.1 kHz / 3)
+    This would indicate that the chip is operating with the assumption of 768 Fs.
+    -> Next time, check ACON for real.  (PCB probe)
+
+2/24/2017
+---------
+It looks like you can only control ACON if you are in slot 0 or 2 (see slot_controller.v)
+So, moved to slot 0.  Now what?
+    No trouble reading samples, but they're all 0.
+    Wait, now ACON has an effect.
+        Default of 0x51 or no setting -> -20 dB RMS, jibberish data (wrong format?)
+        Set to 0x59 -> all zeros
+    Why don't we use the Logicport...
+        Bad connection on I2S? Looks like I2S with noisy LRCK/BCK and zero data.
+        Reseated, now LRCK/BCK look better,  but data is all zeros. (Regardless of ACON)
+        
+2/25/2017
+---------
+Investigating FPGA pinout as potential cause of ACON issue
+    Spreadsheet says ACON0 is ZTEX pin D26 (FPGA P2) and ACON1 is D25 (R2)
+    ACON0 -> FACON1 net on PCB
+    ACON1 -> FACON2 net on PCB
+    ACON0 serialized version looks fine... 0x59 at the moment.  Now probe deserialized nets?
+    DC level of serialized net post-isolator is 1.65 V when 0x59... 1.24 V when 0x51. Probably working.
+    It goes to pin 7 of slot 0 connector (HWCON) then into IC3 on ADC board.  I guess we have to probe that.
+        It's a 74164 shift reg (clocked by MCLK) tied to a 74574 reg (clocked by SRCLK)
+        DC probes on ADC board: MCLK = 1.68 V, SRCLK = 3.11 V, looking good.. ACON0 = 1.24 V, meaning things are probably connected to it
+        What about ACONs going into ADC?  Have to probe across the upper pins of IC2...
+        Far to near...         0001010
+        With ACON set to 0xFF: 0101011 
+        Let's reflow the connections on those registers...
+        Now with ACON0 at 0xFF: 0011101
+    Maybe there is something wrong with the ADC? I did abuse it.
+        SDATA DC = 0.42 V... Logicport?  Shows 1 bit high for each of L/R, maybe the 8th bit?
+        Try different ACONs...  First experiment with format.
+        0xFF - 1 bit high in 8th cycle; FMT = 11 = DSD
+        0xFE - 1 bit high in 8th cycle; FMT = 10 = PCM standard
+        0xFD - all zeros, FMT = 01 = I2S
+        0xFC - some kind of data (reasonable noise like stuff)... FMT = 00 = left-justified
+    Plug in a sinewave and see.
+    Small sinewave with noise on it... period = 874 cycles at 100 Hz, indicating 88.2k sample rate.
+    Try changing upper bits of ACON?
+        Good thing bit 2 (M/S) was stuck low?.
+        0xF8 =  - looks like left justified at 88.2k  1 1 111 0 00
+        0xD8 = 1 1 011 0 00.  Now LRCK is very glitchy.  (But maybe 44.1k?)
+        0xE8 = 1 1 101 0 00.  Same - very glitchy.
+        0xC8 = 1 1 001 0 00.  Glitchy and slower.
+    Try changing HPFD? 0x38 same as F8.  
+    Maybe it's still having trouble with the clock input.
+        At 0x60 I get clean I2S at 29.4 kHz... 0x70, 58.8 kHz
+        With everything at 0, cycle through OSR options (bits [5:3]) to see which are clean and which are glitchy.
+        000 -> 0x00, clean 14.7k (single rate 768fs)
+        001 -> 0x08, glitchy (single rate 512fs)
+        010 -> 0x10, glitchy (single rate 384fs)
+        011 -> 0x18, glitchy (single rate 256fs)
+        100 -> 0x20, clean 29.4k (dual rate 384fs)
+        101 -> 0x28, glitchy (dual rate 256fs)
+        110 -> 0x30, clean 58.8k (quad rate 192fs)
+        111 -> 0x38, clean 88.2k (quad rate 128fs)
+    Trying slot 1 to see if clocking or I2S makes any difference.  
+    Slot 0 DIR pin is grounded.  ACON controlled via slot 0.
+        000 -> 0x00, clean 14.7k (single rate 768fs)
+        001 -> 0x08, glitchy (single rate 512fs)
+        010 -> 0x10, glitchy (single rate 384fs)
+        011 -> 0x18, glitchy (single rate 256fs)
+        100 -> 0x20, clean 29.4k (dual rate 384fs)
+        101 -> 0x28, glitchy (dual rate 256fs)
+        110 -> 0x30, clean 58.8k (quad rate 192fs)
+        111 -> 0x38, clean 88.2k (quad rate 128fs)
+    Now, can we get I2S to work?  Add 01 to end...
+        Logicport looks plausibly I2Sey.
+
+Wait: Datasheet says "The PCM1804 needs RST = low when logic levels on the OSR2, OSR1, and OSR0 pins are changed."
+    Likewise for the other config pins.
+    So, let's implement this... now have ENTER_RESET (0x4B) and LEAVE_RESET (0x4C) commands.
+    Reset functionality works.  But I2S output is still glitchy in the clock modes we care about.
+    CLK0 reaching FPGA is stable 11.28953 MHz
+
+Options..
+    Look at clock signal reaching ADC pin?  (Then can decide to adjust clock dist)
+        Before that, try adding 18pf cap on CLK line.  Doesn't seem to have an effect either on working or nonworking mode.
+    ACON0 pins could be flaky... I did get some anomalous readings with the multimeter, but it's hard to tell if I'm probing accurately.
+        Adding solder paste and reflowing digital ICs, ADCs and connector didn't help.
+    ADC could be bad (heat damaged?)
+        Have another one.  Try the SMT heat gun tomorrow, I guess.
+        May want to retry current one- maybe some solder underneath chip (it's not flat on the board)
+
+2/26/2017
+---------
+Tried more hardware debugging around ACON:
+    Replaced ADC.  No difference.
+    Replaced registers.  Now can't get anything besides all zeros for ACON (i.e. 14.7kHz).
+    Check pinouts: LVTH574.. bad OE?  No... but maybe bad VCC.  Add a wire connection in case PCB pad is lifted.
+        Fixing that didn't affect behavior.  ADC acts like its control pins are low.
+        But it's worth checking the other connections around those chips.
+        SRCLK to reg: OK
+        data, clock to shift reg: data is OK, clock is OK
+        CLR is high
+ 
+Are there other places I use this deserializer circuit, and do they work?
+    Pattern is SRCLK falls for half a cycle during positive phase of MCLK
+    Yes: clock selects, and ADC/DAC chip select for SPI
+    Have had some SPI problems...
+    Since clock select mux is removed... can experiment with that.
+        Setting CLKSEL to 0x03 (0011) shows:
+            CLKSEL3 = 0.05 V
+            CLKSEL2 = 2.41 V (0.72x)
+            CLKSEL1 = 3.32 V
+            CLKSEL0 = 2.07 V (0.62x)
+        Hmmmm...
+            CLKSEL = 0x01: 0, 0, 2.24, 1.94
+            CLKSEL = 0x02: 0, 2.57, 3.32, 0
+        Looks like a timing violation to me... or a misunderstanding of how the shift reg is supposed to work.
+        Output (574) is a DFF positive edge triggered.
+
+Much debugging (2+ hr) later...
+Looks like there were 2 problems
+    1) Bad timing going into shift reg. due to launch on rising clock edge
+    2) Bad connectivity on PCB between shift reg and DFF
+Now, I can get good data at 44.1k.  There might be a bit shift though.
+How's the performance?
+    Datasheet says to expect around -102 dB THD+N.
+    I see a lot of power supply crap.  Also other odd spurs (can't tell if they're from the soundcard or not).
+    And the harmonics are around -90 dB (HD2/3 each around -93 dB).
+
+OK, let's bring the DAC back.
+    Had to modify RTL to allow slot 1 to set ACON0
+    Reason: for mechanical clearance of PCBs (I/V stages), DAC must be in slot 0 and ADC in slot 1.
+    Now there's a problem: ADC output is intermittent when both it and DAC are plugged in.
+    Presumed reason: bad connection
+        But try it the other way round, anyway.
+        DAC appears to work.  But ADC doesn't come up and do anything with its I2S port.
+        Scope?  Clock is OK.
+        A5V is at 1.69 V... (isolator board has 5.01)
+        Bad connection.  Reflowed slot connector pin, seems OK.  
+        But there are still a bunch of other bad connections on the ADC board, relating to ACON at least.
+        -> Retire this board.  The concept was proven, the execution was bad.
+
+Time to look at the new I/V
+    Doesn't blow anything up.  
+    Follow up.
+        Supplies: -15.42 +15.45
+        Offset (mV): IIN- 25 IIN+ -163 VOUT- -108 VOUT+ -80
+        Bias: voltages across (pos half)
+            (pos rail) R26=15.45/13.90 (1.55)  R27=15.45/14.09 (1.35) R28=14.49/0.35 R14=14.1 
+            (neg rail) R23=-9.85 R22=-9.85 R15=-14.1 R17=-14.1
+        LTSpice expected for R22/23 was -11.4
+        Others are reasonable.  1.3 V drop across res is... possibly heating up bias?
+            Vpb = +13.65, Vnb = -13.64 (1.8 V drop on LED)
+            LTspice expects 1.7 V across the LED and 1.03 V across the resistors.  I have 1.8 and 1.35 or so. (+30%)
+                -> BC817 have lower Vbe than expected.  OK.
+            LTspice expects 6 V (13.5 - 10 mA * 750 ohm) at IVOut.  I have 0.35 V (14.5 - 19 mA * 750 ohm).
+        Now instead of 16.5 mA in 62 ohm and 10.3 mA in 100 ohm, I have 21.7 and 13.5.
+        220 ohm resistors show Wilson mirror current is 25 mA instead of expected 16.5.
+            -> Mirror appears to be working.  But R26 has too much current due 1.55 V drop instead of 1.03.
+            Replace with 100 ohm?  That would bring current to 15.5 mA.
+
+    Given drop on R26 (1.55 V), R27 (1.35 V), to get 16.5 mA and 10.3 mA, I need 94 ohm and 131 ohm.
+    But I only have 100 ohm, 200 ohm, and higher values. Paralleling?
+    First investigate other half:
+        R46: 15.45 - 13.95 = 1.50
+        R47: 15.45 - 14.08 = 1.37
+    All LEDs are around 1.8
+    Let's try:
+        R26 -> 100 ohm (15.5/15 mA mA)
+        R27 -> 162 ohm (8.3/8.5 mA)
+        Difference of currents = 7.2/6.5 mA
+        Meaning: upper half will sink 1 mA too little, dragging output up by 0.75 V.
+        But that's better than what we're doing now, which is sinking 9 mA too much and collapsing the output entirely.
+
+Maybe I need to switch from green to red LEDs?  Red may have smaller voltage drop.
+Nope, trying 100/162 ohm.  Seems to fix the most egregious issue.  IVOut is now 7.88 V which is OK I guess (target was 6).
+    Note: fix on negative half also.  But should be able to test THD as is.  (Nope... then cap multiplier won't work.)
+    
+Performance: Some quick measurements
+    Looks like -95 dB or so at full scale.  -100 dB at -14 dB and lower.  Mostly 2nd harmonic.  Some 3rd.
+        Note: Sound card loopback shows the floor is around -106
+    Almost what I was hoping for.  Investigate more later?  Maybe.   Want to listen first.
+    Worse at higher/lower frequencies - could be isolation transformer, could be something else
+    
+Listening notes: Purple I/V boards
+    Tonally, back closer to what I remember from the CD player.  But not quite.
+    Bass was loose at first (amp warming up?) and treble a little hard/opaque e.g. "I Feel Lucky"
+    Still laid back, but not as much as previous version.  Especially in the mids
+        Guns and Roses still sounds squashed, with a piercing guitar, but more tolerable than I remember
+        Toy Matinee is relaxed except for the one part towards the end of "Last Plane Out"
+        Wallflowers is relaxed
+    Highs a little sharper/shimmery.
+        Eva Cassidy tracks more alive
+    Surprising ass kicking capability.
+    Piano leaps out from the darkness (spent a while listening to quiet Schubert)
+        Classical may be as engaging as previous version, will have to listen more
+-> Seems more neutral, but its possible something has been lost since the last version.
+    Will have to listen more.
+
+2/27/2017
+----------
+Some more listening, didn't pay close attention.  Sounded fine.
+
+Soldered op amp IV board.  Not tested yet.
+
+
+3/2/2017
+--------
+Did a quick comparison of "old" and "new" discrete IV stages while friends were over.
+    Jenny Scheinman, relatively quiet
+    Old was definitely softer IMO.  Mike thought this was a negative, but I thought it was a positive.
+    Should investigate more carefully on the bench and experiment with discrete IV.   
+        Cap related distortion?
+        DAC loading difference with 3.3n IV conversion bypass?
+
+Tried opamp IV.
+    Turned on, was quiet for a few seconds and made some nasty sounds.  (No damage apparent.)
+    Appears to be oscillating.  Fixed some solder joints, didn't help.
+    Need to try with fewer caps.  Might just need more careful layout.
+
+Next up:
+    a) DSD1792 I/V comparison experiments
+    b) AD1934 prep/testing - prepare digital crossover using speakers library
+        (want to be ready to try it out when the XLR connectors arrive)
+
+3/3/2017
+--------
+A little more listening to V2 discrete I/V.
+    Seems to be growing on me.
+    Amazing treble (realism? maybe) on Stanley Clarke Trio
+    Everything seems in balance, even at a higher volume level.
+    Not relaxed, but not fatigued either.
+    May be more transparent in the mids.  Bass could be a little light?  Hard to tell.
+    Is it breaking in, or are my ears breaking in?
+    Should probably listen more when people aren't around.
+    
+Another try for opamp I/V.
+    Current FB op amps don't like caps in the feedback network.
+    Removed 3.3n lowpass caps.
+    Changed 4.7n to 3.3n in LPF to keep response reasonably flat.
+    Result: Distortion
+    The circuit is really sensitive to stray capacitance.
+    -> Next thing to try will be fiddling with power supply bypassing - remove (short) ferrite bead L52?  
+    But do this next time you have the platform on the bench.
+
+3/4/2017
+--------
+Plan: 
+    a) Test 8-ch DAC and try speakers lib (so we're ready for XLRs)
+    b) Explore variants on discrete IV stage in more detail (caps as distortion source?)
+    c) Try 8-ch ADC again.  Loopback would be great.
+    
+Discrete IV stage comes first
+Captured spectrums at 1k and 5k.  
+    Some extra spurs at HF, would like to see them gone.  
+    Also want higher order HD gone.
+    Left and right are similar.
+Also found that turning on soldering iron makes the noise floor go up.
+Also found that LF distortion (-60 dB at 50 Hz full scale) was mostly caused by isolation transformer.  
+    About -86 dB without isolation transformer.  Decent, but maybe should be improved?
+
+1. Right channel was a little less linear.  So, mess with it.  Then we can compare with untouched left channel.
+    a) try removing 3.3n filter cap - C14/C34
+        THD up to 0.004 (vs. 0.0013 orig.)
+        All harmonics are higher it looks like
+        When I put the caps back, I get .002 THD.
+        Good to know.
+    b) Try adding cap at input.
+        I have some 4.7n caps... but larger polyprop ones may be better.
+        Trying 10n ... DAC is not happy.  Undo.
+        Still broken after undo?  Maybe I broke something independent of this.
+        Yep. shorted something coming out of FPGA.  Try again.
+        OK, the distortion is 0.01%. 2nd and 3rd got worse.
+        When I go down to 1.5 nF, distortion is .0027%.  So the caps hurt.
+    c) Try 5V discrete reg instead of 7805
+        No change in distortion, but it might be worth listening to.
+    d) Compare to V1 I/V stage.
+        At -20 dB, it has no 3rd order and almost invisible 5th order.  But other harmonics are higher (0.04 total).
+            10th, 14th, 16th, 18th are surprisingly high.
+            Also higher noise floor (bad PSRR?)
+            Actually with 1k full scale tone, 8.3k is there (-128.1) and 10.3k (-129.5)
+            Whereas with V2 they are -8.3k (-127.3) and 10.3k (-145.5)
+        Also, doesn't appear to have anything that's not a harmonic. (But V2 doesn't either; see below.)
+    BTW, at -20 dB, V2 has nothing above the noise floor.  -110 dB or better.
+    e) Try removing filter caps from LPF. (C16/C17--on back)
+        No change in spurs or linearity.  But more hash appears in top octave (10k-20k).
+        Went back to original config.
+        May also be a tone at 13.9?
+    f) Try figuring out where 8.3k/10.3k spurs come from
+        1.1k tone: shift to 8.2k and 10.4k
+        1.5k tone: 7.8k, 10.8k
+        ->  F1 = 9.3k - Fc
+            F2 = 9.3k + Fc
+        What is the significance of 9.3k?
+        With 5k tone, I see spurs at 18.65k, 13.9k, 11.35k, 8.65k, and a little at 14.3k
+        With no input, I see something at 13.9k
+        Could this be the measuring setup?  Check loopback...
+            -> Yes, 8.3k and 10.3k spurs visible in loopback
+            as well as a lot of intermodulation with 100 Hz?  Weird.
+    g) Account for baseline harmonics
+        1k 0 dB: -5.9 dBFS
+        HD2 -102.8
+        HD3 -116.2
+        HD4 -115.1
+        HD5 -123.1
+        HD6 -125.6
+        HD7 -125.5
+        HD8 -137.1
+        HD9 -130.5
+        HD10    -142.6
+        HD11    -133.8
+        HD13    -136.6
+        HD15    -142.4
+        2k 0 dB: -5.9 dBFS
+        HD2 -101.0
+        HD3 -115.4
+        HD4 -120.5
+        HD5 -128.7
+        HD6 -126.5
+        HD7 -130.6
+        HD9 -131.9
+    h) Measure bias in output stage and see how it matches spec. and/or affects performance
+        R14 1.364 -> 1.3 mA
+        R17 1.362 -> 1.3 mA
+        R19 0.343 -> 23 mA
+        R20 0.341 -> 23 mA
+        Hmm, a little higher than I wanted.  Other channel?  Similar (0.33 V).
+        Try cutting the current, see if it affects distortion?
+        On right channel, pos.  R19/R20 -> 47 ohm
+        After that change V drop down to 240 mV -> 5 mA, so I overshot.
+            But there is no difference in the distortion spectrum.  Maybe a touch more 3rd harmonic?
+    i) Try changing MOS buffer bias current
+        R15 (475 ohm): 1.34 V -> 2.8 mA
+        Hard to say if it wants more current, or less.
+        Try more.  Then less. 200 ohm -> 6.7 mA, 1.5k -> 1.0 mA
+            More: No big difference.  HD3/5 a little lower, HD4/6/7 a little higher?
+            Less: No big difference.  HD2/3 a little higher, HD5/6 a little lower?
+        Not a big difference either way.  Go back to the original.
+    j) Try changing DC coupling cap
+        I have a 1 uF MKP lying around somewhere
+        2.2u tried.  No significant difference.
+    Congratulations, you've optimized everything except the input current buffer.
+    What to do there?
+    k) Check DC at current input (mV)
+        Left: 85.0 74.4
+        Right: 91.8 70.7
+        Reminder: DC sink current is... R22 3.24 V -> 14.6 mA
+        Whereas source current is... R27 1.33 V -> 8.2 mA
+        That means on one side of the current buf we have 8.2 mA, and on the other side there is 11.01/750 = 14.7???
+            I thought the DAC has a DC output of 6.2 mA.
+            Actually, I got 6.50 V (8.7 mA) while the DAC was playing.  So maybe it powers down.
+        962 mV at base of Darlington. 73 mV at current input (right), 78 mV (left).
+        Would DAC be happier if it was zero?  Can try changing current.
+            Should put a little more current in the right side to move the offset up.  That comes from R26 (currently 100 ohm).
+            Current is presently 14.6 mA.  Add a couple milliamps by putting 500-1k ohm in parallel? 
+                Sure... 825 ohm.
+                Now I have 57 mV at the base.  And at 0 dB, dist is .0019%
+                So maybe a little better, but not much.
+                In other words the DAC isn't extremely sensitive to DC at that node.
+    l) Check AC and cap multiplier output
+        Multimeter says 0 mV.  But who knows?
+    How do I tell if the distortion is coming from output stage or not?
+    If I could probe THD at an intermediate node...
+    Try the input to the LPF/output buffer.
+    From this point, distortion looks much worse. (0.016%)
+    -> Give up.  Too hard to tell what's going on.
+    
+Random other idea: Maybe the difference between left and right is not the IV stage, but the DAC board?
+    The traces to the right I/V are longer.
+    -> IV PCB swap channels
+    Yes.  That's it.  The difference between 0.0015 and 0.0020 distortion is from the DAC PCB layout.
+    This means the DAC layout can probably be improved... 
+        and it may be that some of the distortion I'm seeing is coming from the DAC.
+        
+Alright.  Enough tweaking on the V2 IV.  It's good.
+Time to try DAC8 board.
+
+Problem: can't talk to it over SPI, even with latest firmware.
+    Probe SPI signals... C24, C27-29
+    CS is possibly OK if it's being serialized right.
+        (Look at SRCLK too.  D29)
+    DMDI is undriven?
+    Now we have massive stream of data coming back.  My guess is CS is messed up on the board side.
+        According to multimeter, it's fluttering around and mostly low.
+    DMDO is slave out of DAC.  It's going nuts.
+    Do a quick FPGA ILA debug.  Hard to tell what's happening in there.
+    Top level gets the request packet, SPI does something.
+        SS counter counts out 24 cycles
+        DMCS parallel data goes from F to D 1101 - good
+        But serial data is unclear, and parallel "estimated" data that is used to mux the port and control MOSI output is stuck at F
+        Bit counter is set to F , then decrements to E, but then doesn't go anywhere.
+    Simulation doesn't have a problem...
+        Adding dmcs_des nets to debug.  trying ILA again.
+        data_int reg in deserializer looks like it should
+        Q is E.  Why ?  what does the clock look like
+    Hmm, I didn't have CLK0/1 in the constraints.  That was a problem.
+    Now SPI and analog output works like a charm
+    
+Other problem: providing data in 8 channel form
+    For some reason, 2 channel works well and 8 channel doesn't.
+    Intermediate thing to try is 4 ch.  What happens is the output turns on and off.
+    When I use MCLK as PLL input source, it works with 4 ch, still doesn't work with 8 ch... Odd.
+    When I bypass PLL... doesn't work.
+    Anyway, this is odd. Maybe simultaneous switching is impacting MCLK/LRCK integrity when all 8 channels have same data.
+    For now, use "fake 2 ch" mode.
+    At 1 kHz, 0 dB: 0.004% THD (-88 dB), mostly 3rd harmonic (2nd, 4th, 5th all around -104)
+    Reasonably low noise, maybe 6 dB higher than the DAC2 with discrete IV
+    THD improves to .001 at -10 dB, .0008 at -20 dB (good...)
+    THD is 0.004 at 2k, 4k, 6k... good
+    THD is about the same across all 4 populated channels.
+    DC offsets are small (1-10 mV)
+    So now the challenge is identifying channels.
+    OK, try to play 1.1/1.2/1.3/1.4 kHz in the 4 channels.
+    Seems to work.  Lots of low level IM products in the output make the THD+N more like 0.01% when THD is 0.004%.
+        Just as the datasheet says.
+
+-> So, should try listening to it for a bit, with 2 channels hooked up.  This will help debug things on the Raspberry Pi.
+    This works, will listen more tonight
+
+Planning ahead, to digital crossover...
+    How to get the transfer function of the analog active crossover?
+    Inspect the components in there now.
+    Notes copied down:
+        Tweeter
+            Near IC140 - 2.2n + 420 ohm
+            S140: 6.8n 22.1 1u 670
+            S160: 6.8n 174 4.7u 2.64k (R160 = 1.49k)
+            S190: 10n 10n 26.5k 5.57k
+            S181: 6.8n short 200 10k
+        Woofer
+            S110 0.1u 0.1u 27.1k 10k (bypassed HPF?)
+            S131 16.1k 10k 6.8n 15n
+            S130 6.75k 10k 6.8n 10n
+            S150 6.8n 24.1k 1u 100k (R=47.5k)
+            S170 10k 21.9k 22n 10k
+    Made an LTspice model that looks plausible.  analog_xover.asc
+        The only part missing is knowledge of the gain for each driver/channel.
+        (Potentiometer settings)
+
+Tomorrow: Load these filters into speakers library.  Test each filter going through analog crossover so I can listen to the FR.
+    And then work out some scheme using the analog crossover as volume control?
+    That's the main problem: how to protect amplifier and ears from issues on the tweeter output.
+
+3/5/2017
+--------
+Some listening to AD1934
+    Competent.  Reasonably clear and relaxed.
+    Nothing jumps out at me.  But I haven't listened too loud or carefully.
+
+Constructing filters
+    Exported freq responses from LTspice.  Modeled in Ipython notebook.
+    Mid tracks exactly with no changes.
+    Tweeter needed some tweaking to get magnitude to track, and phase doesn't track.
+        About 30 deg off at the crossover point[!]
+    Needs an allpass, but there is probably an issue with the impulse response time scale.
+    Will probably need to delay mid to get good tracking.
+    
+Trying out filters
+    Main problem is how to get sound into/out of the filter library.
+    Mike's code interfaces directly to audio devices in C.
+    So I can make a device for C to talk to, or I can write a different interface
+    Or, I can just do everything in Python (using code I already have?), hope that it's fast enough, and ask Mike for integration help.  Or do the integration myself, but later.
+    What about creating fake Alsa devices to use with the existing libfilter scheme?
+    That should work... my write_to_file device shows up in the list of "python -m sounddevice"
+        Need to create an input device.  And in my first write_to_file
+        Then create a 2nd output device that handles the multichannel stream
+
+Implementation notes: ALSA config for runspeakers with fake devices
+    It seems there is no way to get loopback without using the "loopback device" which is a loadable kernel module snd-aloop
+    But this device seems to only support 48k sample rate?
+    It's loopback... who cares what the sample rate is
+    This is a kernel limitation?
+        https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/sound/drivers/aloop.c
+    For now, try converting to 48 and back.
+    Whoops, Frank is asleep in the living room.  Not a good time to make a bunch of static.
+    How to test without actually making noise?
+        Direct output to a raw file.
+        Send input from a wav file.
+    Got it.  Output looks... to have wrong endianness.  Or to be a botched floating point conversion.
+    PA_SAMPLE_TYPE in runspeakers is paFloat32.  What does that mean?
+        ALSA may be doing a conversion for us... or it may not.
+        Need to generate a ramp and display samples received by C code.
+        They are floating point in the range of -1 to +1... good, I guess.
+    But I have to tell ALSA to reformat the data going back to the file?
+    
+FIR digital filters - works
+    Safety precautions:
+        Used -30 dB volume setting in DAC SPI registers
+        Used 22 ohm resistors (initially) in line with tweeters
+        Wore earplugs (initially)
+        Made Python play_stream script error out if the input format was wrong
+        Measured DC+AC voltages on amplifier outputs before hooking up speakers
+    Practical notes:
+        Had to set up softvol PCM device in ALSA to create volume control.  Eventually it worked.
+        No hum, but noticeable hiss (and some buzz) in tweeters.  
+            Can barely hear from listening position, can clearly hear with ear up to speaker.
+            As expected.
+        Had to do a lot of ALSA magic with loopback.
+            Currently forced to use sample rate conversion to 48k and back - will need a better solution.
+    Listening notes:
+        Only a little listening, just to prove the concept.
+        Sounds clean.  Detail not impressive.
+        Mids not the same since phase didn't match up to analog xover transfer function (~30 deg off).
+        
+What's next?
+    Try the 8 ch DAC (and maybe 2 ch again?) and then it's time to start the next rev.
+
+3/6/2017
+--------
+
+Looked into some clock distribution options
+    SN74CB3Q3257 seems like the right set of muxes to replace ADG1436
+    DS90LV011A single LVDS driver, output is 350 mV diff with 0.5 ns risetime (maybe it should be faster?)
+    ADN4661 does the same thing... 360 ps risetime it looks like (15 pF load)
+    ADCLK925 has 2 PECL outputs with 60 ps risetime and 60 fs jitter
+    PECL and CML are the same thing?
+
+    Si53340 has 50 fs jitter, 4 outputs, shared 2:1 input mux
+        That would be good if clocks didn't have to be independently selectable
+
+    DS08MB200 has a 2:1 mux 
+    Also check out SN74CB3T3125 and CD4066B
+
+So maybe the first question is whether to use LVDS or CML
+    LVDS: easier, lower power, cheaper... slower
+        Apparently LVDS input can receive anything including CML: http://www.ti.com/lit/ml/snla187/snla187.pdf page 35
+    CML... opposite
+        But could use any old mux, since they're just like SPDT switches?
+            e.g. switch the fanout buffer output between real load and dummy load
+
+And the second question is whether to support independent clock for different modules
+    i.e. some modules playing/recording at 44.1 while others are at 48/96/192
+    Supporting that is a [big?] hassle
+    
+3/11/2017
+---------
+Clock distribution planning
+
+
+Rev 2 platform planning
+    Chassis: Plan to use Hifi2000 Slimline 2U with 3 mm Al covers (280 mm depth)
+        $119 shipped from DIYaudio store
+        Also keep in mind a cheaper option, the Pesante 2U... $64, but 1 mm steel panels
+    Floorplan: PCBs are as follows
+    -   RPi/FPGA holder
+    -   PSU
+    -   Clock board (4 layer?)
+    -   Isolator (4 layer)
+
+
+3/12/2017
+---------
+Some listening notes from the last few days (DAC2 with IV v2)
+    I feel like the v1 IV had a fog of sweetness about it, and the v2 has a light mist of fatigue
+    But maybe this is mostly a tonal thing; the top octave is a bit "etched"
+        -> AA filter difference?  Should just measure the frequency response.
+    It handles compressed music well, effortless
+    Other harebrained idea: maybe a diff to SE converter is needed and the distortion products will cancel?
+        The v1 IV stage could have been masking them with noise and/or 2nd order
+    Need to do more serious (somewhat loud) listening to get a better handle on this.  It's... hard to get a handle on.
+    
+Cranking up on v2.  PCB design todo list:
+    Spec out all the interfaces and mechanicals (working on that today)
+        May as well make the footprints in EAGLE after sketching
+        Did iso-mod connector... iso-clk connector...
+        
+    
+    Order more transformers - screw to plywood for now (though a chassis is attractive)
+    Design PSU board
+    Design clock board
+    Design v1-v2 module adapter board
+    Design carrier board
+    Design main isolator board
+
+Notes on mechanicals/interfaces
+    Flip the RPi upside down, that will prevent me from having to remove/replace the header, yet still
+    Plan to use standoffs with #4 screws, in general.
+        Some places will not allow that.  Example: Rpi probably needs #2 screws.
+    Ribbon cables are cool, but what about interlocking boards via edge connectors?
+        e.g. S5534-ND, 8.5 mm long female 2x20 for $2.80
+        0.1" headers will allow either edge to edge connectors (right angle), or ribbon cables (vertical)
+            ... maybe.  Check cable geometry.
+        This might make sense for the carrier-isolator connection 
+            just because the only reason it's there is to avoid an L-shaped PCB
+        PSU can be ribbon cable.
+        Clock board... 
+    -> Proposal: Iso board goes on bottom.  Clk board, carrier and DA modules piggyback on top of it.
+        Boards cannot be horizontally mated with RA connectors at same height; one would be top, one bottom to get pin matching.
+        There will probably be a way to get ribbon cables to work also.
+        So, get pinouts to match from top.
+    Will reflections from 0.1" connectors be a problem for clocks?
+        FR4 dielectric constant is 4.2, so (according to Mentor Graphics) the motion is about c/2 = 165 ps/inch
+        The overall length of the line is going to be about 12" (maybe a little more?) -> 2 ns one-way
+        If the risetime is 100 ps... we have some potential problems.
+        But these boards aren't going to be controlled dielectric anyway.
+            Estimate... 10 mil of prepreg between top/bot and inner layer (there is a thicker core between the inner layers, like 40 mil)
+            It actually depends a lot on the dielectric thickness.  
+                With 7 mil prepreg, 8 mil trace at 6 mil space is close to 100 ohm
+                It looks like the width and separation needs to be similar to the dielectric thickness to get 100 ohm
+                Increading space rel. to width gives higher imp.
+                Apparently Oshpark has 6.7mil.
+            9 mil wide, 7 mil space: impedance as a function of prepreg thickness
+                7mil -> 95 ohm; 9mil -> 104 ohm; 11mil -> 110 ohm
+                So that should be fine.
+
+    Random note: For Rpi/FPGA carrier geom.
+        Rpi HDMI should be along the back.  Then use the following cables to bring connections out from the other edge.
+            https://www.adafruit.com/products/909 - Ethernet
+            https://www.adafruit.com/products/908 - USB (note: 907 is the B version for USBStreamer)
+            https://www.adafruit.com/products/978 - HDMI
+        Power should all come from within
+        Make sure there is easy access to JTAG port on FPGA board - either solder to card edge or put on carrier.
+        
+Queued up for tomorrow
+    Finish specing out interfaces and put them in EAGLE: iso-carrier, iso-PSU
+    * Add drill pads and outline to the iso-clk footprint
+
+Queued up for after that
+    Make more detailed mechanical drawings and review
+
+Risks
+    Clock distribution
+    Layout complexity / grounding / isolation
+    2-level ser/des -> should just simulate it, along side the current one
+    
+3/19/2017
+------------
+Realization: should have a separate transformer (+ buck converters?) for 5 V (RPi, FPGA) and 3.3 V ("dirty" isolator supply)
+    to minimize capacitive coupling with the audio supplies; otherwise, would have interwinding capacitance
+    -> separate power board as well?  Can be same PCB, but maybe use separate connectors? 
+    i.e. JST for reg. 5V to carriers and 3.3 V to isolator; std 0.1" header for the unregulated "clean" supplies
+    Inadvertantly, I had this already: 12 pin header didn't include the dirty supply
+    
+Drew up the headers... next would be mechanical
+    4-40 screw is tight fit .116" free fit .1285" - use .125 for PCB with 0.25" dia pad for screw head contact
+    Carrier connector 24x2 has 2.9" between hole centers - min expected PCB width = 3.3"
+    Clock board connector 16x2 has 2.1" between hole center - min expected PCB width = 2.5"
+    Module connector 26x1x2 has 3.0" (V), 2.0" (H) between hole centers - PCB width = 2.375" space = 0.125"
+    Chassis internally 80x415x280 mm = 3.15 x 16.34 x 11.0"
+    Transformers:
+        - F8-28 is 2.562" H x 4.031" W (tabs; 3.062" body only) x 2.25" D (excl connectors) with 2 holes spaced 3.562"
+        - VPS10-4300 is 2.688" X x 3.125" W (tabs; 2.312" without) x 2" D (excl connectors) with 2 holes spaced 2.813"
+    But I can probably get away with smaller ones. e.g. Rpi+FPGA should be <10 W, so should the rest (25 VA OK).
+    And +/- 15 V... realistically, 1 A is fine. (50 VA)
+        - VPS10-2500 is 2.312" H x 2.813" W (tabs; 2" without) x 1.938" D (excl connectors) with 2 holes spaced 2.375"
+            Call the footprint 2.5 x 3
+        - FD7-28 is 2.25" H x 3.687" W (tabs; 2.687" without) x 1.812" D (excl connectors) with 2 holes spaced 3.125"
+            Call the footprint 2.5 x 4
+        -> Goign with these for now
+    Depth space in 280 mm chassis... with 5" isolator there's only 6" left
+        RPi+FPGA width is ~4.2" so there needs to be 4.5" behind, 1.5" in front.
+        Hopefully, can reduce the depth taken by isolator (from 5")
+        This also reduces space available for clock board.
+        -> Does this mean we need 350 mm depth instead? (Slimline comes in 280/350, Pesante in 300/400)
+        Should probably do some PCB layout work to see...
+        
+    Width space: isolator should probably be 14" wide not 15"
+        This leaves about 1.5" for PSU board
+    
+    PCB Overlap: looks like 0.4" is good
+    That puts 0.15" from pin center to board edge, leaving some space for routing, and leaves clearance around mounting holes
+    -> Clock board can be up to 3.75" x 1.9" if we have 1.5" clearance at front
+    -> Carrier can be up to 3.75" x 4.9" if we have 1.5"
+    Note: width should actually be a little smaller than 3.75" for clearance from optional shielding barrier
+        Maybe 3.625" would be good.
+    
+    Where are the transformers going to go?  They aren't that narrow...
+        ~2" D
+        If the carrier board is narrower that would help.  (But it needs space for power connector and isolator connector.)
+            And RPi is 3.3" long.
+            -> Make carrier no wider than it needs to be to support RPi/FPGA.
+            Power input connector can be at the front corner
+        In fact, current plywood supply enclosure has the VPS10-2500 in it. (And F8-28, slightly larger than FD7-28)
+            And it's 8" x 10" without seeing that empty.
+            And I was planning to add another VPS10-2500.
+        So, there is drastically too little space for the power transformers.
+        What about placing the carrier on top of the isolator?
+            Would lose RPi connector placement at the back.
+            But Adafruit has that too.  (Added to link list above.)
+            So, no problem.
+            Just have to make sure that
+                a) there is nothing tall on the isolator in that area
+                b) there are other mounting holes for the carrier
+                c) there is clearance for power supply connections to isolator at edge
+                    (this would be why we should keep the carrier slightly narrower)
+            What depth to expect for carrier board?  How about... 4.5", in other words, all of isolator
+            -> 3.3" x 4.5"
+        Just keep the connectors facing to the outside (and not the left).
+            With RPi in the rear, upside down, HDMI faces rear, Ethernet/USB face right.  Connector in front/left.
+                Be careful with flipped upside-down arrangement.
+                Also, there are mounting holes.  Which we should use.
+                    Hole dia = 2.75 mm pad dia = 6 mm -> #3-48, #3-56 or M2.5x0.45 (M2.5 recommended)
+                Standoffs all the way down?  Or just local connection to carrier?  (With nuts?  Ugg.)
+                    What about a standoff threaded at both ends?  Then use 2 short screws.
+                    Need almost 2 cm  (3/4") spacing between carrier and RPi board to clear Ethernet connectors
+                    AE10863-ND  should fit the bill..  Yay for Assmann.
+                    Maybe instead of a "Pi-Hat" this is a "Pi-Shoe"
+            FPGA... doesn't really matter.  Connectors nearly symmetrical, doesn't have mounting holes.
+        Now the space for transformers (+ AC inlet, switch, fuseholder) is 6 x 4.5"
+            That seems sufficient for 2 transformers but not 3.
+            Any way to avoid sharing a transformer for the dirty supply?
+                a) Ext connector on the back for a 5 V wallwart - simple, but not very elegant.  About $10.  
+                    Connector like CP-039BH-ND
+                    Can use existing supply I have for the FPGA probably
+                    If ordering, consider Triad Magnetics WSU050-3000
+                b) Small open-frame supply?  2.5 A SMPS on Digikey costs $21 and is 2.91 x 1.64"
+        PSU board: 1.5" x 5" - assume aligned with isolator
+    
+    What about the alternate configs
+        USBstreamer = 2.4" x 1.4" with USB connector at center of narrow edge
+            Intended to be mounted to the same chassis surface as the USB connector with M3 screws.  No vertical mounting holes.
+        Ministreamer = 2.3" x 1.4" with USB connector at center of narrow edge
+            Same mounting as USBStreamer.
+        Where to put them?
+            a) if using RPi - want them internal
+                Then there should be a short USB cable to the RPi.  And there should be a carrier option to hold it.
+                But will have to deal with mounting (3D-print a piece that screws into alt carrier for mounting?)
+                Deal with this later.  It doesn't seem hard to make an alt carrier that works.
+            b) if not using RPi - no carrier, want them at the rear (but there's no space due to transformers)
+                But could probably:
+                - reconfigure transformer placement to make room, or
+                - mount above the transformer? (sketchy), or
+                - continue using alt carrier, just leave out the RPi and use a panel mount USB cable
+        Connectors should be just below the main carrier connector - connecting to slot I2S signals
+    
+    Note on standoffs
+        4-40 standoffs are available, about 40 cents each
+        Will need approx. 28 - get a bag of 50 from Ebay
+        Height should be determined by max. component on bottom of isolator board.
+        But will need different heights - look at stacking height of headers for modules/clock/carrier
+        
+    
+    I feel like this floorplanning will go badly without an actual chassis, connectors, transformers.
+        Everything takes up more space than you think (e.g. connectors)
+        But this is a good initial shot.
+        
+
+Also, switched back to V1 I/V for time being.
+    Definitely more relaxed, but highs are slightly hashier.  Seems to have slightly less clean impact up and down the spectrum.
+    Not sure whether I really prefer V1 or V2, maybe it depends on the speakers.
+    Probable course of action is to tweak the speakers a bit once this is all said and done
+
+Started writeup - see writeup.txt
+
+Made up plan for v2 HW platform - see planning.txt
+    But don't forget to try ADC boards again on v1
+    And tweak DAC2, see if anything can be learned performance wise
+    And work on software stuff, e.g. streaming from services or casting Netflix
+
+3/25/2017
+---------
+Laid out PSU PCB.  Simple enough.
+
+Started to design clocking.
+    Analog Dialogue article very helpful.
+    Mentioned ADCLK series has lower jitter than AD951x, which I had noticed but hadn't paid attention to
+    ADCLK846 has a CMOS output, so that seems like the way to go for the module side
+        Needs AC coupling on the CML input, which is not a big deal
+        Needs 1.8 V (no higher) clock supply.  Problem there?  Yes...  That may be the reason to use AD9515 which is 3 V
+
+3/26/2017
+---------
+Worked on clock PCB - footprints/schematics
+
+Have the ECL/CML parts picked out.
+LVDS part selection
+    Receiver is easy: DS90LV012A. $1 in SOT23-5
+    That's the one without on chip termination.  DS90LT012A has on chip 100 ohm resistor.
+    -> Use DS90LV012A and put the resistors (and if necessary coupling caps) on the board.
+
+    Transmitter: Hmm.
+    SY89847UMG  576-1618-ND  is $5 each.  Looks actually like a cheaper version of the ADI parts, supporting LVPECL.
+        But it doesn't have CMOS inputs?  Could probably tie neg. input to ground through a cap, like ADCLK948 datasheet suggests.
+    LMK00105 has CMOS outputs. So that won't work.
+    -> What about plain old LVDS transmitters and a CMOS mux?
+    LVDS transmitter x4:  	FIN1031MTCXCT-ND $1.27
+    LVDS transmitter x1:    FIN1001M5XCT-ND $0.85 - pin compatible with DS90LV011A
+    CMOS mux: SN74AUP1T157DCKR 296-27393-1-ND $0.36
+        OR  	296-14909-1-ND SN74LVC1G3157DCKR $0.36 - already has Eagle symbol in 74xx-little-us
+    
+    Low cost oscillator?
+        EPSON specifies their phase noise... -145 at 1k, -158 at 100k, -161 floor (only 10 dB worse than CCHD-957?)
+        SER3827-ND (22.5792) SER4123CT-ND (24.576)
+    
+    Supply regulator
+        What's a good regulator?  3.3 V.
+        Low cost?
+            296-21112-1-ND  TLV1117-33CDCYR  $0.62
+            Output noise is specced at 0.003% of VOUT from 10-100k which for 3.3 V would be 100 uV
+            UA78M33 has typ 40 max 200 uV... better?
+            296-13424-1-ND  $0.58  DCY pkg is SOT-223 (footprint in Eagle)
+            
+        High performance?
+            ADM7154 ADM7154ARDZ-3.3-R7CT-ND SOIC-8 with exposed pad. $6.10.
+            NSD at HF is 1.5 nV/rt Hz or 1.6 uV RMS from 10-100k
+            LT3045 is 0.8 uV RMS.  About the same price.  Seems to have better low freq performance, not high freq?
+        -> Go with the ADM7154. I think the HF NSD floor is more important in this application.  Oscillator/buffer PSRR is probably better at low freqs (or the difference will get swamped in the 1/f phase noise).
+
+
+Power budgeting
+    Oscillators: 50 mA
+        TENT XOs: 10-20mA, call it 20, x2 = 40
+        CCHD-957: 15-25 mA, call it 25, x2 = 50
+        SG-210STF: 3 mA + loading.  Less than others.
+    Clock drivers: 350 mA
+        ADCLK948.  Pos supply current max = 330 mA. (Neg is 120 mA, probably due to termination)
+        FIN1031 25 mA
+    -> 400 mA is a good budget.
+
+... Time for footprints/symbols
+    ADCLK948 - done
+    AD9515 - done
+    FIN1031 - done
+    FIN1001 - done
+    SN74LVC1G3157DCKR - done
+    Already had TENT XO.  Crystek CCHD-957 - done. SG-210STF - done
+    ADM7154 - done
+
+Let's hook this shit up.
+    1) Regulators.
+    2) Oscillators.
+    3) LVDS.
+        What's the termination/coupling?
+        Need the 4 combinations of LVDS/CML to work properly.
+        AD9515 says inputs should always be AC coupled.
+        Is there a problem with having 2 caps in line when using CML on both ends?  Yes, I think so...
+        TI app note suggests cap goes at the receiver side.  So 1 cap is fine.  Receive side only.
+        
+        200 ohm resistor from each output to ground on driver side.  Sets DC level to 0--3.2 V.
+        Unused outputs: y-termination with 50 ohm resistor x 3
+
+Let's lay this shit out.
+    ADCLK948: Any way to route power ground and signals with a 2-layer board?
+    You need ground in an adjacent plane basically everywhere
+    But how to route power to the 4 corners of the chip?
+    -> Silly shaped polygons.  The bottom is not going to be anything like a solid ground plane.
+    
+    How to route the isolator connector's power/ground and also the LVDS clock outputs?
+    Again... 2 layer.
+    This would be much easier in 4 layer.
+    But don't you like a challenge?
+    Hard to tell what the performance impact would be.
+    
+    How to route ground for the LVDS drivers?
+
+Component numbering so you know what to stuff:
+    1xx stuff always
+    2xx stuff for high-perf only
+    3xx stuff for low-cost only
+    4xx for completely optional - don't populate by default
+    
+
+3/30/2017
+---------
+Need to think about clock testing setup.
+    Include module adapter in this?
+        That would require having some way to hook all the other signals up, in order to test a module.
+        -> Not worth it.
+    Just check that you can get a clock out of each of the 4 combinations of src/dest
+    Have a LVDS receiver and LVPECL receiver and having 2-pin headers that have to be connected with wires.
+    
+    Any way to evaluate performance without special equipment?
+    Can look at things on the scope through a battery powered LNA, if an SMA is placed on board
+        Although the bandwidth limitation of the scope is an issue
+    
+
+Ferrite bead article from Analog Dialogue was helpful.
+    Looking at 732-1623-1-ND bead: DCR = 0.1 ohm
+    Rated current = 2 A. Only use to 20% (400 mA)
+    Needs damping RC.  Probably.  Because it's still inductive up to 30 MHz or so.  L = 1.5 uH!
+    For 1 dB of peaking, put 3 ohm in series with the 1 uF cap.  Gives 10 dB atten. at 1 MHz, 36 at 10M, 70 at 100M
+    Output impedance has broad peak of 3 ohm from 200k-10M, before 10n cap takes over.
+    Is that OK?  Or, keep 1u+10n and add 1 ohm + 10u.  Then peak is at 1 ohm at 100k.
+    For clock, I don't think we care.  This is an oscillator so it won't draw anything below the osc. freq.
+    -> Just put 3 ohm res. in series with 1u cap to prevent peaking
+    (OVERRULED - SEE BELOW)
+    
+    a) Osc
+    If DC current is 25 mA, what's the AC part?  Let's say it's charging/discharging 100 pF.
+    So if we have 10 nF of local cap, it will lose 1% of its charge from a current impulse.
+    
+    b) ADCLK948
+    DC current is expected to be 330 mA.  So, that will drop 33 mV or more.  Not sure what the AC content is.
+    
+    It looks like we want more "direct" cap, on the load side of each bead.  Though the beads are still necessary to prevent
+        the regulator and/or other loads from seeing the load current.
+    Charge/discharge 100p in the load-> 1u cap loses 0.01% of charge -> 0.33 mV
+    Well, what's the power supply rejection of the oscillator?  Not specified.
+    For all I know, they have internal decoupling. Let's swamp it out.
+    -> Added 10u+1R in parallel with decoupling after each ferrite bead
+    
+3/31/2017
+---------
+Started schematic and LTspice model for clock test setup
+
+4/1/2017
+-----------
+Working out LTSPice model for clock test
+    What are RCLG params of transmission line?  
+        Assume 9 mil trace, 7 mil space, 1.4 mil thickness, 10 mil height above plane.  
+        (This gives about 107 ohm according to http://www.multek.se/engelska/engineering/pcb-structures-2/differential-microstrip-impedance-calculator-2)
+        CircuitCalculator.com: 0.054 ohms per inch series R (single-ended); 108 mOhm/inch diff.
+        Single microstrip: 1.94 pF/in from http://emclab.mst.edu/pcbtlc2/microstrip/ (implies 10 nH/in)
+        Diff. microstrip will have twice that to ground, plus some coupling.
+            -> L = 20n, C = 2p, R = 100m (gives 100 ohm nominal) - assumes 1p/in coupling
+    Anyway, now why aren't the DC levels what I expected?
+        Diff. input not symmetric and not 0-centered
+        CM drive is constant at half-rail as desired
+        Also, simulator also appears to give a non-physical growing oscillation, even with Gear solver
+        I guess the lesson is to just try it and see what the real world behavior is.
+        This is why you're doing a test board run.
+        TI AC coupling guide page 4 shows LVPECL to LVDS connection
+        ADI shows coupling caps on the near end, TI shwos them on the far end.  Just need to keep consistent.
+        AD9515 includes internal DC bias, so just couple and terminate.
+    AD9515 configuration bits
+        S0 = 0, delay bypassed
+        S1 = 1, low-swing LVPECL + CMOS
+        S2 = 0, output 0 off
+        S3 = 1
+        S4 = 0
+        S5 = 0, output 1 divide = 1
+        S6 = 0
+        S7 = 0
+        S8 = 0, doesn't matter since S0 = 0
+        S9 = 0, doesn't matter since S0 = 0
+        S10 = 0
+        -> S3 and S1 are high, rest are low
+
+Finally placed some orders.
+    Clock, clock test, PSU boards from EasyEDA... $43 incl. shipping for 3 different 2-layer boards
+    Digikey parts $170 ish
+    Allied transformers $46
+    Ebay SMA/BNC cables $18
+    -> Total = $277
+    But V2 is under way.
+
+4/2/2017
+--------
+I think it's time to take another look at that 5 V regulator.
+Constructed circuit in LTspice.  Startup problem seems to be the base current buffer, which I may have added relative to the original Jung design?
+    Adding 1k resistor from input to that node fixes thing.
+    But I don't get what my design was attempting to do.
+    It's a PNP, how is that going to source a positive base current?
+    If I flipped the E/C around it wouldn't be a follower anymore and would affect the transfer function
+    I added a connection that was missing .  Now it oscillates.
+
+Op amp - I have an AD8655 (AD825 doesn't work with such low supplies)
+    28 MHz gain/bw product, 11 V/us slew rate, 2.7 nV/rtHz noise; RRIO
+    And it drives +/- 220 mA output current.  So why does it need buffering again?
+
+-> Just remove that buffer.  It makes no sense.
+    That makes it similar to the std pos regulator (non-LDO) except without LM317 prereg, and with ADR441 ref instead of LM329.
+    
+How to try this out?
+    First, test the reg as is.  But alligators are too clumsy to connect it - ordered some hooked leads.
+    Will solder wires on for now..
+
+Initial test: Doesn't start.  Not surprising.
+    Try hacking the board.
+    Replace R7 with short.
+    Still doesn't work.  Probe around a bit...
+    In = 19.33
+    Q1 base = 17.46 emitter = 19.35 collector = 0.5
+        -> no current through R4
+        Is transistor busted?  Not exceeding Vce limit.
+        Try resoldering.
+
+Seemed to work for a while then cut out.
+    Tried replacing with new BC856.  Initially works.  Going to load test.
+    Expected load in current setup:
+        Call it 25 mA from oscillator
+        DSD1792: 40 mA at 44.1k
+        -> only 65 mA.  Let's load it at 200.
+        For 5 V, 25 ohm will do it. (Power = 1 W)
+        Expected reg dissipation = 15 V * 0.2 A = 3 W
+            So it might get hot.  But that's the point.
+        Q1 appears to be hot very soon.  Still hot after load removed (Vbe = 0.4, Vce = 14).  How much collector current?
+        
+        Connecting 22 ohm resistor saw output voltage go up to 10 V then down to 3.3?
+    Probably that fried the AD8655.  The max supply is 6 V.
+        AD8655 supply = 3.4 V; amp out = 0.9 (despite the fact that input is positive), D1 is turned on
+            and Q1 is sourcing current into the amp output
+    But why did that happen?
+        Oscillation would be one reason.
+        The peak in line transfer function appears related to the output cap,
+            but it's still -70 odd dB at its peak.  (and goes higher if caps are smaller)
+    
+    Replaced AD8655 (last one...)
+    
+    Now work more gradually.
+        1) Startup with 680 ohm-7 mA OK
+        2) Startup with 220 ohm-23 mA OK but voltage went up to 5.11?
+        3) Startup with 100 ohm-50 mA OK 5.10 V
+            But when I touched the resistor it went up to 5.15?
+            
+        4) Startup with 47 ohm-100 mA  OK
+        5) Startup with 22 ohm-200 mA  OK
+            Pretty hot though
+        Long term test?  Monitor with IR gun
+            Voltage is drifting up... 5.17 after 2 min.
+            Ended the test after pass transistor was showing >100 C on the case.  Toasty.
+            But that's a separate issue.  For now, should reinstall and see if it works with 65 mA load.
+
+End of (eventful) day...            
+Back in the system, will see how it goes.
+
+In the future, will have to think about heatsinking for those regs. (And PSU?)
+
+
+4/3/2017
+--------
+Some morning regulator research: Just use LM317/337
+    LT1086 is available in D2PAK (pos. adj. reg)
+    RMS output noise is 0.003% of Vout integrated from 10-10k Hz
+        -> At 15 V, that is 450 uV, which is 4.5 uV/rtHz
+    LT3088: D2PAK 800 mA adj reg
+        Nonstandard architecture gives 85 nV/rtHz (27 uV from 10-100k Hz)
+        But it costs $4.70
+    AZ1084CS-ADJ is the cheap option (I guess like an LM317)
+    
+Some morning reference research: Use LM4040
+    In my circuit 500 ohm / 120 uF gives corner at 2.6 Hz.  So the LF noise matters slightly more.
+    LM329 has 7 uV from 10-10k (at 6.9 V)
+        Looks to be about 75 nV/rtHz... going up to 125 at 10 Hz.
+        But the scope trace of 0.01 to 1 Hz looks good. < 5 uV pp
+    I was using ADR441: $6.45.  Rated 1.2 uV pp 0.1-10 Hz.  I guess that's what matters since ref is filtered?
+        48 nV/rtHz. -> 4.8 uV from 10-10k
+    Cheap option: LM4040 (Micrel) 35 uV over 10-10k at 2.5 V.  (350 nV/rtHz)
+    ADI makes ADR5041 (2.5 V): 3.2 uV 0.1-10 Hz, 150 uV 10-10k Hz
+        ADR525: 18 uV pp (3 uV RMS? -> 1 uV/rtHz) 0.1-10 Hz, $1.46
+    Need a good compromise of cost/noise... help
+        -> LM4040D25FCT-ND $0.50  SOT23-3 
+        35 uV from 10-10k.  Noise density up to 480 nV at 0.1 Hz, not bad. (Corner around 1 Hz).  This is at least close to LM329.
+        1% voltage tolerance but whatever
+        https://www.diodes.com/assets/Datasheets/LM4040.pdf
+        
+AD825 ($4.98) and AD8655 ($2.57) have same pinout in 8 pin SOIC.  That's good.
+    AD825: 12 nV/rtHz -> why not use something lower noise?  ... may not exist, at least not for desired GBW and cost
+    AD8655: 4 nV/rtHz
+    -> Keep as is.
+    
+Prereg / low cost reg: keep LM317
+    Bypass with 1206 jumper for LDOs
+    Just remember to get the pass transistors in D2PAK for height match
+
+Next: Look at Jung's 1995 article and design test apparatus for reg boards.
+
+Seems to rely on an AP machine.
+1) Line rejection: Superimpose AC on the input
+
+
+BTW: get shielded twisted pair cable from 
+    http://www.markertek.com/product/l-2t2s-bk/canare-l-2t2s-audio-cable-black
+
+Low noise measurement preamp (4x 9V battery?)
+    PM Carl_Huff for boards?
+http://www.diyaudio.com/forums/equipment-tools/287604-groners-low-noise-measurement-amp-linear-audio-vol-3-spare-boards-15.html#post4744070
+    Need to decide how much effort to go to.
+    See Linear Audio vol 3 pg 143
+    It looks good and it's unbalanced.
+        -> Input: Floating with ground tied to source ground
+        -> Output: Connect to sound card through isolation transformer
+    
+Alternative is poor man's measurement amplifier (PMMA) - Linear Audio vol 7 pg 133
+
+4/4/2017
+--------
+Contacted Carl about boards, he says he's about to order more and will follow up with me.
+
+4/6/2017
+--------
+Morning circuits: drew up the test part of schematic for regulator prototyping
+    Now I just need to put in the actual regulators (including 1-side layout)
+
+Also, the 5V regulator was broken again
+    Dammit.
+    It lasted a couple of days.
+    I'm going to assume this is heat related and not a fundamental problem with the circuit, for now.
+    
+Now porting the circuit over.
+
+Reference redux: MAX6220 looks like a good deal at $2.42 (MAX6220ASA-2.5+-ND )
+    1.5µVp-p 0.1-10 Hz
+    1.3µVrms  10-10k
+    15 nV/rtHz above 100 Hz... needs 1 uF cap from NR to ground
+
+How to mount the D2PAK devices when there are caps on same side?  (cap height = 10.2 mm D2PAK height = 4.4 mm)
+    1) Find shorter caps
+    2) Make a metal spacer (requires layout to put all the D2PAKs in a zone of no caps)
+    3) Put the caps on top of the board (then modules have to clear them)
+    
+Not an easy layout... take time on the first one, get it right
+
+4/8/2017
+---------
+5 V LDO failed again.  Thinking about why... what about Q1? (BC856)
+    Dissipation is rated at 225 mW at 25 C
+    556 K/W thermal resistance junction-to-ambient -> implies 150 C junction temp
+    In the circuit... green LED bias over 47 ohm resistor (1.2 V?) gives about 25 mA
+    And if input is 20 V, output is 5 then emitter is at 18.8, collector at 5.6 -> Vce = 13.2 V
+    So, power is 330 mW
+    Ding... that's a problem.
+    Start out by ~tripling that resistor.  Startup should still happen.
+    (Don't forget to replace Q1, may as well remove Q3 while at it)
+    
+After reducing Q1 current and replacing: 2.14 V out, not quite started up
+    2.73 V at base drive.  Think the zener voltage needs to be bumped up.
+    Can do 2 LEDs in series to get 3.6 V?
+    (Op amp AD8655 is rated to 2.7 V, so Zener voltage should be at least 3.4 V.  Maybe 3.6 to be safe.  But that does limit min. voltage to around 3 V.)
+    Note: Work backwards for required base drive current.
+        DC current gain  = 60 at 2 A, Vce = 1
+        1 A out -> 16 mA in
+    What I have now is 6 mA.  So hopefully the load isn't too big.
+    Real fix is probably to use a beefier device there, and give it 20 mA.
+    -> BC807 should work.  Rth = 272 (about half that of BC856).  Use 20 mA.
+    I have some of these lying around from discrete I/V stage
+    
+Anyway, the hack of using 2 LEDs in series got me going again.
+    Listened in the afternoon with Ed and Alice
+    Need to listen more to evaluate.
+    
+Finished a 1-sided layout of pos reg
+    Much time spent on making this layout to my liking.
+    Dimensions = 2.2 x 1.3 in
+
+Now copy over to make the other regs
+
+4/9/2017
+---------
+
+Copied over the positive reg and removed LM317 prereg on the LDOs
+    Much EAGLE hassling.
+    Any way to recover area for LDOs with those big caps?
+    Fine if I can't.
+
+TODO: Fix up negative reg.
+    It should probably be drawn with GND on top.  Otherwise quite confusing.
+    Problem: Generating a negative reference
+        The MAX6220 is a series reference and thus can't be used the same way as the LM329
+        The LM329 would work but it's TO-92
+        There are SMT shunt references like the LM4040 and ADR5041 but with much worse noise
+        How about LT1236CCS8-10#PBF-ND ? $4.52
+        
+4/11/2017
+---------
+Negative reg: compared to v1 schematic
+    Looks good.  OK to implement layout.
+    
+4/23/2017
+---------
+Listening session last night
+1) Vertical Horizon
+    Smooth, detailed and relaxed.
+    Compressed, syrupy sound of the recording comes through.  A little "glow".
+    Diversity of drumset sounds was preserved.
+    Felt a little distant, as if I was listening through studio monitors as a recording engineer, rather than "in" the music. 
+        Maybe it wasn't loud enough.
+        But I was still pretty involved, with say "Grey Sky Morning" and "Finding Me"
+2) John Williams
+    Man, this music is overkill.  It's so good, but no one notices because they're watching the movie
+    Chorus on Home Alone overture is good.  Sounds like cute children.
+    Strings free of grain, though as I recall this recording may already be equalized for easy listening
+    Gentle on the low bass, but it's there
+    (These are as much comments about the speakers as the source)
+Overall verdict: Pretty good.  Hard to motivate further work when I can listen like this.
+    If the relaxed non-fatiguing behavior keeps up, the main issue to look for will be emotional involvement.
+
+More work on negative reg layout
+    Way too much stuff has to be re-done vs. positive reg.
+    
+Also, need to add stuffing options for LM317/337 only. (not prereg, just reg)
+    Including on LDOs where it isn't usually there.  See how that goes...
+    Does bump the boundaries out a bit but not too bad.
+    
+Ugh, now I have to place and route all of the testing stuff..
+    Try to have top and bottom independent... but there are some through hole parts.
+    SMT substitutes can be found for everything except: transformer input, snap-in capacitor
+    Did a rough placement
+    
+Some thought to mechanicals/thermals
+    Overall footprint of regs is about 5 x 3 -> will span (underneath of) 2 modules
+    Heat spreader: 3/8" thick, 1-1/2" wide Al bar (~6" long - holes drilled on centerline at 2.5" intervals (.5/3/5.5)
+    D2PAK is 0.175" (nom.) thick - makes PCB to chassis clearance 0.55"
+    Caps are 10 mm high = 0.4"; sounds about right  (note : 1/4" thick Al would give 0.425", not enough clearance)
+    Will need an odd length spacer for the isolator PCB, then (unless the heat spreader can be custom milled to the right height)
+    Assume holes in spreader align with chassis and it's just secured under chassis with nuts
+    Assuming 5 V drop across each reg, and 1 A, the losses are 20 W total... sounds risky, but whatever
+    
+TODO: 
+    Convert jumpers/headers to SMD footprints
+    Do a placement within board outline (think about which things need to be outside of regs)
+    Hook up everything
+
+5/6/2017
+---------
+Man, I really haven't spent enough time on this.  Time to finish up the regulator test board while I'm not sleepy.
+
+Listening notes:
+    This is dumb, but at some point I turned off the old CD player.
+    It was sitting on top of the amplifier.
+    I think this made a noticeable difference.
+    A bit more relaxed and liquid -- this might have been the configuration that I first listened to with the v1 I/V stage.
+        (Except now I have the v2 I/V stage and all Jung regulators.)
+    Put on a series of rock music with the volume control vertical.
+        Foo Fighters, quite clear and not really anything objectionable.  When I had listened to it at lower levels I was worried that it would be an intense mess if cranked up.  Upper bass on "Aurora" is overkill, but I think that was intentional
+        Even Bush (Comedown), extremely hard and grungy recording, not as fatiguing as I remember.
+        Gin Blossoms, vocal sounded a bit hard at times, but really melodic and I liked the lively bass.
+        Guns N' Roses mix is insane, but I can actually follow the guitar and singing at the end of "Catcher in the Rye" when they're brought out in front of the band.  It still sounds a little squashed compared to more easy going speakers, but I'm not trying to escape the room.
+        Live (They stood up for love), seems a bit hard, but nothing's bothering me.
+            I think I can hear the distortion from my ears and/or tweeters at this level.
+            But the fact that I wasn't driven out of the room is a good sign.
+            And I really got into it.  "Masters of every time" indeed
+        Dave Matthews "Ants Marching".  Sounds big, but I'm not appreciating details the way I usually do.  It's just loud.
+        (88--90 dB average with the Dave Matthews, which is less compressed than the others for the most part.)
+        Eva Cassidy, amazing as always.  (Thicker balance than usual, maybe I broke in the woofers.)
+
+5/7/2017
+--------
+Finished layout and ordered boards for reg test.
+My specialty: making 2 layer boards for things that really shouldn't be 2 layer
+
+Still need to prepare lists and order parts.  Don't forget:
+    - Enough parts to make 2 boards, one with LM317 only variant and one with Jung
+    - Multiple types of through hole Zener diodes for adjusting input DC
+    - Mini test points and jumpers in addition to those SMT headers
+    - Op amps may be cheaper from Arrow
+    - Fuses (and connectors?) for Mike
+    - Barrel jacks for separate RPi/FPGA supply input
+    - Different values of 2512 SMT resistors (0-1 ohm)
+    - Syringe tips - the one I have is stuck (if it's cold? seemed to work fine on Sun 5/14)
+    DONE (Ebay) SMAs, didn't get enough the first time
+    - 0.1uf 0603 caps, got 1206 for some reason
+    - Standoffs and shit
+    - Extra 50V 1000uf caps to replace the 16 V ones on PSU board
+
+5/13/2017
+---------
+Assembled PSU and clk test board (still need to do the 2 variants of the clock gen)
+Need to get a chassis platform and put the transformers/PSU on it to get started
+
+5/14/2017
+---------
+Assembling clock gen boards
+    ADCLK948 is a pain to solder, but looks good once on there.  ADM7154 -  not sure if I got the bottom pad attached without killing it.
+
+What to do with oscillators?
+    2 boards -one LVDS one LVPECL
+    2 oscillator footprints each
+    LVDS board: Crystek vs. Epson
+    LVPECL board: Crystek vs. Tent
+    But don't solder the Crysteks yet, get them working with the Epson/Tent
+        Hopefully the 24.576 Tent isn't actually broken.
+        If it is... Compare with the 11.2896 one, when I'm confident I won't bust it.
+    
+Cut the boards for the proto-chassis
+Marked holes and cutouts, need to drill/dremel/file
+
+Next steps:
+1) Order parts (things you need for clkgen, and parts for pwr test)
+2) Drill/cut boards - wire up supplies to heart's content
+
+5/19/2017
+---------
+Half-day off from work
+Assembled the protochassis transformers and AC input stuff (only cracked the acrylic a little...)
+
+5/24/2017
+---------
+Have the regulator test PCBs now.  Better get moving on ordering those parts.
+
+5/29/2017
+---------
+Put together BOM for regtest PCB.
+    About $50 in chips from Arrow--trouble logging in to place order, will retry tomorrow.
+        -> Done
+    $140 for Passives and some discretes/chips from Digikey
+    SMA connectors from Ebay 10 for $9
+    
+Also discovered wrong voltage caps on PSU PCB - will order replacements.  Good catch before powering it up.
+
+Zener options: 3.75 + zener voltage (+/- 2 from control)
+    Desired range would be about 7 to 25 V
+    Max : 20 V zener is fine 1n5250b
+    Min: 3.3 V 1n5226b
+    Other options:
+    Out     In     Zener
+    15      20     16       1n5246b
+    15      22     18       1n5248b
+    15      25     20       1n5250b
+    5       15     11.2     1n5241b
+    5       10     6.2      1n5234b
+    5       8      4.2      1n5229b
+    3.3     7      3.3      1n5226b
+    
+PSU bringup
+    Probing around
+    VPS10-2500 primary resistance is ~ 7 ohm
+    F7-28 output AC at no load: 34 V (CT balanced) - 21% above nominal
+    VPS10-2500 output AC at no load: 6.30, 6.28 V - 26% above nominal
+    +22 output at no load: 23.4, -22 is -23.4 (total 46.9) -> rectifier drops 1.18 V
+    Each +7 output is 8.43 V -> rectifier drops 460 mV
+
+Got some sparks, need to properly bleed off current when powered down.
+    -> Discharge and for now, add some through hole resistors
+    Takes a few minutes to run down all the cap.
+
+So, before I hook things up, probe around the clock test board.
+    Dig. 7 V input - OK
+    3.3 V supply to ECL receiver - shorted
+        Where's the short?
+        Probably under the AD9515, but it's so hard to see..
+        Removed AD9515 - short gone.
+        Replaced AD9515 - looks like it's at a slight angle, but short gone.
+    3.3 V supply to LVDS receiver - OK
+
+At least it doesn't look like any of the supplies on the clkgen boards are shorted...
+
+Goal is to get some clock going (LVDS)
+
+First, powered up with only clktest board connected
+    Unreg 7.9 V
+    ECL supply 3.3 V
+    LVDS supply 3.3 V 
+    So far so good. Nothing burned.
+Next, plug in LVDS source, with clksel for the osc that's on there.
+    Unreg 7.84 V
+    Supply on clkgen board 3.3 V
+    Osc output 1.63 V
+    ECL receiver output 0.8 V
+    LVDS receiver output 3.3 V
+    Diff clock trace output P 3.3 V , N 0.55 V
+    -> Need to investigate clk board more.
+    
+5/30/2017
+------------
+Continued clk debug
+    CLK_SE (after mux): 3.3 V
+    Verified clock going into mux is 1.65 V.
+    Tried cleaning up soldering, no difference.
+    Did I get mux/inv wrong?
+    Try again with the solder cleanup.  Now I've got CLK_SE.
+    But diff?
+    Now P 2.25 , N 2.05
+    And outputs 1.6 V DC - both LVDS and ECL
+
+Note: using SG-210STF osc. only
+
+Logicport: Both outputs (LVDS, ECL) are the right frequency 22.5792 MHz
+Oscilloscope: Both outputs are 3.3 V CMOS
+    ECL output shows more ringing (bad scope connection, or just faster?)
+    LVDS signal: a little ringing, but mostly just a 1st order filtered square wave
+In both cases, probably limited by scope bandwidth (I thought it was 50 MHz...)
+
+To-do list:
+    DONE Should probably try to look at the diff signals also.  If there is a DC balance issue, I want to see it.
+    DONE And why not put on the Crystek?
+    DONE Add 0603 decoupling caps when they come
+    DONE And why not try the ECL source board?
+    DONE And mount the boards to the plywood (small wood-screws with 1/4" spacers?)
+    DONE And why not test all combinations of outputs/traces and receivers?
+        If trace makes a difference, also try putting 0 ohm resistors under board to see what happens without flying-wires.
+    Write phase noise testing procedure.
+    In other words, get everything ready for phase noise testing.
+
+6/1/2017
+--------
+Crystek seems to work.  Output waveform looks the same on the scope.
+Added decoupling caps, no apparent difference.
+    Except ECL output waveform looks smoother?  Maybe due to less ground bounce coming from source board?
+What about the diff traces? (LVDS source)
+    9" trace: With 10x scope probe, looks like a triangle wave from 1.5 to 2.5 V
+    3.5" trace: A slightly sharper triangle wave? 0.8 to 2.0 V
+    -> Probe load is probably distorting that.  Will be fun to check with ECL source.
+    But in the end, will have to check duty-cycle of output clock on a faster scope
+What about using different traces and looking at SE output?
+    a) LVDS receiver
+    All 5 traces look the same (OK; slightly rounded, slight ripple)
+    b) ECL receiver
+    All 5 OK, slightly different looking ripple from ECL receiver
+Duty cycle: looks symmetrical, but I'm going to need a faster scope and/or better way of measuring.
+
+Alright, tomorrow try the ECL source and mount things up.
+If time allows start assembly of reg test
+
+6/2/2017
+--------
+Trying out ECL source board
+    Tentlabs 24.576 is busted, but 8.472 works (at least according to DC voltages) - use that
+    Check waveform...
+        8.4 - clean squarewave with slowed rise/fall
+        Similar looking ripple to the other source
+        ECL and LVDS receivers - same
+    Supply output is 7.04 or so, instead of 7.84, so it's drawing a lot more current...
+        Wow, how much?  
+    Differential trace?
+        Waveform doesn't seem to rise much above 0... how were the receivers working?
+        Looks that way on either side of the cap.  Bad probe conn?
+        Never mind, it was just the 10x probe. Diff trace is square wave from 1.6 to 2.4 V.
+    Try Crystek to get an idea of what it looks like at 24.576
+        CMOS output looks basically the same as the 22.5792s.
+        But diff traces?
+        Looks like a little sinewave from 1.7 to 2.5.  Surely scope limited.  (affected by loading?)
+        Scope isn't much good for looking at the CMOS outputs either, to be honest.
+        Though with 10x probe, ripple is reduced.
+    -> No surprises here, though I would like to measure the supply current.
+    
+
+Got the PSU board mounted up.  I guess the positioning is fine but it would be happier with a vertical header instead of a horizontal term block.
+
+Tomorrow:
+    DONE Mount clocktest board for phase noise testing
+        Think about how to separate source from test board
+        Figure out where it should go
+        Drill holes (whatever drill used for PSU is perfect)
+        Mount test board - 1/4" standoffs
+            -> oops, should have got 5 since src board seems
+        Will need some longer #4 screws to hold source board down.  And longer standoffs/spacers?
+            Board to board spacing is about 7/16".
+            Spec out any missing parts on shopping list for next time.
+        -> Need 2 more 1/4" standoffs for board to board interface
+            and 2 3/4" standoffs for clock source overhang
+            and 2 7/16 spacers + long screws for that
+            
+    DONE Assemble PSU test boards.
+    NOT DONE Help Michelle with bookcase.
+
+6/3/2017
+---------
+Mounted clocktest board
+
+Started regtest boards.  Shopping list:
+    *NM* Need more 10u 1206 caps 1276-6767-1-ND (10 more) - left out C1, C14 (output coupling) on board boards -> Found. (previous order)
+    *NM* Missing 1u caps for Jung - C36/44/54 (near MAX6220 refs U2/4/6) -> added, some others still needed
+    ORDERED - DK Need more D2PAK LM317s/337s, since they're used on both Jung and LM317 based regs (need 1 more of each)
+    ORDERED - Ebay Need more test points (though the mini test points are too small, get regular test points) - red/black and some other color for neg?
+
+What's left?  As components arrive...
+    Jung board
+        DONE Top SMAs
+        DONE    D44H11s 
+        DONE 1u caps: C46 C48 C49 C37 
+    LM317 board
+        DONE Top SMAs
+        Some test points for top
+        DONE    1 LM317 and 1 LM337
+
+What transformer to test with?
+    Desired: 20 V input to 15 V regs
+    Which requires about 25 V at the input
+        Note: LM317 has about 2 V dropout
+
+6/4/2017
+--------
+What about having a single carrier board, with stuffing options for the USB streamers, FPGA/no FPGA, Rpi?
+    USBStreamer and Ministreamer have similar looking mounting - check
+    Want to support async FIFO with FPGA, even if using streamer instead of Rpi
+    Also, streamers produce their own clocks
+    
+Todo:
+    DONE Rpi footprint incl. holes/keepouts
+    POSTPONED Streamer footprints and mounting adapter design -> flip over also?  6x2 header for USB, 5x2 for mini
+    DONE Update carrier pinout to have a 3.3 V power pin for "dirty" side of isolator -> pin 48+46
+    Check mechanicals and place board edges and mounting holes
+    DONE Figure out supply connection (JST?) and regulation (78M33 DPAK)
+    Draw/experiment with schematic
+
+Need to limit myself here.  Too many options
+    USB to I2S: RPi/FPGA, Ministreamer, USBstreamer, WaveIO
+        WaveIO cost = EUR 100 + shipping
+        Ministreamer+USBstreamer cost = $130+20 shipping
+        Already have Rpi+FPGA but these would cost ~225 (of course this provides both USB-I2S and async FIFO)
+    Async FIFO: None, my FPGA, iancanada FPGA
+    Want the first set of boards to cover the extremes of cost/performance
+        Most expensive: RPi/FPGA
+            This is already part of the plan
+        Least expensive: ministreamer
+            The carrier connector is a header--what about using wires to hook it up to the isolator?
+            Just need the ability to have the carrier supply the clock -> buffer+SMA on carrier to link to clock source?
+                That isn't a very elegant solution, but how else to manage the fanout issue?
+            Also, where to mount?
+                I think it should just be a specialized carrier board.
+                    2-layer, pretty cheap.
+                    Carrier is 3.3 x 4.5 " -> $30 for 10, i.e. $3 each.  Not bad.
+        -> Fine, design a 2nd carrier for the "streamers" later.  It just has to be thought out / tested.
+            Features will include: Same power connector for separate 5 V input (since you don't get it from the streamer)
+                (drives the power pin on carrier connector)
+
+Connector hunting
+    JST VH series: 3.96mm pitch, 10 A rated, cheap.  
+        455-2947-ND PCB header.  455-1183-ND wire conn housing.  455-1133-1-ND crimp pin.
+
+6/5/2017
+---------
+A bit of schematic drawing
+    Both FPGA and Rpi have onboard 3.3 V regs.  So, don't need my own.
+    This board is going to be really simple... just get it out the door.
+    
+JTAG connector on carrier, or edge of FPGA?
+    Edge of FPGA looks like a good option, except for conflict with module and/or chassis divider
+    Of course, that's just for debug; USB can be used to program FPGA
+    
+    
+Mechanical notes
+    FPGA board width 3.305" height 2.010"
+    FPGA board should overhang isolator connector at top edge of board
+    RPi width 3.348" (3.520" with USB connectors and SD card sticking out) 
+        height 2.211" (2.302" with audio 3.5mm jack)
+    Need about 0.3" of clear space at the bottom for mounting holes
+    ... so actually, 3.3 x 4.5 is about the perfect size.  OK if FPGA/Rpi overhang a bit.  Especially to the right.
+    Rpi needs to be spaced up quite a bit to make room for USB connectors
+        Height = 0.611" from top (bottom when flipped) surface of board
+        -> 5/8" mating height for header will be needed
+        -> Get a stacking header, and 5/8 long spacers, and solder with the boards screwed together so the pins contact at the right point.
+        SD card protrudes by 0.088"
+    Or, let Rpi hang over right side of board.  That requires 0.837" clearance for Ethernet conn; probably too tight.
+    
+    Collision of USB cable/connector with caps on PSU board?
+        Think about this tomorrow.
+
+6/6/2017
+---------
+Looked up transformers on Ebay in case the  ones I have aren't suff.
+    There's a guy in NJ who sells cheap transformers.  Want about 38-40 Vct.  
+    One of those costs $27 shipped and could be here in a week.
+    
+6/7/2017
+--------
+Got remaining SMAs, regs, and caps on regulator test boards
+They're ready to go, some test points are missing from the LM317, but whatever
+
+Order of operations:
+    - Get carrier PCB out
+    - Begin testing regulators
+    - Recheck clock setup and write phase noise test procedure
+    - Design heat spreader (ask Ed?)
+
+6/10/2017
+---------
+Dealing with mechanical layout issues
+We have 2 problems:
+    On left, there is the first module board (and chassis divider)
+    On right, there is the PSU
+    Also note: below is clock source, above is transformers
+Initial design has USB connectors and Pi Ethernet connector on the right
+    This looks fairly certain to conflict with PSU caps, even with right angle cable 
+    (and I don't think there are right angle Ethernet cables)
+Board could be extended up a little bit, without hitting the transformers (with current transformer placement)
+Oh wait, there is a debug header and PSU connector to the right
+    (isolator extends 0.4" to right of carrier edge--total distance to PSU is ~0.75")
+    So maybe that is the best for clearance
+    USB right angle connector looks like it needs about .6--.7" 
+    So it might work.  But it's tight, especially with SD card sticking out, and what if you want Ethernet?
+    Also, one of the USB connectors is (nearly?) over the PSU connector on the isolator - conflict with power conn/cable?
+What about soldering my own USB wires?
+    It's only 480 Mb/s, right?  No big deal.
+    Potentially, could also remove USB connectors from Rpi and/or FPGA
+    This would make it harder for others to assemble though
+Other idea: "T" mounting with Rpi flying above FPGA, mounting holes don't collide
+    Distances: top of FPGA board to top of male header = 0.35"
+    Height of male header sitting on board (through hole) = 0.1"
+    Clearance of RPi needed for USB conn = ~5/8
+    Tallest component on FPGA board in overlap zone = 0.08" (SOIC pkg.)
+    Let's call it 1.25" spacing and get a female connector for the stacking header to snap into 
+        (it's not long enough by itself)
+        Quick test using the female header under the FPGA board (fully inserted) gives a spacing of 1.21.  Perfect.
+Added bonus of this is that there's room for a vertical JTAG header and for the power input jack
+
+Okay, whew.  Next steps:
+    - Add footprint/hook up JTAG header
+    - Figure out which FPGA pins to connect to isolator connector
+    - Figure out connection of GPIOs to FPGA, and add debug header
+    - Add PG test points
+    - Ship it
+    
+Impl. notes
+    JTAG header should be S9019-ND $1.20
+
+6/11/2017
+---------
+Making progress on carrier PCB.
+
+Ideas:
+- What about adding SPDIF input/output?  Bluetooth input?
+    These could be wired to FPGA or Rpi
+    SPDIF can be handled by DIX9211, application note circuit is fine (optical input? TORX1355) - about $10 each
+    Think about it... only add after rest of board is done and it looks like there's space
+    This might make sense since these protocols provide their own clocks and wouldn't want to be on the isolated side
+        (they're digital inputs after all)
+
+- To do SPDIF input, would need/want a tiny board with:
+    the TORX module with decoupling
+    pg conn (2-pin 0.1" header fine)
+    BNC+RCA (right angle PCB mount) connectors
+    SMA to the carrier, which would have a PCM9211
+How would it connect to the FPGA?
+    I2S.
+How would it integrate with the rest of the system?
+    Anyone's guess.
+
+This could be a bit of a science project.  BT module may generate SPDIF not I2S.
+    -> Consider playing around and adding later, via debug connector? (after all, it is pins connected to FPGA+Rpi)
+
+But these would be valuable features:
+    SPDIF for interfacing to old style CD players
+    BT for casual streaming from phone/laptop/etc.
+
+Also, just discovered that I have the FPGA footprint rotated 180 degrees from what I want.
+    oops.  Have to re-do a bunch of stuff
+    
+6/12/2017
+---------
+Redoing a bunch of stuff.
+
+Also decided to
+    a) Make SPDIF input and BT input one board, so BT module can output SPDIF
+    b) Leave that for a separate board, using the expansion connector (for now--integrate once successful)
+
+Ordered carrier boards. $22.12
+Parts from Digikey.. $22.09
+
+Want to try a BT module... got one for $10
+
+Hardware notes:
+    RPi: need to get female/female spacer and screw from both sides
+    There aren't any screws long enough to get a 1.25" board spacing
+    Also, spacer lengths are metric with the longest being 30mm (1.18") - got washers to try to bump out spacing
+
+Todo from now:
+    - Begin testing of power supplies
+    - Design heat spreader
+    - Write phase noise test plan when it seems like I might be able to test phase noise soon
+
+6/14/2017
+---------
+Towards PSU testing
+Put in AC from first transformer, see what we get.
+
+Note: 7805 max input is 35 V.  Don't exceed.
+
+Power up operating point
+    Unreg: +/- 22.1
+    Reg input:  +/- 21.8
+    +/- 5 V rails: OK
+
+Let's try setting the reg input voltage to 19.75 V -> 16 V zener
+    Which one is that? 1N5246B
+    Put it the right way round...
+
+    OK, now we have +20.4 and -20.7 at reg inputs.
+        Pos. zener 17.94 to 2.49 (15.45 V)
+        Neg. zener -18.42 to -2.49 (15.93 V)
+    This is more than I expected from adj to out.  What's going on?
+        Maybe the issue is that there's no load?
+        Start with a 10k load by connecting pos reg input #1.  (and neg reg input #1-- the socket)
+        Good, now we have -19.67 and +19.22.  Adj to out is as expected.  Not much load needed.
+    Oops, sockets were headers instead.  Doh.  Oh well, won't be able to try 3-terminal regs.  
+        (Order sockets with next parts.)
+    
+    So the next thing to test is driving the input?
+        0.168 V AC at line input (1 kHz)
+        Also at Zener diode and LM317 ADJ terminal (on LM317, in has 23 mV, out has 57 mV)
+        ARTA shows... something, but not much and not sinusoidal
+        DC output up to 19.46 from 19.30 -> getting rectified?  Maybe we need more load.
+        So, return to this once we have a reg and load hooked up.
+        First hookup the pos reg 2 which is +15 V (LM317)
+        DC reg in = 19.26 out  = 15.26 -- OK
+        Now, how about a 100 mA load?
+            Thermal check: dissipation is going to be
+            input reg dropout = 3 power = 0.3
+            main reg dropout = 4 power = 0.4
+            load transistor drop = 12.5 power = 1.25
+            resistor drop = 2.5 power = 0.25
+            total = 2.2
+            -> should be OK short term.  Will need some kind of heatsinking long term possibly.
+        With load: same I/O voltages and there is now a sinusoidal signal at input port (only -102 dB for ARTA...)
+            Multimeter says 148 mV, vs. 168 mV drive.  Ah, whatever. -1.1 dB.
+        Check sound card connections?
+            Yep, wrong channel.  Now I can see much more signal.
+            -27.8 dBFS for -20 dB drive configured.
+            Let's make life easy and adjust so it's -20.  Still sinusoidal.  (Wow, 0.018% THD...)
+            Noise floor is around -105 with no FFT averaging.  -109 or so with averaging.  Some 60 Hz harmonics visible.
+        Load transistor isn't too hot... note, ceiling fan is on
+    
+    So, line rejection.
+        Now looking at the output port with the same drive, amplitude is -97.7 and noise floor is -140 to -146
+        So, 77.7 dB at 1 kHz?
+        Try 10 kHz.  RMS is -84.5, that's 64.5 dB rejection.
+        Check input port to see if it's still -20... this FR needs to be characterized.
+            Yep, well, close. -20.4.
+        Cool, it works.
+    
+    Now, how about output impedance?  This is a fun one...
+        Now driving the load input with the same stimulus.
+        Output port shows -74.4 dB at 1k.  What's the actual load current RMS?
+        Multimeter shows 0.412 V AC at the 25 ohm resistor (2.5 V).  That would be 16.5 mA RMS.  (-35.6 dBAmp)
+        -> Output impedance of -38.7 dBOhm = 12 mOhm.
+        Not bad.  Let's try 10k.  Output ampl = -65.6 -> output impedance = -30 dbOhm = 31.6 mOhm.
+    
+    Now, how about noise?
+        Short the line and load inputs.
+        Now I see some odd spikes in the spectrum but you can see the floor and its shape (still -140 to -146)
+        Better results when connecting the line input and not driving it - just connects the grounds together.
+    
+    So, what's the actual scale in dB to Volts?
+        Multimeter shows input port AC of 411 mV in this scenario.  Which we read as -20 dB after the isolation transformer.
+        -> 0 dBFS = 4.11 V RMS, if we trust the multimeter.  So, to convert to dBV, add 12.3.
+        Not needed for line rejection.  For output impedance scale by 25 ohm load (i.e. add 28 dB to ampl difference in-out)
+            -> 48 mOhm at 1k, 132 mOhm at 10k
+        
+        For noise, I can read RMS off ARTA: -101.6 (and the spectral density which is -140 to -146 but with 32k points at 44.1k Fs)
+        0 dBFS = 4.11 V = 12.3 dBV.
+        So -101.6 dBFS = -89.3 dBV = 34 uV.
+        Noise spectral density: FFT spacing = 1.346 Hz (2.6 dB), so -140 dBFS/FFT = -142.6 dBFS/Hz = -130.3 dBV/Hz.
+            305 nV/rt(Hz).
+        Does it add up?  20 kHz = 43 dB rt(Hz).  -130.3 + 43 = -87.3 dBV.  
+            But the noise floor was lower than -140 over much of the band so the numbers make sense.
+            
+    Can't wait to try the other regs and the Jung regs.
+    And script this to cover the entire band and generate plots.
+    Which to do first?  Decide tomorrow.
+    
+    
+Good day.
+
+6/25/2017
+---------
+Finally getting back to it.
+Need to automate power supply measurements
+
+1. Input amplitude
+    a) actual level (drive)
+        How about 100 mV RMS?
+        For ARTA, that is -16.2 dB when the Windows volume control is at 50
+    b) soundcard input sensitivity -- max
+        ARTA shows -32.2 dBFS for 100 mV
+        (Note: at 500 Hz, -112 dB on the output which is -80 dB rejection. Consistent with earlier meas.)
+
+NOTE: Remember to set Windows volume control to 50 as part of procedure.
+OTHER NOTE: Remember to turn on ceiling fan for cooling.  Load transistor case temp was 90 C without it.  About 60 C with it.
+
+2. Getting Python code to work.
+
+So, why does Pyaudio just return the samples we provided (or something like them?)
+
+Not sure that's what it's doing.  Let's get some FFTs.
+Latency at startup seems to be around 8k samples.
+Looks like a sinewave with 16-bit noise below it.  Not what I was hoping for.
+
+Ah, changed the "default device" to line in in the Windows audio settings.
+Now I see a noise floor with a tiny 1 kHz peak above it.
+    Ampl at 1k = -119 dB; ARTA had shown -112
+    Ah, let's adjust output level now.
+    -> No change necessary.  Multimeter showed 100 mV.
+With 10 averages:
+    1k peak at -119 still.  Rest of noise floor went down.
+    Definitely need 24 bit res. (but first, get ampl right with out-in FB)
+
+Fortunately switching from Pyaudio to Sounddevice is easy
+    But Sounddevice is still giving 16-bit data?
+    All right.  WDM-KS devices (whatever those are) have 24-bit res.
+
+Now for some freq sweeps.
+    a) Calibration sweep at input port.  Saved to stim_freqs.txt / fr_input_port.txt
+    b) Line rejection (LM317, 15 V)
+    c) Noise spectral density - got around 100-200 nV/rtHz, 17 uV RMS.
+        TODO: Check scaling.
+    d) Output impedance
+        Drive of 100 mV RMS across 25 ohm = 4 mA RMS (-48 dBA).  Maybe increase this?
+        May not be necessary.
+        
+OK, I seem to have the procedure down.
+Try out the procedure for all 4 regs on this board, then repeat it with more points (1/24 oct spacing)
+    LM317 board: results in jun25b dir for low-res meas.
+        pos2 (+15) - done
+        pos3 (+5) - done
+        pos4 (+3.3) - done
+        neg2 (-15) - done, but performance needs investigating - worse HF line rejection, higher noise
+            Walton's measurements don't show anything wrong like this
+            I checked the board and the bypass cap is still there
+            -> just needs some playing around/ ARTA debugging
+
+Why not try out the Jung board?
+    Eek... well, maybe this will help debug neg meas issues.
+    Install Zeners for LM317 setting, test without connecting any regs.
+    pos2 (+15) - nom out  14.97,
+        Input port cal is showing ~3 dB less than before... 75 mV.  Wonder why?
+        Line rejection is good, ~100 dB assuming the setup is working.  (What you'd expect.  Walton measured 120, with 110 at 10k.)
+        NSD 30 nV/rtHz?  Integrates to 4.6 uV, which sounds reasonable.
+        
+    pos3 (+5) - nom out 4.76 <- needs investigation
+        Input port cal is now back to normal.  Bad SMA connection before?
+        Line rejection is no good at -60.  Why?
+        Output impedance is no good at 370  mOhm.  Big problem with this reg.
+        Noise same as pos2, but with 60 Hz stuff.
+        
+    pos4 (+3.3) - nom out 4.75 -.... wrong res divider?
+        C51 pos end is 2.57, thats fine
+        C53 pos end is 3.18 - bad connection around op amp?
+        R57 0.3 V - op amp driving low
+        C38 pos end 5.35 - wrong Zener diode?
+            Schematic is labeled MMSZ5226B; diodes labeled CK
+            BOM is listed MMSZ4684; consistent with CK labeling
+                Orientation looks good.
+                This is rated 3.3 V at 50 uA
+                Actual operating current = 15 mA.  Problem?  Probably.
+            All of this range of low voltage Zener diodes have that issue.
+            So, we should actually have used MMSZ5226B like the schematic said.
+            Have any lying around?
+                no, but I do have the through hole version 1N5226B; try that.
+        After "fix" nom out is 3.03 V.  See how it performs...
+            Result: shitty, even worse than the 5 V one.
+    neg2 (-15) nom out -15.03
+        Cal for this doesn't roll off at HF like the positive ones on this board.
+        Poor line rejection.
+        Output impedance is OK though, 10m
+        NSD looks like it might be reasonable but with lots of 60 Hz stuff, and rising at HF unlike the pos one.
+        
+        
+Re-test pos2.
+    Cal measurement is messed up.
+    When I move the jumper to pos5 it's normal at low freqs and masssively rolls off at HF.  
+    But with pos2, it's suppressed except for peaks at 60 Hz?
+    Something odd about the input impedance?
+        ARTA shows: tons of 60 Hz stuff showing up at input port when pos2 is connected
+        Mixing with the input in a nonlinear fashion?
+        With pos5 hooked up, we can see just the input tone but also many harmonics 15% THD
+        So maybe something about the line input on this board is messed up?
+        Tried re-heating some solder joints, nothing fixed.
+
+    Looking at output port, see lots of 60 Hz junk.
+        But when I turn off the generator it goes down a lot
+        -> Line input driver dumping into ground?
+
+        Really bad at 2k.  Output shows 2k tone, harmonics, mixing with 60 Hz.
+        Which is a lot like what the input port shows.  So maybe this is about current going into ground.
+
+Getting tired.  Will have to ponder the results and continue tomorrow.
+Summary of things that are broken:
+    LM317 -15 V reg suspiciously bad performance (line rejection and noise)
+    Jung test board - line input screwed up (high THD, FR depends what reg you connect to)
+    Jung +5/+3.3 regs  high output impedance and poor line rejection
+    Jung +3.3 reg high HF noise
+    Jung -15 reg poor line rejection and noise (esp HF); output imp looks OK
+    
+1st priority is dealing with bad line input on Jung board.
+
+And consider whether regs should be a separate board for modularity?
+    I don't think so, but what if I screw up?
+
+6/27/2017
+---------
+While Michelle naps and I can't cut wood for the bookcase
+
+Thinking about bad line input on the Jung board:
+    See what happens when I use a lower voltage Zener setting the input
+        With 11 V zener, I get 14.09 at pos input
+        Now, with input driven, I see distortion (20% THD) but not mixing with 60 Hz.
+        See what happens with pos4 reg performance?
+        
+    Cal showing rolloff at HF might have something to do with distortion.  Cap loading?
+        60% THD and rolled off at 5k
+        21% THD at 2k
+        0.1% THD at 1k
+        0.04% THD at 500 Hz
+        Indeed.
+            C32/C50 are at the reg input since 3.3/5 V regs have no prereg.  TRy removing them.
+            
+        While warming up, what happens when we drive pos2 (+15) input?
+        6.7% THD at 1k
+        0.4% THD at 500
+        0.12% THD at 200
+        And the amplitude looks OK.  So, probably just need more voltage overhead to properly test +/- 15 V Jung regs.
+        
+    After removing C32/C50: pos4 testing
+        Input THD = 0.03% at 2k and 5k
+        Cal FR = normal
+        Line rejection = still shit, investigate that in ARTA
+            Smoother over freq than before, i.e. better at HF.  Probably related to cap removal.  Still in the -50 to -60 range.
+        Output impedance = still shit
+        Noise = OK except for lots of 60 Hz stuff and peaks at HF (4k, 8k, 12k, ?)
+        First, investigate line rejection.
+            ARTA doesn't show anything odd at 1k, about -60 line rej.
+            Perhaps this is a circuit design error?
+            1. Figure out why Vout= 3.01
+                Opamp input voltages = 2.24 and 1.80
+                Check reference?
+                    Well, the supply is only 3 V.
+                    MAX6220 says it has an 8 V to 40 V input range.  HMM......
+                    Datasheet really means it.  No wonder it was cheaper.
+                    Can keep it in the 15 V reg.  But for 5/3.3, need something that works at 3.3.  Digikey that.
+                    So, we have the ADR441 again.  $6.26 on DK, $5.08 on Arrow.
+                    Noise is reportedly 1.2 uVpp 0.1-10 Hz.  48 nV/rtHz wideband.  (but we filter it)
+                    ADR4525 is $4.73 and 41 nV/rtHz.  And hooray, pin compatible with MAX6220.  (disconnect NR cap)
+            This pretty much explains the  shitty performance of the 5 V and 3.3 V circuits.
+            
+    Let's try connecting the pos2 reg up to see what its input looks like.
+        0.06% THD at 1k, right input level.
+        1.3% THD at 5k, same input level
+        0.04% at 500, 0.06% at 200
+        So, maybe some loading issues, but over all not bad.
+        With the original Zener back, input looks clean?
+        Try re-measuring pos2...
+            Looks pretty clean now, in all respects (cal, linerej, noise, outimp)
+            Though output impedance is higher now around 15 mOhm.
+        So maybe removing those caps mattered somehow?
+
+So, need to order new voltage references for Jung +5/+3.3
+    ADR4525. MAX6220 is out unfortunately.
+
+And see if we can figure out what' up with the -15 V regs?
+    Start with Jung...
+    Input port is clean.  run tests.
+    Line rejection improved, but degrades above 1k, and the floor is only -90 in the midrange
+    NSD still bad at HF and 60 Hz stuff
+        Could reflect ground error.
+    Output impedance is good.
+    So what's going on?  Observe line rej. in ARTA
+        At 5k, some 60 Hz mixing is apparent. and line rej is ~62 dB; would want ~100
+    Insufficient dropput?
+        Vin = -19.85 Vout = -15.04
+        Prereg output = -17.35  (note: on pos2 it's +17.34)
+        Base drive = -15.26 (collector of Q7).  Hm.
+        -8.36 at R53
+        Base of Q7?  -15.48, maybe Q7 is saturating.
+        
+Take a break, it's time to cut wood.
+
+6/28/2017
+---------
+Received carrier boards, starting assembly but got sidetracked.
+
+6/29/2017
+---------
+If you want a higher voltage transformer for testing, just get it.
+    Done.  $26 for 2 small 38VCT toroids.
+
+Assembling carrier
+    Power connectors don't fit the supplies I have.  What's up?
+    Supply output plug: OD = .215 ID = .068 (hard to meas.) = 5.46 mm, 1.72 mm
+    Circular Connector: OD = .240 ID = ~.085 = 6.09 mm, 2.16 mm
+    -> The pin in the center is too big.  Need 2.1 x 5.5 to match supply.
+    Shit.  Do I have any of these lying around?
+    For now, can just cut off the output plug and put it back on later.
+
+Wired up a huge kludge to test carrier.
+    On the plus side, nothing blows up.
+    Carrier-isolator header is connected via jumpers, to FPGA header pins on the ZTEX breakout board, which then has wires soldered to v1 isolator
+    DAC is in slot 0.
+    Active oscillator in IC20 (CLK1B on v1 isolator, connected to )
+    DIRCHAN is all zeros and SPI transactions don't work.
+    Concerned that there might be a clock problem.
+    
+Will need to debug with Logicport tomorrow.
+Wow, so many wires.
+
+6/30/2017
+---------
+A note on the Jung regulators: Why not use cheaper op amps?
+    5 V: MAX4475 has <5 nV over 1k, 20nV at 10 Hz MAX4475ASA+-ND $1.28 GBW=10
+    15 V: NE5534 has 4 nV over 1k, 10nV at 10 Hz 296-26239-1-ND $0.88 GBW=10
+    Compare: AD8655 has 30 nV at 10 Hz, 3 nV over 1k, GBW=28 $2.57
+    AD825 not specified, but 12 nV at 10k, GBW=26 
+
+Maybe the default used AD825 because Jung worked at ADI.  The AD797 made sense but AD825 didn't.
+Even the LM4562 is $2.85.  3nV to 300 Hz, 8nV at 10 Hz.  Works from 5 V to 34 V.  Maybe not going to work for 3.3 V reg.
+
+Shopping list:
+    Female SMT 0.1 headers for putting in 3 terminal regs.
+    Op amps
+    Proper sized (2.1x5.5) DC power connectors
+    
+Heat spreader: 1-3/4" will fit, 2" just barely
+    Caps are 0.40" high
+    D2-paks are 0.182" high -> 0.25" bar will work, not much clearance
+    
+    Bought a .25x2x6 bar for $6.60
+
+OK time to work (10 am...)
+OK back from work (4 pm...)
+
+Op amp: reconsidered due to GBW product being low on the cheap options
+    I guess faster op amps are more expensive...
+    Keep AD8655 since it's cheap and has low noise and appropriate GBW.
+    AD825, consider replacing with the cheaper LME49710. 296-38149-1-ND  $2.03 GBW=55 noise=2.5nV at 1k, 6.4 at 10 Hz
+    Also Jack Walton found it was an improvement in performance and worked fine.
+
+Let's move on to debugging the carrier.
+
+Clock hookups.  On isolator, only CLK1 is active.  That used to be connected to D27 - showing 11.289 MHz now.
+    Now connected to carrier pin 47
+Our SCLK output (used to be called MCLK) should be half that freq. Connected from carrier pin 43 to C24.
+    Now showing 6 MHz.
+    Oops never mind, that's what it should be.  USB clock (48 MHz) / 8.
+How about SRCLK?  Carrier pin 38 to D29.
+    Reads 750 kHz - OK.
+Let's look at some signals.  SRCLK / MCLK / DIRCHAN.
+    DIRCHAN is C30 to carrier pin 36.
+    See some pulses on DIRCHAN, but not as many as I'm supposed to.
+    -> Poor signal integrity?  Wouldn't surprise me.
+    Only 1.14 V on CLK1B after the translator.
+    That's because there is 2.34 V on the supply. Hmm.
+    I didn't hook up the power from the carrier to the isolator.  That explains... something.
+    Carrier pins 46/48 to C18/D18 on old breakout board.
+    Now that's hooked up, we have 3.3 V, and DIRCHAN signal looks more reasonable.  I can do SPI reads too.
+    But there may be some timing issue.  Something is a little sketchy.
+    
+Playing tone doesn't work although it does seem to have DIRCHAN right.
+Probe I2S also?  Just going to do a reset so we don't have to deal with SPI.
+    Need to probe: C14, C19, C20
+    Those are always low.  Even though things appear to be hooked up properly.
+    Read FIFO counts?  FIFO seems to be draining at the proper rate.
+    Check constraints.  This is slot 1.
+    This may be a problem; in the old HW... for DAC2...
+        BCK   is slotdata1[5] or slotdata[11] - this is going to become slotdata1[0] or slotdata[6]
+        LRCK  is slotdata1[3] or  slotdata[9] - this is going to become slotdata1[1] or slotdata[7]
+        SDATA is slotdata1[4] or slotdata[10] - this is going to become slotdata1[2] or slotdata[8]
+    So, we need to re-wire carrier connector for now (don't mess with constraints).
+        BCK (brown) from 10 to 13
+        LRCK (purple) from 9 to 11
+        SDATA (green) from 12 to 14
+    We have a tone now!  A clean one amazingly.
+    Now test from Rpi.  Looks like it plays music.
+    
+OK, what next?
+    I want to get rid of this breakout board before putting it back in the stereo.
+    Plan: Solder header pins in the holes of the isolator FX2 connector footprint, where the ribbon cable is soldered in now.
+    Which ones?
+        Power 3.3 V - carrier 46/48 (orange) - red wire, leftmost
+        
+        Ground - carrier 8/32/etc (gray) - black wires, inner rows away from PCB edge
+        
+        LRCK - carrier 11 (purple) - blue wire, 5th from left, 1st row
+        BCK - carrier 13 (brown) - brown wire, 7th from left , 1st row
+        SDATA - carrier 14 (green) - 2nd yellow wire, 8th from left, 1st row
+        
+        RESET - carrier 44 (yellow) - white wire, 3rd from right, 2nd row
+        DIRCHAN - carrier 36 (white) - gray wire, 4th from right, 1st row
+        SRCLK - carrier 38 (blue) - purple wire, 4th from right, 2nd row
+        DMDO - carrier 40 (purple) - blue wire, 5th from right, 1st row
+        CLKSEL - carrier 42 (yellow) - green wire, 5th from right, 2nd row
+        DMDI - carrier 39 (orange) - yellow wire, 6th from right, 1st row
+        CLK1 - carrier 47 (green) - orange wire, 6th from right, 2nd row
+        DMCS - carrier 35 (blue) - brown wire, 7th from right, 1st row
+        MCLK - carrier 43 (red) - 2nd yellow wire, 10th from right, 1st row
+        
+Also, don't forget to flash the FPGA with the new bitstream (pinout changes).
+    The program to flash the FPGA is ~/software/ztex/java/FWLoader/FWLoader
+    Options : -f -um ~/projects/cdp/xilinx/da_platform/da_platform.runs/impl_1/da_platform_wrapper.bit
+
+Hooray, seems to work.  Maybe more junk in the output than there used to be?
+Time to install back in the stereo for now.
+    Actually, nasty distortion.  (At least it plays music...)
+
+7/1/2017
+--------
+Finished writing up the phase noise plan, sent to work.
+    Remember to ask Frank to ask around this week.  And e-mail Kimberly.
+    
+Things to do:
+- Fix distortion issue with carrier and v1 isolator
+- Test regulators with higher voltage input
+- Test 3.3/5 V regulators with ADR4525 references
+
+Working on fixing things with the carrier
+    Problem: Now there is no sound
+    Playing a 60 second tone is suspiciously fast.
+    Also SPI registers are all zero
+    DIRCHAN is properly detected (but maybe that's luck?)
+    My guess is that the clock isn't getting through.
+    
+Probably needs some Logicport debug.  Laptop?
+    After moving the shelf down to the ground, DIRCHAN is wrong but the tone generator takes the normal amount of time,
+    suggesting that there are some bad connections going around.
+    
+Got it working on the ground, now it's broken again when in the shelf.
+    Silly bad connections.
+    A good proxy for "broken" is when it detects the AD1934 instead of DSD1792
+
+Got it working, it's just a matter of shoving the boards around in the right places.
+
+Time for 3.3/5 V reference replacement
+    ADR4525 datasheet: 1/3/5/7 = NC, 2 = in, 4 = GND, 6 = out.  Interesting thing is pin 8: test pin. "Do not connect."
+    Current hookup: 2 = in, 4 = GND, 6 = out, 1u cap to pin 3.  Everything else unconnected.
+    Looks like the cap won't hurt anything.
+    
+Components to remove = U4, U6.
+
+After replacing references, output voltages are correct (5.01 / 3.31)
+Time to do the sweeps.  Data dir is jul1a
+    Pos4: cal is wonky
+    Line rej. is fluttering around at LF, then comes out around 85 dB at 200 Hz and decreases smoothly to 55 at 10k
+    Output impedance is ~const at 11 mOhm.
+    Noise is flat at 100 nV with 60 Hz spikes.  (~10x more than expected).
+    Line rejection and output impedance improved, but:
+    still some head scratching to do.
+But let's try pos3.
+    Same shit with the cal.
+    Line rejection is better than pos4: -100 in the low/mid freqs.  Degrades to -82 at 10k
+    Output impedance flat at 11m - same.
+    NSD 30 nV - good, though I wonder why it isn't better. 4 uV RMS.
+
+So let's figure out this cal issue.  Multimeter says?
+    Multimeter gives me 40 mV whether I connect it to the input port or not.
+    However it does show 100 mV at the adjust terminal of the LM317.
+    So what is the reg doing to slow it down?
+    ARTA spectrum shows input port is suppressed, super distorted and mixed with 60 Hz.
+    But it's that way now for pos2 also.
+    Negative reg?  clean.
+    With pos5 (10k res only) - lots of THD but no mixing.
+    
+Maybe the unconnected regulators are screwing things up?
+    With input to pos2, output to pos3, output is 2.49 V?
+    That's from the load current thing.  Turn that off for a minute?
+    Still a distorted input port when driving pos2.
+    OK, the unused regs are still off.  so it's probably something about the active reg.
+    
+Say, what about the dropout on the LM317?  Not enough (due to transformer voltage)?
+    Bingo.
+    Put in 11 V zener, for 14 V reg input, and input port is clean.
+    Re-test LV regs.
+    pos3:
+        - cal normal
+        - line rejection not as good (maybe because the input is being driven properly?).  100 at 100, 82 at 1k, 63 at 10k
+        - noise 30 nV with 60 Hz stuff, total 4 uV
+        - output imp this time 13m (again, probably due to stronger input)
+    pos4:
+        - cal normal
+        - line rejection similar to pos3 (almost exactly same, looking at graphs).  95 at 100, 84 at 1k, 62 at 10k. 
+        - noise still 100 nV.  Problem needs to be investigated.
+        - output imp 10m
+
+Well, that certainly sets the stage for testing with a higher voltage transformer.
+
+But, looking at pos4 noise:
+    ARTA averaging with no input shows: noise floor around -150, RMS of -104.
+    Compare to pos3.  Immediately you can see it's 10 dB lower.
+    Whaaat
+    So there's that Zener diode I soldered on.   1N5226B instead of MMSZ4684
+        But I doubt that has anything to do with the noise.   The error amp fixes the noise.
+        Bum reference?  Or reference filtering?  Doesn't look like it.
+    One thing to try would be changing the resistor divider that sets the output voltage.  See if that makes a difference?
+    Kind of stumped by this.
+    
+So, just move on to testing with the higher voltage input.  And see if I think of anything for the pos4 noise.
+
+7/2/2017
+----------
+New toroid.  Testing 40VCT winding:
+    No load - 42.7 VCT
+    This should give us about: +/- 29 V DC.  Good.
+    Note: 7805 abs. max is 35 V, and recommended is only up to 25.  So let's hope that sags a bit..
+    I bet nothing bad will happen.  Let's see...
+    No.  Use the blue ones.  40.2 VCT will give +/- 27.8 instead of 29.6.  Feel better about this.
+
+So, some testing.   
+    First pos2 with 16 V zener (19.7 V in)
+    ARTA shows clean input.  Test results seem similar to the initial ones (jun27b).  In other words, good.
+    Now try neg2 with 16 V zener.
+    Noise has gone down a bit, but still bad (80 nV?) with lots of 60 Hz
+    Line rejection and output impedance are the same.
+    Line rejection is way worse than the pos reg. at mid/high freqs. ARTA shows basically what you'd expect.
+    Similar to the pos3/pos4 where there is no prereg.
+    So, something wrong with the prereg?
+    Prereg in: -19.83 adj: -16.11 out: -17.34
+    Reg base: -15.33 out:-15.04
+    Both error amp inputs at -10.03 which is good
+    
+Notes from board inspection:
+    neg2 (-15) and pos4 (-3.3) regs are both along bottom edge of board, and thus share ground
+    The output port is connected to the ground on the top.  So it has to go all the way around to get to neg2.
+    Also, small ground currents from the voltage disturbance circuitry go into the ground on the top.
+    Let's ballpark:
+        100 mV RMS
+        Assume current dominated by the 1k resistor R4. -> 100 uA RMS
+        Assume trace is 0.2" wide and 3" long - 15 square at 0.5 ohm/square -> 7.5 mOhm
+        So the voltage error is 0.75 uV RMS, or -102 dB
+        Plausible.
+    Want to try adding a better ground lead to the output connector?
+    Interestingly, input port connector is grounded near the neg2 reg.  So that would be a place to solder
+    What thickness wire is needed?  Length = 3 in.
+        12 awg is 1.6 mOhm/ft.
+        16 awg is 4 mOhm/ft.
+    Using 12 awg, why not.  SMA to SMA.
+    ARTA showed the output spectrum is suddenly much cleaner.  Let's re-run the sweeps on neg2.
+    Line rejection now gets to -105 like pos2, in the midrange.  Starts degrading faster at HF over 1k, -72 at 10k vs -92
+    And the noise is back to what I would expect, 30 nV/rtHz, 5 uV RMS.
+    
+Now I'm reasonably content with the neg2 meas.  Try pos4 again.
+    Line rejection same as before (gradual degradation at HF)
+    Noise went down a bit to 60 nV, but lots of 60 Hz in there.
+    Problem is probably that lots of little currents are getting injected into ground between the reg and output conn
+    
+What to do about this?  Anything?
+    Try more heavy wire soldering.
+    C50/51 seems like a good place to attach wire.
+
+Also, the NSD measurement floor is higher than I thought.  RMS = 3.7 uV, ~30 nV, a few spurs.
+    Can anything be done about this?
+    Short of adding an LNA, no.
+
+Adding the wire from pos4 ground to output connector actually made the noise worse.
+    HF line rejection improved by about 6 dB.
+    Weird.
+
+What's next?
+    Do some plotting of the latest data for the different reg types.  Then decide what to do.
+    Try to wrap up this regulator testing stuff today.
+
+Plotting is done, initial writeup given to Frank for review.
+Also reading Jung's articles (hardcopy).
+
+If I can get the regulators out of my hair, I think it's time to move on to the isolator.
+
+OK, not quite out of the hair:
+    Try with the rectifier on the other board.
+    3.3/5 V only.  (DC input is reduced due to reduced transformer voltage, plus the extra rectifier.)
+    ARTA: Some 60 Hz harmonics present but not as much as before.
+    Sweeps: Big difference in both noise and line rejection.
+    To try getting rid of the 60 Hz, let's remove filter caps from the test board.  (They are on the rectifier board.)
+    Hmm, the big cap doesn't want to come out.
+    Uh oh, even after taking it out, there is 60 Hz stuff in the output.  Ground loop?
+    Try disconnecting line input. -> Even with line/load inputs shorted, more 60 Hz stuff.  Why does it matter?
+
+Got some better looking results.
+    1) line rejection now >100 for pos3/pos4 at LF, degrades somewhat but better than before
+    2) noise for pos3/pos4 now indistinguishable from noise floor
+
+Updated the writeup.  Now I think I'm really done.
+    But, there are 2 loose ends: 
+        1) substituting LME49710 on the +/- 15 V regs, and 
+        2) adding female 3-pin sockets to try out v1 regs (and 7805 etc.)
+    Another time.
+
+For now I think I'm ready to move on to the isolator.
+
+7/3/2017
+--------
+Indeed, time for the isolator.
+First question is what isolators to use?
+I have a tube of ADUM3402CRWZ.  Qty = 39.  Should probably use those.
+    But what are they pin compatible with?
+    First, specs.  2 in/2 out.  Pin 7/10 are active high enables.  3.0 to 5.5 V.  Up to 90 Mb/s.  34 ns prop delay.  <16 ns skew.
+    Package: RW-16, 7.5 mm wide SOIC, 16 pins.  0.05" pin pitch.
+    I have 39 of them left.  I guess I used 8 for the v1 isolator. (to make 2 slots work)
+    Compare to what I had penciled in earlier: ADUM142E0 (which is cheaper--10%?)
+    2 in/2 out. Pin 7/10 are active high enables.  1.8 to 5 V.  Up to 150 MB/s.  6.8 ns prop delay.  <7.5 ns skew.
+    Package: Either R-16 or RW-16. (RW-16 is same as ADUM3402.)  
+    -> Should spec ADUM142E0BRWZ, but use ADUM3402CRWZ that I have on hand.
+    
+    Output current/speed:
+        ADUM3402C: Rise time  = 3 ns with 15 pF load.  If at 3.3 V, 20-80 rise is across 2 V, so 3 ns is 0.66 V/ns -> 10 mA.
+        ADUM142E0: 2.5 ns, 10-90 with 15 pF.  15 mA.
+        
+BTW, I paid $275.87 including shipping/tax for the 47 ADUM3402CRWZ that I have.  ($5.59 each)
+    So, better use them.  Just keep in mind that ADUM142E0BRWZ will be faster.
+    
+Need to come up with steps for transforming old schematic
+    DONE Label nets from carrier, then slots, supplies, clocks
+    DONE Fix signal naming around unidirectional isolators
+    DONE Fix signal naming around bidirectional isolators
+    DONE Do direction control (isolate the serialized signal and deserialize?)
+    DONE Add logic for serializing/deserializing of relevant things (CS_N, DIRCHAN, HWCON, HWFLAG)
+    DONE Add power supplies (copy schematic and layout) - and make modifications from errata
+    DONE Add debug header (will wait to assign pins until layout)
+    WONTFIX Add test points (will just drop pads on layout)
+    DONE ERC
+    Review and add labels/rearrange sheets
+    [Then on a future day] Begin layout
+
+7/5/2017
+--------
+Some notes from looking at the (nearly schematic-complete) isolator:
+    Supply regs need to be rotated relative to what I was expecting.
+    This will require more routing area, and obviously blocks the bottom layer.
+    Also, heat spreader needs to be wider and it isn't clear how it will be secured given the module standoffs need to come from within that area.
+        Could just put big through holes in it so the spreader fits over the standoffs, I guess.
+    Not a lot of routing area available...
+        In vicinity of modules, layers are used up like this:
+        1.  Clocks, plus other digital routing (shield in between)
+        2.  Digital ground plane
+        3.  Supplies
+        4.  (Modules 1/2) Regulators; (Modules 0/3) Open
+        How many unique signals to each module?
+            Exclude diff clocks, supplies.
+            Shared digital signals: [5] MOSI, MISO, !RESET, SCLK, SRCLK
+            Unique digital signals: [11] !CS, D3, D2, D1, D0, LRCK, BCK, HWCON, HWFLAG, DIR, CHAN, 
+        This means # signals crossing = 49
+        There is space for 25 signals in the gaps of the module pads,
+            so if we had 2 layers, it would work.
+        Also, top layer is going to be off limits due to diff clocks, in a lot of places.
+        
+    Need to think about floorplanning the right end - is there going to be a clear shape to the "carrier supply region"?
+    
+        
+7/9/2017
+--------
+Some isolator schematic review and floorplanning.
+
+Where to tie AGND/DGND together?
+    First, the PSU connector on the isolator ties the AGNDs together.
+    Didden's companion to the Jung regulator article shows grounds being tied together at the most sensitive location
+        the input stage of an amp
+    But I can't do that.  And also, that was referring to separate +/- grounds, which I don't have (but perhaps should).
+    Sometime down the road I'll have to deal with the various AGNDs.
+    But right now I'm concerned with AGND and DGND.
+    They need to be at the same DC level but otherwise isolated.
+    AD1955 data sheet shows use of a 600 ohm ferrite bead between the DGND and AGND (as well as in series with each supply)
+    Place 1 at supply connector, or 1+ at each module?
+        It's basically an inductor with 0.3 ohm DCR, up to 30 MHz.
+        Max current = 200 mA.  Will it carry any current nominally?  No, those nets are totally isolated otherwise.
+        How much DC current would flow?  Assume max 1 amp DC flowing into each ground.
+        Also note: bead should be used at 20% of rated current (probably less).  Oops, this means I need larger beads elsewhere.
+        -> should use 732-1623-1-ND (2 A) instead of 732-1625-1-ND (200 mA)
+        Let's just put 1 at the supply connector with the option to replace with resistor. 1206.
+
+Note on costs (for isolator):
+    EasyEDA is $90 for 1 oz copper, $150 for 2 oz copper
+    So, tough decision.
+    Actually, no.  Their stackup images show the inner layers don't get thicker with 2 oz.  (only outer)
+        So, the internal impedances of the regs would change but the internal planes (ground/power) wouldn't.
+    -> Going to order with 1 oz and see how it goes.
+    
+    Resistance over the 9.5" length of one of the power traces is 0.1 Ohm. (half that to each module)
+    So there will be some drop at high load...
+        Example: AD9515 draws about 100 mA from D3V3.  Two of those = 200 mA over half the length = ~10 mV.
+    
+    
+7/14/2017
+---------
+Did phase noise measurements.  Went pretty well, will have to dig through the results.
+Wrote Python script to parse E5052B files and make plots.
+Todo:
+    Write some code to compute jitter.  Check against E5052B.  Allow variable bandwidth and spur suppression.
+    Compute jitter impact of various changes.
+    Do writeup of phase noise results.
+
+
+7/16/2017
+---------
+Crazy week is over, now I can write up the phase noise stuff.
+    Got a start on it, figures pasted in, need to write and do scripting.
+    
+7/19/2017
+---------
+Finished implementing jitter calcs with appropriate spur filtering
+Added tables to document and redrew figures
+Now just need to write commentary.
+
+7/21/2017
+---------
+Finished commentary.  A few quirks with the integrated jitter, but need to move on.
+Excess jitter from clock dist is around 0.15 ps, assuming I can fix the spurs.
+Need to sanity check that this is OK before continuing with design of platform.
+
+But I think it's time to go back to the isolator PCB design.
+
+7/22/2017
+---------
+Isolator work
+
+Issue: Mounting heat spreader.
+    Added 3 more .25" pads for screws, down the middle where the regs are (center 2 modules).
+    Required some tight rerouting and took copper away from -22 unreg supply input to reg.
+    (Heat spreader will require large holes for 4 standoffs to pass through.)
+    
+Issue: Ground routing
+    a) Added bead/resistor option to connect CGND to DGND in case the non-isolator option is used.
+        (DGND and AGND already connected through a bead.)
+    b) Where to connect regulator grounds (analog)?
+        Close to the modules or back at the supply?
+        It would seem that to minimize output impedance the connection should be close to the modules.
+        What does Jan Didden say?  I think it was to connect at the input stage of the load if it was an amp.
+        So, close to the load it is.
+        One tweak is to only use the traces near the regulated supplies.  The ones by the unreg supplies might carry ripple currents.
+
+Got an initial placement of everything.  288 airwires left.
+    Slight annoyance: Don't think I have enough room right of the barrier to put serdes chips.
+    Oh well, probably won't make much difference.  Can slit the DGND plane if worried about that (probably counterproductive).
+
+Tomorrow, to do:
+- Route signals from modules into serdes chips above module 3
+- Figure out power/ground distribution for isolators and other small chips
+- Consider moving isolators to the left
+- Route direction control signals to isolators
+- Route the carrier signals starting from the left end of the connector, just enough to properly position the isolators
+- Route clocks (both sides of isolators)
+- Route data buses (module side)
+- Route everything else on the module side
+- Route carrier side.  Strict direction rules per layer to allow tapping off for debug.
+
+Reminder: Need to test regs for the max current.

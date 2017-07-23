@@ -1,0 +1,101 @@
+iv_diff_v2 parts - nonstandard
+-----------------
+
+100 uf tant 399-5214-1-ND 
+22 uf tant 399-3746-1-ND
+10 uf tant 399-3734-1-ND 
+
+1.5 nf np0 1276-2814-1-ND
+3.3 nf np0 490-3351-1-ND
+4.7 nf np0 445-2333-1-ND
+
+1 uf mkt box 399-11451-1-ND 
+
+LED 1206 160-1456-1-ND
+
+BC807 PNP SOT23 BC807-40LT1GOSCT-ND 
+BC817 NPN SOT23 BC817-40LT1GOSCT-ND 
+
+scaler_v2 parts (if not listed above)
+----------------
+
+33 pf np0 1276-1252-1-ND
+220 pf np0 399-8167-1-ND
+270 pf np0 478-1485-1-ND
+470 pf np0 399-1213-1-ND
+
+ADA4001-2 ADA4001-2ARZ-R7CT-ND 
+
+
+Other notes
+------------
+0.1u 1206 NP0 cap: 490-6505-1-ND (warning: expensive at $15 for 100)
+600R 1206 ferrite bead: 732-1623-1-ND (expensive at $23 for 100)
+    
+
+isolator and carrier parts
+--------------------------
+2x24 0.1" female header with 0.325" insulation height: 929975E-01-24-ND
+
+4-40 Al standoff M/F 1/4" high: 36-8714-ND 
+
+Diode: Panasonic DB2W40300L DB2W40300LCT-ND  has 40V, 3A, 50 pF cap, 15 ns trr - Schottky
+    Use for 7 V supply: SOD-123F 
+
+    ES2AFSCT-ND  has 20 ns trr, 18 pf - not Schottky (50V 2A)
+    I think this is good for the +/- 22 V supply.  Package = DO-214AA (SMB) 
+
+How much cap do you need?
+    1 A load, 100 mV droop at 120 Hz: 83000 uF.
+    That sounds excessive.  Try 1/5 of that.
+    10000 uF cap across +/- (50 V rated), one 1000 uF cap (30 V rated) from each rail.
+        10k uF 50 V: 338-1568-ND (snap-in) - $4, 10mm spacing, 30x40mm
+        1000 uF 35 V: 493-16077-1-ND  (SMD 14x14 mm) or 399-6120-ND  (TH 13mm D x 27 mm H, 5mm spacing)
+    For 5V supplies: 16 V rated caps
+        1k uF 16 V; 399-6082-ND - 10x21mm can, 5mm lead spacing
+        10k uF 16 V: 338-1564-ND  - snap in with 10mm lead spacing, 22x30mm
+    10 uF film bypass.
+        399-12458-ND - 26.5x8.5x18mm box with 22.5mm spacing, $2.64
+        Or a ceramic/tantalum one would be cheaper and in this app, just as effective. 399-8336-1-ND 2413
+        Nice low-Q characteristic with ~0.1 ohm from 10k to 3meg
+    Series power res.?  (to limit charging current)
+        Leave space for 1 ohm or 0 ohm jumper... 2512
+
+Also: AC input filter?
+
+
+Clock parts
+-----------
+10u 25V 1206 cap: 1276-1804-1-ND 
+1u 25V 0805 cap: 399-8004-1-ND
+330u tantalum cap: 718-1038-1-ND  2917 pkg 0.287" L x 0.169" W (7.30mm x 4.30mm) 
+SMA conn $2.86 CONSMA001-SMD-G-ND 
+
+
+Regulator and regulator-testing parts
+-------------------------------------
+16V SOD-123 zener DDZ16Q-7DICT-ND 
+15V DDZ16Q-7DICT-ND 
+10V DDZ10C-7DICT-ND 
+25 ohm 10W resistor with small footprint: TNP10SC25R0FE-ND 
+15V SOT-223 Reg LM2940IMP-15/NOPBCT-ND 
+-5V reg (DPAK) MC79M05CDTRKGOSCT-ND 
+
+100uf 35v cap with low ESR: PCE4554CT-ND $0.48/ea qty 10 (Panasonic size code D8)... taller version of D, 7.7 mm high
+    The larger, lower ESR version is PCE4442CT-ND $.62/ea qty 10 (size code F)... 8mm dia 10mm high
+    These are better than the FC of the same size (obsolete... even capacitors get better)
+    The low ESR through hole series is FM, which is about the same performance as the FP
+    -> Use FP size F
+    
+D2PAK version of D44H11: 497-15455-1-ND (D45H11: MJB45H11GOS-ND )
+
+6.8 V SOD-123 diode: BZT52C6V8-FDICT-ND 
+3.0 V version BZT52C3V0-FDICT-ND 
+
+Surface mount headers for jumpers etc.
+    5x2 header 952-2842-ND $0.63 https://cdn.harwin.com/pdfs/M20-876.pdf
+    1x2 952-1913-ND $0.24 
+    1x3 952-1951-ND $0.27
+    1x4 female  	S5596-ND  $0.83
+    
+1000uf 50v cap UVY1H102MHD-ND

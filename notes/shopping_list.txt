@@ -1,0 +1,7 @@
+Shopping list
+
+LME49170 op amps
+3-pin SMD 0.1" female sockets - for testing 3-terminal regs.
+Proper sized (2.1x5.5) DC power connectors
+Thermal pad[s] for heat spreader: BER161-ND is a 4x4" sheet that can be cut up.
+

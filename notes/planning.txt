@@ -1,10 +1,26 @@
-CDP work planning - Summer 2013
+CDP work planning notes
 
+Summer 2013
+-----------
 Get PMOD DAC working over USB - drive headphones
 
 Get full complement of regulators working - +/- 15, +5, +3.3D, +3.3A
+[continued... in hindsight, looks like I got DAC2 board running off Nexys2 and isolator, without DRAM FIFO, and one channel of I/V]
 
+Aug 2016
+--------
 
+a) Hardware roadmap
+0.  ZTEX board with empty debug board - test USB interface and DRAM FIFO
+    -> Finished, sometime in early Aug 2016
+1.  ZTEX board with debug board wired up to FPGA adapter
+    -> Finished; got basic functionality on 8/12/2016, error-free I2S loopback and 2-ch DAC analog out on 1/2/2017
+2.  New FPGA adapter board which acts as carrier for ZTEX board
+    -> Skipping ahead to final board, will use a sandwich adapter for testing with existing DAC/ADC
+3.  "Final" board with new DAC/ADC spec - FPGA TBD
+    Needs to consider mechanicals, cost, PC integration
+    -> This is current task as of March 2017; planning to continue using ZTEX board, with USBStreamer/Ministreamer as lower cost alternative
+    
 Jan 2017
 --------
 
@@ -48,6 +64,8 @@ Stretch goal:
 b) Hardware
 
 First HW rev will not include PC in same chassis.  Just a USB soundcard.
+->> Change 1/15/2017: Include footprint for a Raspberry Pi. (Model B+ ver 3)
+    To be used as streaming server (mpd)
 
 PCB redesign ideas:
 - Consider all errata from first rev.
@@ -59,3 +77,28 @@ PCB redesign ideas:
 - Add Logicport debug connector
 - Come up with some way to allow different clocks (e.g. Tentlabs vs. Crystek vs. other)
 
+Mar 2017
+--------
+Planning v2 hardware setup
+Goals
+    Maintain stuffing options for cheaper versions and alternate USB interfaces
+    
+Order of operations plan
+    DONE Chassis mechanical design and PCB floorplanning: roughly know the specs of everything and check feasibility
+    DONE Unreg PSU board design/ordering--get more transformers, wall wart and input connectors etc. along with it
+    DONE Plywood chassis/wiring checks with PSU
+    Clock dist prototyping
+        DONE Design/order clock board and a mating diff-SE board (SMAs out) with long traces (and headers?)
+        DONE Verify functionality with clock and PSU PCBs, in LVDS and CML modes (+ all combinations)
+        Stretch goal: check phase noise of each oscillator option before/after the link
+    Supply regulator prototyping (before including supplies on underside of isolator)
+        DONE Design/order reg board with +/- 15, A5, D3.3 outputs
+        DONE Measurements: noise spectra, output impedance, Jung and 3-terminal variants
+    Carrier prototyping
+        DONE Design/order carrier A board, check that it can work with v1 isolator
+        POSTPONED Design/order carrier B board, USB/mini-streamers, check that they can work with v1 isolator
+    Then add isolator and chassis
+    Then design new modules
+        Additional idea: expand carrier with Bluetooth and SPDIF inputs 
+    And of course, work on software
+    
