@@ -48,11 +48,13 @@ if __name__ == '__main__':
 
     #   Try something: switch all slots except the DAC slot to clock 1 (24.576 MHz - not connected)
     #   to decrease loading on CLK0A net
-    backend.write(numpy.array([0xFF, DAPlatformBackend.SELECT_CLOCK, 0x00], dtype=backend.dtype))
+    #backend.write(numpy.array([0xFF, DAPlatformBackend.SELECT_CLOCK, 0x00], dtype=backend.dtype))
 
-    #   tester.get_dirchan()
+    print tester.get_dirchan()
 
-    SLOT_DAC = 0    #   default = 1
+    #SLOT_DAC = 0    #   default = 1
+
+    print tester.spi_summary()
 
     #print tester.ad1934_spi_summary(slot=SLOT_DAC)
     #tester.spi_write(SLOT_DAC, 1, 0, 0x0800, 0x99)  #   turn off MCLKO pin and PLL
@@ -176,9 +178,7 @@ if __name__ == '__main__':
     else:
         raise Exception('Unexpected source data type: %s' % x_st_int.dtype)
     """
-    
-    
-    
+
     #N = int(F_s * T)
     do_record = False
     N = x_st_int.shape[0]
