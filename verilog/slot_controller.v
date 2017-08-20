@@ -4,7 +4,7 @@ module slot_controller(clk_core, reset,
     aud_rd_valid, aud_rd_data, aud_rd_ready,
     aud_wr_valid, aud_wr_data, aud_wr_ready,
     spi_ss_out, spi_ss_in, spi_sck, spi_mosi, spi_miso,
-    slot_data, slot_clk, mclk, dir, chan, acon, aovf,
+    slot_data, slot_clk, sclk, dir, chan, hwcon, hwflag,
     spi_state, ctl_wr_waiting, fifo_en
 );
 
@@ -37,11 +37,11 @@ input spi_miso;
 
 inout [5:0] slot_data;
 input slot_clk;
-input mclk;
+input sclk;
 input dir;
 input chan;
-output reg [7:0] acon;
-input [1:0] aovf;
+output reg [7:0] hwcon;
+input [7:0] hwflag;
 
 output [3:0] spi_state;
 output ctl_wr_waiting;
@@ -139,15 +139,9 @@ wire dac_dsdl = 0;
 
 //  wire pdata_mod = pdata || !pdata_active;
 always @(*) begin
-    slot_data_val = 0;
-    if (dir && !chan) begin
-        //  2-channel DAC: slot[5] = BCK, slot[3] = LRCK, slot[4] = SDATA
-        slot_data_val = {dac_pbck, dac_pdata[0], dac_plrck, dac_dbck, dac_dsdr, dac_dsdl};
-    end
-    else if (dir && chan) begin
-        //  8-channel not yet supported... but we can at least put the pin ordering here
-        slot_data_val = {dac_plrck, dac_pbck, dac_pdata[0], dac_pdata[1], dac_pdata[2], dac_pdata[3]};
-    end
+    //  Version 2 isolator standardizes which pins are BCK/LRCK/DATA
+    //  Side effect: DSD will have to use existing names
+    slot_data_val = {dac_pdata[3], dac_pdata[2], dac_pdata[1], dac_pdata[0], dac_plrck, dac_pbck};
 end
 
 //  2 channel ADC mode
@@ -155,22 +149,13 @@ reg adc_pbck;
 reg adc_plrck;
 reg [3:0] adc_pdata;
 always @(*) begin
-    {adc_pbck, adc_plrck, adc_pdata} = 0;
-    if (!dir && !chan) begin
-        //  2-channel ADC: slot[2] = SDATA, slot[1] = BCK, slot[0] = LRCK
-        adc_pbck = slot_data[1];
-        adc_plrck = slot_data[0];
-        adc_pdata[0] = slot_data[2];
-    end
-    else if (!dir && chan) begin
-        //  8-channel not yet supported
-        adc_pbck = slot_data[3];
-        adc_plrck = slot_data[2];
-        adc_pdata[0] = slot_data[0];
-        adc_pdata[1] = slot_data[1];
-        adc_pdata[2] = slot_data[4];
-        adc_pdata[3] = slot_data[5];
-    end
+    //  Version 2 isolator standardizes which pins are BCK/LRCK/DATA
+    adc_pbck = slot_data[0];
+    adc_plrck = slot_data[1];
+    adc_pdata[0] = slot_data[2];
+    adc_pdata[1] = slot_data[3];
+    adc_pdata[2] = slot_data[4];
+    adc_pdata[3] = slot_data[5];
 end
 
 assign slot_data = dir ? slot_data_val : 6'bzzzzzz;
@@ -210,7 +195,7 @@ reg spi_response_ready;
 
 spi_master spi(
     .clk(clk_core), 
-    .clk_serial(!mclk),
+    .clk_serial(!sclk),
     .reset(reset), 
     .request_valid(spi_request_valid), 
     .request_data(spi_request_data), 
@@ -452,7 +437,7 @@ always @(posedge clk_core) begin
         current_cmd <= 0;
         current_report <= 0;
         
-        acon <= 8'h51;  //  defaults for PCM1804
+        hwcon <= 8'h51;  //  defaults for PCM1804
     end
     else begin
         ctl_wr_valid_int <= 0;
@@ -507,7 +492,7 @@ always @(posedge clk_core) begin
                 byte_counter <= 0;
             end
             SLOT_SET_ACON: begin
-                acon <= ctl_rd_data;
+                hwcon <= ctl_rd_data;
                 byte_counter <= 0;
             end
             endcase

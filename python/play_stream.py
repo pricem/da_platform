@@ -10,7 +10,7 @@ from modules.dsd1792 import DSD1792Module
 from modules.ad1934 import AD1934Module
 from utils import get_elapsed_time
 
-SLOT_DAC = 1
+SLOT_DAC = 0
 multichan_mode = False
 
 backend = DAPlatformBackend()
@@ -29,7 +29,9 @@ elif chan_vals[SLOT_DAC]:
 else:
     print 'Detected DSD1792, 2-channel'
     dac = DSD1792Module(backend)
+
 dac.setup(SLOT_DAC)
+dac.select_clock(1)
 
 #  For now, assumes 44.1 kHz, 2 channels, 16 bit format
 #  BUT should eventually get that from the command line (ALSA)

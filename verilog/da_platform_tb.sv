@@ -298,16 +298,19 @@ initial begin
     #10000 ;
     
     //  Test clock select
-    send_cmd_data[0] = 8'h0D;
-    send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
+    //  send_cmd_data[0] = 8'h0D;
+    //  send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
     
-    #10000 ;
+    //  #50000 ;
     
     //  Try some SPI setup stuff.  First, 16 bit transactions (8-bit addr/data).
-    spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
-    spi_write(8'h00, 0, 0, 8'h29, 8'hA3);
-    spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
-    spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    spi_write(8'h00, 0, 0, 8'h47, 8'hA3);
+    //  spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
+    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    
+    //  Stop early
+    #50000 $finish;
     
     //  Now, 24 bit transactions, 16 bit addr + 8 bit data.
     spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
@@ -315,8 +318,7 @@ initial begin
     spi_read(8'h01, 1, 0, 16'h0819, spi_receive_data);
     spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
     
-    //  Stop early
-    #10000 $finish;
+
     
     /*
     //  Set ACON

@@ -7,22 +7,18 @@
 
 module slot_model_dac8(
     inout [5:0] slotdata,
-    input clk,
-    input dmclk,
-    input dmcs, 
-    input dmdi, 
-    output dmdo, 
-    input amclk,
-    input amcs, 
-    input amdi, 
-    output amdo, 
+    input mclk,
+    input sclk,
+    input cs_n, 
+    input mosi, 
+    output miso, 
     output dir,
     output chan,
     input hwcon,
-    output aovfl,
-    output aovfr,
+    output hwflag,
     input srclk,
-    input reset,
+    input srclk2,
+    input reset_n,
     
     //  Testbench output
     input logic sample_clk,
@@ -34,21 +30,19 @@ assign dir = 1;
 assign chan = 1;
 
 //  ADC stuff unused
-assign amdo = 0;
-assign aovfl = 0;
-assign aovfr = 0;
+assign hwflag = 0;
 
 //  SPI interface
 spi_slave #(
     .address_bits(16), 
     .data_bits(8)
 ) ctl_model(
-    .clk(clk), 
-    .reset(!reset), 
-    .sck(dmclk), 
-    .ss(dmcs), 
-    .mosi(dmdi), 
-    .miso(dmdo)
+    .clk(mclk), 
+    .reset(!reset_n), 
+    .sck(mclk), 
+    .ss(cs_n), 
+    .mosi(mosi), 
+    .miso(miso)
 );
 
 FIFOInterface samples_a(sample_clk);

@@ -20,7 +20,7 @@ module da_platform #(
     //  (As of 8/3/2016 the memory controller is yet to be implemented...)
     host_width = 16,
     mem_width = 32,
-    mclk_ratio = 8,
+    sclk_ratio = 8,
     num_slots = 4
 ) (
     //  Generic memory interface
@@ -62,58 +62,75 @@ logic reset_local_hold;
 logic [7:0] reset_local_counter;
 localparam reset_local_timeout_cycles = 200;
 always_comb begin
-    iso.reset_out = !(cr_core.reset || reset_local);
+    iso.reset_n = !(cr_core.reset || reset_local);
 end
 
-//  MCLK generation, along with a reset synchronized to it
-wire mclk_last;
-reg reset_mclk;
+//  SCLK generation, along with a reset synchronized to it
+wire sclk_last;
+reg reset_sclk;
 
-clk_divider #(.ratio(mclk_ratio)) mclkdiv(cr_core.reset, cr_core.clk, iso.mclk);
-delay mclk_delay(cr_core.clk, cr_core.reset, iso.mclk, mclk_last);
+clk_divider #(.ratio(sclk_ratio)) mclkdiv(cr_core.reset, cr_core.clk, iso.sclk);
+delay sclk_delay(cr_core.clk, cr_core.reset, iso.sclk, sclk_last);
 
 always @(posedge cr_core.clk) begin
     if (cr_core.reset)
-        reset_mclk <= 1;
-    else if (!iso.mclk && mclk_last)
-        reset_mclk <= 0;
+        reset_sclk <= 1;
+    else if (!iso.sclk && sclk_last)
+        reset_sclk <= 0;
 end
 
-//  SRCLK generation - for serializers
-wire srclk_predelay;
-clk_divider #(.ratio(64), .threshold(4)) srclkdiv(cr_core.reset, cr_core.clk, srclk_predelay);
+//  SRCLK/SRCLK2 generation - for serializers
+logic srclk_sync;
+logic srclk2_sync;
+logic srclk2_fpga_launch;
+logic srclk2_fpga_capture;
 
+logic [5:0] cycle_count;
+always_ff @(posedge iso.sclk)   
+    if (reset_sclk) cycle_count <= 0;
+    else cycle_count <= cycle_count + 1;
+
+logic srclk_en;
+logic srclk2_modules_en;
+logic srclk2_fpga_launch_en;
+logic srclk2_fpga_capture_en;
+always_latch if (!iso.sclk) srclk_en = (!reset_sclk && (cycle_count % 8 == 0));
+always_latch if (!iso.sclk) srclk2_fpga_launch_en = (!reset_sclk && (cycle_count % 64 == 1));
+always_latch if (!iso.sclk) srclk2_modules_en = (!reset_sclk && (cycle_count % 64 == 17));
+always_latch if (!iso.sclk) srclk2_fpga_capture_en = (!reset_sclk && (cycle_count % 64 == 33));
 always_comb begin
-    iso.srclk = !srclk_predelay;
+    iso.srclk = !(iso.sclk && srclk_en);
+    iso.srclk2 = !(iso.sclk && srclk2_modules_en);
+    srclk2_fpga_launch = !(iso.sclk && srclk2_fpga_launch_en);
+    srclk2_fpga_capture = !(iso.sclk && srclk2_fpga_capture_en);
+end
+
+always_ff @(posedge iso.sclk) begin
+    srclk_sync <= !(cycle_count % 8 == 7);
+    srclk2_sync <= !(cycle_count % 64 == 63);
 end
 
 reg [3:0] clk_inhibit;
 reg [3:0] reset_slots;
 
-wire clk0_last;
-delay clk0_delay(cr_core.clk, cr_core.reset, iso.clk0, clk0_last);
-wire clk1_last;
-delay clk1_delay(cr_core.clk, cr_core.reset, iso.clk1, clk1_last);
+wire mclk_last;
+delay mclk_delay(cr_core.clk, cr_core.reset, iso.mclk, mclk_last);
+
 
 //  Parallel versions of serialized signals
 
-wire [7:0] aovf_parallel;
+//  Coming from modules to FPGA - dirchan and hwflag
 wire [7:0] dirchan_parallel;
-wire [7:0] dmcs_parallel;
-wire [7:0] amcs_parallel;
-reg [7:0] clksel_parallel;
+wire [7:0] hwflag_parallel;
+deserializer dirchan_des(iso.sclk, iso.dirchan, iso.srclk, dirchan_parallel);
+deserializer hwflag_des(iso.sclk, iso.hwflag, iso.srclk, hwflag_parallel);
 
-wire [7:0] acon0_parallel;
-wire [7:0] acon1_parallel;
+//  Going from FPGA to modules - hwcon and cs_n
+wire [7:0] hwcon_parallel;
+wire [7:0] cs_n_parallel;
+serializer #(.launch_negedge(1)) hwcon_ser(iso.sclk, iso.hwcon, srclk_sync, hwcon_parallel);
+serializer #(.launch_negedge(1)) cs_n_ser(iso.sclk, iso.cs_n, srclk_sync, cs_n_parallel);
 
-deserializer dirchan_des(iso.mclk, iso.dirchan, iso.srclk, dirchan_parallel);
-deserializer aovf_des(iso.mclk, iso.aovf, iso.srclk, aovf_parallel);
-
-serializer amcs_ser(iso.mclk, iso.amcs, iso.srclk, amcs_parallel);
-serializer dmcs_ser(iso.mclk, iso.dmcs, iso.srclk, dmcs_parallel);
-serializer clksel_ser(iso.mclk, iso.clksel, iso.srclk, clksel_parallel);
-serializer acon0_ser(iso.mclk, iso.acon[0], iso.srclk, acon0_parallel);
-serializer acon1_ser(iso.mclk, iso.acon[1], iso.srclk, acon1_parallel);
 
 //  FIFOs for clock domain conversion (host interface (USB/FX2) to core)
 FIFOInterface #(.num_bits(host_width)) host_in_core (cr_core.clk);
@@ -176,15 +193,12 @@ reg cmd_stall;
 reg [7:0] cmd_data_waiting;
 
 //  Monitor AMCS and DMCS to estimate what the values are on the board
-wire [7:0] amcs_parallel_est;
-wire [7:0] dmcs_parallel_est;
-deserializer amcs_des(iso.mclk, iso.amcs, iso.srclk, amcs_parallel_est);
-deserializer dmcs_des(iso.mclk, iso.dmcs, iso.srclk, dmcs_parallel_est);
+wire [7:0] cs_n_parallel_est;
+deserializer cs_n_des(iso.sclk, iso.cs_n, iso.srclk, cs_n_parallel_est);
 
 //  Things which are replicated for each slot
-
-assign amcs_parallel[7:4] = 4'b1111;
-assign dmcs_parallel[7:4] = 4'b1111;
+assign cs_n_parallel[7:4] = 4'b1111;
+assign hwcon_parallel[7:4] = 4'b0000;
 
 /*  FIFO interface declarations
     - Audio data goes through RAM-based arbiter; control data goes through plain FIFOs
@@ -372,29 +386,26 @@ generate for (g = 0; g < num_slots; g++) begin: slots
     end
 
     //  Muxing of isolator interface signals
-    wire slot_clk = (!clk_inhibit[g]) && (clksel_parallel[g] ? iso.clk1 : iso.clk0);
+    wire slot_clk = (!clk_inhibit[g]) && iso.mclk;
 
     wire slot_dir = dirchan_parallel[g];
     wire slot_chan = dirchan_parallel[g+4];
-    wire [1:0] slot_aovf = aovf_parallel[(g+1)*2-1:g*2];
-    
-    wire [7:0] slot_acon;
-    //  assign acon0_parallel = ((slot_dir == 0) && (g == 0)) ? slot_acon : 8'bzzzzzzzz;
-    //  assign acon1_parallel = ((slot_dir == 0) && (g == 2)) ? slot_acon : 8'bzzzzzzzz;
-    //  Slot 0 ADC takes precedence over slot 1 for setting ACON (same for 2 over 3)
-    assign acon0_parallel = ((slot_dir == 0) && ((g == 0) || ((g == 1) && dirchan_parallel[0]))) ? slot_acon : 8'bzzzzzzzz;
-    assign acon1_parallel = ((slot_dir == 0) && ((g == 2) || ((g == 3) && dirchan_parallel[2]))) ? slot_acon : 8'bzzzzzzzz;    
+    wire [7:0] slot_hwflag;
+    wire [7:0] slot_hwcon;
+
+    //  Ser/des of hwcon and hwflag
+    deserializer slot_hwflag_deser(iso.srclk, hwflag_parallel[g], srclk2_fpga_capture, slot_hwflag);
+    serializer #(.launch_negedge(1)) slot_hwcon_ser(srclk_sync, hwcon_parallel[g], srclk2_sync, slot_hwcon);
 
     wire slot_spi_ss_out;
-    assign amcs_parallel[g] = !((slot_dir == 0) && (slot_spi_ss_out == 0));
-    assign dmcs_parallel[g] = !((slot_dir == 1) && (slot_spi_ss_out == 0));
-    wire slot_spi_ss_in = slot_dir ? dmcs_parallel_est[g] : amcs_parallel_est[g];
+    assign cs_n_parallel[g] = slot_spi_ss_out;
+    
+    wire slot_spi_ss_in = cs_n_parallel_est[g];
     wire slot_spi_sck;
     wire slot_spi_mosi;
-    assign iso.amdi = ((slot_dir == 0) && (slot_spi_ss_in == 0)) ? slot_spi_mosi : 1'bz;
-    assign iso.dmdi = ((slot_dir == 1) && (slot_spi_ss_in == 0)) ? slot_spi_mosi : 1'bz;
-    wire slot_spi_miso = slot_dir ? iso.dmdo : iso.amdo;
-    
+    assign iso.mosi = (slot_spi_ss_in == 0) ? slot_spi_mosi : 1'bz;
+    wire slot_spi_miso = iso.miso;
+
     //  Debug - monitor SPI state
     wire [3:0] slot_spi_state;
     assign led_debug = (g == 0) ? slot_spi_state : 4'bzzzz;
@@ -424,11 +435,11 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         .spi_miso(slot_spi_miso),
         .slot_data(iso.slotdata[(g+1)*6-1:g*6]), 
         .slot_clk(slot_clk), 
-        .mclk(iso.mclk), 
+        .sclk(iso.sclk), 
         .dir(slot_dir), 
-        .chan(slot_chan), 
-        .acon(slot_acon), 
-        .aovf(slot_aovf),
+        .chan(slot_chan),
+        .hwcon(slot_hwcon), 
+        .hwflag(slot_hwflag),
         .spi_state(slot_spi_state),
         .fifo_en(slot_fifo_en[g])
     );
@@ -561,7 +572,7 @@ always @(posedge cr_core.clk) begin
         ctl_in.data <= 0;
         //  ctl_out_ready_int <= 0;
 
-        clksel_parallel <= 0;
+        iso.clksel <= 0;
         clk_inhibit <= 0;
         reset_slots <= 4'hF;
         
@@ -629,17 +640,10 @@ always @(posedge cr_core.clk) begin
         end
 
         for (i = 0; i < 4; i = i + 1) begin
-            if (reset_slots[i] && !clk_inhibit[i] && !reset_mclk) begin
-                //  Wait for clock pulse of selected clock before disabling reset for that slot
-                if (clksel_parallel[i] == 1'b1) begin
-                    if (iso.clk1 && !clk1_last) begin
-                        reset_slots[i] <= 0;
-                    end
-                end
-                else begin
-                    if (iso.clk0 && !clk0_last) begin
-                        reset_slots[i] <= 0;
-                    end
+            if (reset_slots[i] && !clk_inhibit[i] && !reset_sclk) begin
+                //  Wait for MCLK pulse before disabling reset for that slot
+                if (iso.mclk && !mclk_last) begin
+                    reset_slots[i] <= 0;
                 end
             end
         end
@@ -892,9 +896,9 @@ always @(posedge cr_core.clk) begin
 
                 SELECT_CLOCK: begin
                     //  For each slot that is being switched over, stop the clock and reset it.
-                    clk_inhibit <= (clksel_parallel ^ host_in_core.data);
-                    reset_slots <= (clksel_parallel ^ host_in_core.data);
-                    clksel_parallel <= host_in_core.data;
+                    clk_inhibit <= (iso.clksel ^ host_in_core.data[0]);
+                    reset_slots <= (iso.clksel ^ host_in_core.data[0]);
+                    iso.clksel <= host_in_core.data[0];
                     state <= STATE_IDLE;
                 end
 
@@ -959,7 +963,8 @@ always @(posedge cr_core.clk) begin
                     	host_out_core.data <= dirchan_parallel;
                     end
                     AOVF_REPORT: begin
-                        host_out_core.data <= aovf_parallel;
+                        //  TODO: Expand, since this is now 8 bits per module = 32 bits.
+                        host_out_core.data <= hwflag_parallel;
                     end
                     FIFO_REPORT_STATUS: begin
                         case ((word_counter - 4) % 4)

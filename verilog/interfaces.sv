@@ -44,25 +44,41 @@ interface ClockReset;
     modport client(input clk, input reset);
 endinterface
 
+/*
+interface SlotData;
+    wire bck;
+    wire lrck;
+    wire [3:0] data;
+endinterface
+*/
+
 interface IsolatorInterface;
+    //  Ideally, we would use:
+    //  SlotData modules[4] ();
+    //  But instead, let's break it down like this:
+    //      slotdata[23:18] -> module 3
+    //      slotdata[17:12] -> module 2
+    //      slotdata[11:6]  -> module 1
+    //      slotdata[5:0]   -> module 0
+    //  And:
+    //      slotdata[5:2]   -> module 0 data [3:0]
+    //      slotdata[1]     -> module 0 lrck
+    //      slotdata[0]     -> module 0 bck
     wire [23:0] slotdata;
-    logic mclk;
-    logic amcs; 
-    logic amdi; 
-    logic amdo; 
-    logic dmcs; 
-    logic dmdi; 
-    logic dmdo; 
+    logic sclk;
+    logic cs_n; 
+    logic miso; 
+    logic mosi; 
     logic dirchan;
-    logic [1:0] acon;
-    logic aovf;
-    logic clk0; 
-    logic reset_out;
+    logic hwcon;
+    logic hwflag;
+    logic mclk; 
+    logic reset_n;
     logic srclk;
+    logic srclk2;
     logic clksel;
-    logic clk1;
     
-    modport fpga(inout slotdata, output mclk, output amcs, output amdi, input amdo, output dmcs, output dmdi, input dmdo, input dirchan, output acon, input aovf, input clk0, output reset_out, output srclk, output clksel, input clk1);
-    modport isolator(inout slotdata, input mclk, input amcs, input amdi, output amdo, input dmcs, input dmdi, output dmdo, output dirchan, input acon, output aovf, output clk0, input reset_out, input srclk, input clksel, output clk1);
+    modport fpga(inout slotdata, output sclk, cs_n, mosi, hwcon, reset_n, srclk, srclk2, clksel, input miso, dirchan, hwflag, mclk);
+    modport isolator(inout slotdata, input sclk, cs_n, mosi, hwcon, reset_n, srclk, srclk2, clksel, output miso, dirchan, hwflag, mclk);
 endinterface
 

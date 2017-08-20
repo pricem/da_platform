@@ -47,7 +47,17 @@ class DSD1792Module(ModuleBase):
             print '%6s = %3d' % (key, val)
 
         return result_dict
-     
+    
+    def set_reg(self, reg_name, new_val, slot=0):
+        (reg_index, start_bit, num_bits) = DSD1792Module.REG_CONFIG[reg_name]
+        bit_mask = 0
+        for i in range(num_bits):
+            bit_mask |= (1 << (start_bit + i))
+        current_val = self.spi_read(slot, 0, 0, reg_index)
+        new_val = (current_val & (~bit_mask)) | (new_val << start_bit)
+        print 'Updating register 0x%02x from 0x%02x to 0x%02x' % (reg_index, current_val, new_val)
+        self.spi_write(slot, 0, 0, reg_index, new_val)
+    
     def num_channels(self):
         return 2
 

@@ -17,7 +17,7 @@ class EZUSBBackend(object):
         self.device = self.context.getByVendorIDAndProductID(0x221a, 0x0100)
         assert self.device
         self.handle = self.device.open()
-        self.handle.resetDevice()
+        #   self.handle.resetDevice()
         self.handle.setConfiguration(1)
         self.handle.claimInterface(0)
         

@@ -56,6 +56,11 @@ class ModuleBase(object):
             ovfr = 1 * ((dval & (1 << (slot * 2 + 1))) > 0)
             print 'Slot %d: Left overflow = %d, right overflow = %d' % (slot, ovfl, ovfr)
             #	print 'Result of get_aovf = %s' % self.pprint(result)
+    
+    def select_clock(self, clksel):
+        cmd = numpy.array([0xFF, 0x40, clksel], dtype=self.backend.dtype)
+        self.backend.write(cmd)
+        print 'Wrote command for clock select: %s' % cmd
 
     def reset_slots(self):
         self.backend.write(numpy.array([0xFF, DAPlatformBackend.RESET_SLOTS], dtype=self.backend.dtype))

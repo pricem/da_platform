@@ -70,6 +70,8 @@ always_comb begin
     FULL_FLAG = !(out_count == 512);
     
     //  Only allow read/write if FIFO address is correct
+    EMPTY_FLAG = !((in_count == 0));
+    data_buf = in_local.data;
     in_local.ready = (!SLRD && (FIFOADDR == INEP / 2 - 1)) && !data_pending;
 
     out_local.data = fd;
@@ -84,16 +86,18 @@ always @(posedge ifclk) begin
         data_pending <= 0;
         data_pending_last <= 0;
         enable_last <= 0;
-        EMPTY_FLAG <= 0;
+        //  EMPTY_FLAG <= 0;
     end
     else begin
         data_pending_last <= data_pending;
         enable_last <= in_local.enable && in_local.ready;
-        EMPTY_FLAG <= empty_next;
+        //  EMPTY_FLAG <= empty_next;
         if (!SLRD) begin
             data_pending <= 0;
+            /*
             if (!data_pending)
                 data_buf <= in_local.data;
+            */
         end
         else if (enable_last)
             data_pending <= 1; 

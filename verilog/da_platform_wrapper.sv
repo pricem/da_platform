@@ -7,7 +7,7 @@
 module da_platform_wrapper #(
     host_width = 16,
     mem_width = 32,
-    mclk_ratio = 8,
+    sclk_ratio = 8,
     num_slots = 4
 ) (
     //  ZTEX global inputs
@@ -43,24 +43,6 @@ module da_platform_wrapper #(
     input fx2_flagb,
 
     //  Interface to isolator board
-    /*
-    inout [23:0] iso_slotdata,
-    output iso_mclk,
-    output iso_amcs,
-    output iso_amdi, 
-    input iso_amdo, 
-    output iso_dmcs, 
-    output iso_dmdi, 
-    input iso_dmdo, 
-    input iso_dirchan,
-    output [1:0] iso_acon,
-    input iso_aovf,
-    input iso_clk0, 
-    output iso_reset_out,
-    output iso_srclk,
-    output iso_clksel,
-    input iso_clk1,
-    */
     IsolatorInterface.fpga iso,
     
     //  Other
@@ -89,13 +71,11 @@ always_comb begin
     cr_host.reset = reset_usb;
 end
 
-//  IsolatorInterface iso ();
-
 //  Core
 da_platform #(
     .host_width(host_width),
     .mem_width(mem_width),
-    .mclk_ratio(mclk_ratio),
+    .sclk_ratio(sclk_ratio),
     .num_slots(num_slots)
 ) main(
     .cr_mem(cr_mem.client),

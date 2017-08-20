@@ -7,22 +7,18 @@
 
 module slot_model_adc2(
     inout [5:0] slotdata,
-    input clk,
-    input dmclk,
-    input dmcs, 
-    input dmdi, 
-    output dmdo, 
-    input amclk,
-    input amcs, 
-    input amdi, 
-    output amdo, 
+    input mclk,
+    input sclk,
+    input cs_n, 
+    input mosi, 
+    output miso, 
     output dir,
     output chan,
     input hwcon,
-    output aovfl,
-    output aovfr,
+    output hwflag,
     input srclk,
-    input reset,
+    input srclk2,
+    input reset_n,
     
     //  Testbench input
     input logic sample_clk,
@@ -32,30 +28,25 @@ module slot_model_adc2(
 //  2-channel ADC
 assign dir = 0;
 assign chan = 0;
-
-//  DAC stuff unused
-assign dmdo = 0;
-
-assign aovfl = 0;
-assign aovfr = 0;
+assign hwflag = 0;
 
 //  SPI interface
 spi_slave #(
    .address_bits(8), 
    .data_bits(8)
 ) ctl_model(
-    .clk(clk), 
-    .reset(!reset), 
-    .sck(amclk), 
-    .ss(amcs), 
-    .mosi(amdi), 
-    .miso(amdo)
+    .clk(mclk), 
+    .reset(!reset_n), 
+    .sck(sclk), 
+    .ss(cs_n), 
+    .mosi(mosi), 
+    .miso(miso)
 );
 
 //  Audio generator (stereo... make 8-ch ones later)
 //  Pin mapping matches initial version of ADC2 board with PCM4202
 i2s_source adc_model(
-    .i2s_master_clk(clk),
+    .i2s_master_clk(mclk),
     .sample_clk(sample_clk),
     .samples(samples),
     .bck(slotdata[1]),

@@ -3,20 +3,351 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="/home/price/projects/cdp/xilinx/da_platform/da_platform.hw/hw_1/wave/hw_ila_data_2/hw_ila_data_2.wdb" id="1">
+      <db_ref path="da_platform_tb_behav.wdb" id="1">
          <top_modules>
+            <top_module name="da_platform_tb" />
+            <top_module name="glbl" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0fs"></ZoomStartTime>
-      <ZoomEndTime time="10956806fs"></ZoomEndTime>
-      <Cursor1Time time="319000fs"></Cursor1Time>
+      <ZoomStartTime time="4880200000fs"></ZoomStartTime>
+      <ZoomEndTime time="29630200001fs"></ZoomEndTime>
+      <Cursor1Time time="14778400000fs"></Cursor1Time>
    </zoom_setting>
-   <WVObjectSize size="1" />
-   <wvobject type="vbus" fp_name="vbus398">
-      <obj_property name="label">write_words_target[6:0]</obj_property>
+   <column_width_setting>
+      <NameColumnWidth column_width="175"></NameColumnWidth>
+      <ValueColumnWidth column_width="146"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="83" />
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/dirchan_parallel">
+      <obj_property name="ElementShortName">dirchan_parallel[7:0]</obj_property>
+      <obj_property name="ObjectShortName">dirchan_parallel[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cs_n_parallel">
+      <obj_property name="ElementShortName">cs_n_parallel[7:0]</obj_property>
+      <obj_property name="ObjectShortName">cs_n_parallel[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/current_cmd">
+      <obj_property name="ElementShortName">current_cmd[7:0]</obj_property>
+      <obj_property name="ObjectShortName">current_cmd[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/current_report">
+      <obj_property name="ElementShortName">current_report[7:0]</obj_property>
+      <obj_property name="ObjectShortName">current_report[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cycle_count">
+      <obj_property name="ElementShortName">cycle_count[5:0]</obj_property>
+      <obj_property name="ObjectShortName">cycle_count[5:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/hwcon_parallel">
+      <obj_property name="ElementShortName">hwcon_parallel[7:0]</obj_property>
+      <obj_property name="ObjectShortName">hwcon_parallel[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/hwflag_parallel">
+      <obj_property name="ElementShortName">hwflag_parallel[7:0]</obj_property>
+      <obj_property name="ObjectShortName">hwflag_parallel[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/srclk2">
+      <obj_property name="ElementShortName">srclk2</obj_property>
+      <obj_property name="ObjectShortName">srclk2</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/srclk">
+      <obj_property name="ElementShortName">srclk</obj_property>
+      <obj_property name="ObjectShortName">srclk</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/iso/slotdata">
+      <obj_property name="ElementShortName">slotdata[23:0]</obj_property>
+      <obj_property name="ObjectShortName">slotdata[23:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/sclk">
+      <obj_property name="ElementShortName">sclk</obj_property>
+      <obj_property name="ObjectShortName">sclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/reset_n">
+      <obj_property name="ElementShortName">reset_n</obj_property>
+      <obj_property name="ObjectShortName">reset_n</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/mosi">
+      <obj_property name="ElementShortName">mosi</obj_property>
+      <obj_property name="ObjectShortName">mosi</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/miso">
+      <obj_property name="ElementShortName">miso</obj_property>
+      <obj_property name="ObjectShortName">miso</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/mclk">
+      <obj_property name="ElementShortName">mclk</obj_property>
+      <obj_property name="ObjectShortName">mclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/hwflag">
+      <obj_property name="ElementShortName">hwflag</obj_property>
+      <obj_property name="ObjectShortName">hwflag</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/hwcon">
+      <obj_property name="ElementShortName">hwcon</obj_property>
+      <obj_property name="ObjectShortName">hwcon</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/dirchan">
+      <obj_property name="ElementShortName">dirchan</obj_property>
+      <obj_property name="ObjectShortName">dirchan</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/cs_n">
+      <obj_property name="ElementShortName">cs_n</obj_property>
+      <obj_property name="ObjectShortName">cs_n</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/clksel">
+      <obj_property name="ElementShortName">clksel</obj_property>
+      <obj_property name="ObjectShortName">clksel</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider58" type="divider">
+      <obj_property name="label">Iso model</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_hwflag">
+      <obj_property name="ElementShortName">slot_hwflag[3:0]</obj_property>
+      <obj_property name="ObjectShortName">slot_hwflag[3:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_hwcon">
+      <obj_property name="ElementShortName">slot_hwcon[3:0]</obj_property>
+      <obj_property name="ObjectShortName">slot_hwcon[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_dir">
+      <obj_property name="ElementShortName">slot_dir[3:0]</obj_property>
+      <obj_property name="ObjectShortName">slot_dir[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_cs_n">
+      <obj_property name="ElementShortName">slot_cs_n[3:0]</obj_property>
+      <obj_property name="ObjectShortName">slot_cs_n[3:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/isolator/iso/mosi">
+      <obj_property name="ElementShortName">mosi</obj_property>
+      <obj_property name="ObjectShortName">mosi</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_chan">
+      <obj_property name="ElementShortName">slot_chan[3:0]</obj_property>
+      <obj_property name="ObjectShortName">slot_chan[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider84" type="divider">
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_ser/clk_ser">
+      <obj_property name="ElementShortName">clk_ser</obj_property>
+      <obj_property name="ObjectShortName">clk_ser</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_ser/clk_par">
+      <obj_property name="ElementShortName">clk_par</obj_property>
+      <obj_property name="ObjectShortName">clk_par</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_ser/data_ser">
+      <obj_property name="ElementShortName">data_ser</obj_property>
+      <obj_property name="ObjectShortName">data_ser</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cs_n_ser/data_par">
+      <obj_property name="ElementShortName">data_par[7:0]</obj_property>
+      <obj_property name="ObjectShortName">data_par[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cs_n_ser/\negedge_sensitive.data_int ">
+      <obj_property name="ElementShortName">\negedge_sensitive.data_int [7:0]</obj_property>
+      <obj_property name="ObjectShortName">\negedge_sensitive.data_int [7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_ser/\negedge_sensitive.data_ser_next ">
+      <obj_property name="ElementShortName">\negedge_sensitive.data_ser_next </obj_property>
+      <obj_property name="ObjectShortName">\negedge_sensitive.data_ser_next </obj_property>
+   </wvobject>
+   <wvobject fp_name="divider153" type="divider">
+      <obj_property name="label">cs_n_des</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_des/clk_ser">
+      <obj_property name="ElementShortName">clk_ser</obj_property>
+      <obj_property name="ObjectShortName">clk_ser</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_des/data_ser">
+      <obj_property name="ElementShortName">data_ser</obj_property>
+      <obj_property name="ObjectShortName">data_ser</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/cs_n_des/clk_par">
+      <obj_property name="ElementShortName">clk_par</obj_property>
+      <obj_property name="ObjectShortName">clk_par</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cs_n_des/data_par">
+      <obj_property name="ElementShortName">data_par[7:0]</obj_property>
+      <obj_property name="ObjectShortName">data_par[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cs_n_des/data_int">
+      <obj_property name="ElementShortName">data_int[7:0]</obj_property>
+      <obj_property name="ObjectShortName">data_int[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/sclk">
+      <obj_property name="ElementShortName">sclk</obj_property>
+      <obj_property name="ObjectShortName">sclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/iso/srclk">
+      <obj_property name="ElementShortName">srclk</obj_property>
+      <obj_property name="ObjectShortName">srclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/srclk_sync">
+      <obj_property name="ElementShortName">srclk_sync</obj_property>
+      <obj_property name="ObjectShortName">srclk_sync</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/cycle_count">
+      <obj_property name="ElementShortName">cycle_count[5:0]</obj_property>
+      <obj_property name="ObjectShortName">cycle_count[5:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/srclk_en">
+      <obj_property name="ElementShortName">srclk_en</obj_property>
+      <obj_property name="ObjectShortName">srclk_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider100" type="divider">
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/state">
+      <obj_property name="ElementShortName">state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/host_in/data">
+      <obj_property name="ElementShortName">data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_in/enable">
+      <obj_property name="ElementShortName">enable</obj_property>
+      <obj_property name="ObjectShortName">enable</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_in/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/host_out/data">
+      <obj_property name="ElementShortName">data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_out/enable">
+      <obj_property name="ElementShortName">enable</obj_property>
+      <obj_property name="ObjectShortName">enable</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_out/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_in_core/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_in_core/enable">
+      <obj_property name="ElementShortName">enable</obj_property>
+      <obj_property name="ObjectShortName">enable</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/host_in_core/data">
+      <obj_property name="ElementShortName">data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_out_core/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/main/host_out_core/enable">
+      <obj_property name="ElementShortName">enable</obj_property>
+      <obj_property name="ObjectShortName">enable</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/main/host_out_core/data">
+      <obj_property name="ElementShortName">data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/host_in/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/host_in/enable">
+      <obj_property name="ElementShortName">enable</obj_property>
+      <obj_property name="ObjectShortName">enable</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/host_in/data">
+      <obj_property name="ElementShortName">data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/dut/fx2_fd">
+      <obj_property name="ElementShortName">fx2_fd[15:0]</obj_property>
+      <obj_property name="ObjectShortName">fx2_fd[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/fx2_slwr">
+      <obj_property name="ElementShortName">fx2_slwr</obj_property>
+      <obj_property name="ObjectShortName">fx2_slwr</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/fx2_slrd">
+      <obj_property name="ElementShortName">fx2_slrd</obj_property>
+      <obj_property name="ObjectShortName">fx2_slrd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/dut/fx2_sloe">
+      <obj_property name="ElementShortName">fx2_sloe</obj_property>
+      <obj_property name="ObjectShortName">fx2_sloe</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/SLWR">
+      <obj_property name="ElementShortName">SLWR</obj_property>
+      <obj_property name="ObjectShortName">SLWR</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/PKTEND">
+      <obj_property name="ElementShortName">PKTEND</obj_property>
+      <obj_property name="ObjectShortName">PKTEND</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/SLOE">
+      <obj_property name="ElementShortName">SLOE</obj_property>
+      <obj_property name="ObjectShortName">SLOE</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/SLRD">
+      <obj_property name="ElementShortName">SLRD</obj_property>
+      <obj_property name="ObjectShortName">SLRD</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/fx2/fd">
+      <obj_property name="ElementShortName">fd[15:0]</obj_property>
+      <obj_property name="ObjectShortName">fd[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/ifclk">
+      <obj_property name="ElementShortName">ifclk</obj_property>
+      <obj_property name="ObjectShortName">ifclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/in_local/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/in_local/enable">
+      <obj_property name="ElementShortName">enable</obj_property>
+      <obj_property name="ObjectShortName">enable</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/fx2/in_local/data">
+      <obj_property name="ElementShortName">data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/fx2/in_count">
+      <obj_property name="ElementShortName">in_count[9:0]</obj_property>
+      <obj_property name="ObjectShortName">in_count[9:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/da_platform_tb/fx2/out_count">
+      <obj_property name="ElementShortName">out_count[9:0]</obj_property>
+      <obj_property name="ObjectShortName">out_count[9:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/data_pending">
+      <obj_property name="ElementShortName">data_pending</obj_property>
+      <obj_property name="ObjectShortName">data_pending</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/data_pending_last">
+      <obj_property name="ElementShortName">data_pending_last</obj_property>
+      <obj_property name="ObjectShortName">data_pending_last</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/empty_next">
+      <obj_property name="ElementShortName">empty_next</obj_property>
+      <obj_property name="ObjectShortName">empty_next</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/enable_last">
+      <obj_property name="ElementShortName">enable_last</obj_property>
+      <obj_property name="ObjectShortName">enable_last</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/EMPTY_FLAG">
+      <obj_property name="ElementShortName">EMPTY_FLAG</obj_property>
+      <obj_property name="ObjectShortName">EMPTY_FLAG</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/fx2/FULL_FLAG">
+      <obj_property name="ElementShortName">FULL_FLAG</obj_property>
+      <obj_property name="ObjectShortName">FULL_FLAG</obj_property>
    </wvobject>
 </wave_config>
