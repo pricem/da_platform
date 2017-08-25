@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Product Version: Vivado v2016.2 (64-bit)              -->
+<!-- Product Version: Vivado v2017.2 (64-bit)              -->
 <!--                                                         -->
-<!-- Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.   -->
+<!-- Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="14" Path="/home/price/projects/cdp/xilinx/memfifo/memfifo.xpr">
+<Project Version="7" Minor="20" Path="/home/price/projects/cdp/xilinx/memfifo/memfifo.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="08d14e7debc24763ad6e2e9aa1cb396d"/>
-    <Option Name="Part" Val="xc7a100tcsg324-2"/>
+    <Option Name="Part" Val="xc7a35tcsg324-1"/>
     <Option Name="CompiledLibDir" Val="$PCACHEDIR/compile_simlib"/>
     <Option Name="CompiledLibDirXSim" Val=""/>
     <Option Name="CompiledLibDirModelSim" Val="$PCACHEDIR/compile_simlib/modelsim"/>
@@ -20,11 +20,13 @@
     <Option Name="SourceMgmtMode" Val="DisplayOnly"/>
     <Option Name="ActiveSimSet" Val="sim_1"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
+    <Option Name="IPCachePermission" Val="disable"/>
     <Option Name="EnableCoreContainer" Val="FALSE"/>
     <Option Name="CreateRefXciForCoreContainers" Val="FALSE"/>
-    <Option Name="IPUserFilesDir" Val="$PPRDIR/memfifo.ip_user_files"/>
-    <Option Name="IPStaticSourceDir" Val="$PPRDIR/memfifo.ip_user_files/ipstatic"/>
+    <Option Name="IPUserFilesDir" Val="$PIPUSERFILESDIR"/>
+    <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
+    <Option Name="DSANumComputeUnits" Val="16"/>
     <Option Name="WTXSimLaunchSim" Val="0"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
@@ -39,6 +41,11 @@
     <Option Name="WTVcsExportSim" Val="1"/>
     <Option Name="WTRivieraExportSim" Val="1"/>
     <Option Name="WTActivehdlExportSim" Val="1"/>
+    <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
+    <Option Name="XSimRadix" Val="hex"/>
+    <Option Name="XSimTimeUnit" Val="ns"/>
+    <Option Name="XSimArrayDisplayLimit" Val="1024"/>
+    <Option Name="XSimTraceLimit" Val="65536"/>
   </Configuration>
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
@@ -49,80 +56,6 @@
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="doc/mig_7series_v4_0_changelog.txt"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/constraints/mig_7series_0_ooc.xdc"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_b.prj"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0.xml"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/mig_7series_0_mig.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/mig_7series_0.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/mig_7series_0_mig_sim.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_ecc_buf.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_ecc_gen.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_fi_xor.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_ecc_merge_enc.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_ecc_dec_fix.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ip_top/mig_7series_v4_0_memc_ui_top_std.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ip_top/mig_7series_v4_0_mem_intfc.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_rdlvl.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_data.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_tempmon.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_poc_cc.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_4lanes.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_skip_calib_tap.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_prbs_rdlvl.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_po_cntlr.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_calib_top.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_dqs_found_cal_hr.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_poc_tap_base.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_poc_edge_store.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_wrlvl_off_delay.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_samp.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_cntlr.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_edge.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_byte_group_io.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_poc_pd.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_lim.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_poc_meta.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ocd_mux.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_oclkdelay_cal.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_wrcal.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_wrlvl.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_byte_lane.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_poc_top.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_mc_phy.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_if_post_fifo.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_mc_phy_wrapper.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_dqs_found_cal.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_of_pre_fifo.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_init.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_prbs_gen.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/phy/mig_7series_v4_0_ddr_phy_top.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_rank_cntrl.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_mc.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_bank_common.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_col_mach.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_arb_row_col.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_arb_select.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_bank_cntrl.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_bank_compare.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_rank_common.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_arb_mux.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_bank_mach.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_round_robin_arb.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_rank_mach.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_bank_state.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/controller/mig_7series_v4_0_bank_queue.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ui/mig_7series_v4_0_ui_wr_data.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ui/mig_7series_v4_0_ui_top.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ui/mig_7series_v4_0_ui_cmd.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/ui/mig_7series_v4_0_ui_rd_data.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/clocking/mig_7series_v4_0_clk_ibuf.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/clocking/mig_7series_v4_0_iodelay_ctrl.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/clocking/mig_7series_v4_0_infrastructure.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/rtl/clocking/mig_7series_v4_0_tempmon.v"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0.veo"/>
-        <CompFileExtendedInfo CompFileName="mig_7series_0.xci" FileRelPathName="mig_7series_0/user_design/constraints/mig_7series_0.xdc"/>
       </File>
       <File Path="$PPRDIR/../../verilog/contrib/dram_fifo.v">
         <FileInfo>
@@ -136,11 +69,6 @@
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/ip/mig_7series_0/mig_a.prj">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
       <File Path="$PSRCDIR/sources_1/ip/mig_7series_0/mig_7series_0.upgrade_log"/>
@@ -240,10 +168,12 @@
         <Step Id="synth_design"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+      <ReportStrategy/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
     </Run>
-    <Run Id="impl_2_13a" Type="Ft2:EntireDesign" Part="xc7a35tcsg324-1" ConstrsSet="constrs_2_13a" Description="Vivado Implementation Defaults" State="current" Dir="$PRUNDIR/impl_2_13a" SynthRun="synth_2_13a" IncludeInArchive="true">
+    <Run Id="impl_2_13a" Type="Ft2:EntireDesign" Part="xc7a35tcsg324-1" ConstrsSet="constrs_2_13a" Description="Default settings for Implementation." Dir="$PRUNDIR/impl_2_13a" SynthRun="synth_2_13a" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2014"/>
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2017"/>
         <Step Id="init_design"/>
         <Step Id="opt_design"/>
         <Step Id="power_opt_design"/>
@@ -255,6 +185,26 @@
         <Step Id="write_bitstream"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+      <ReportStrategy/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
+    </Run>
+    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7a35tcsg324-1" ConstrsSet="constrs_2_13a" Description="Default settings for Implementation." State="current" SynthRun="synth_2_13a" IncludeInArchive="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2017">
+          <Desc>Default settings for Implementation.</Desc>
+        </StratHandle>
+        <Step Id="init_design"/>
+        <Step Id="opt_design"/>
+        <Step Id="power_opt_design"/>
+        <Step Id="place_design"/>
+        <Step Id="post_place_power_opt_design"/>
+        <Step Id="phys_opt_design"/>
+        <Step Id="route_design"/>
+        <Step Id="post_route_phys_opt_design"/>
+        <Step Id="write_bitstream"/>
+      </Strategy>
+      <ReportStrategy/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
     </Run>
   </Runs>
 </Project>

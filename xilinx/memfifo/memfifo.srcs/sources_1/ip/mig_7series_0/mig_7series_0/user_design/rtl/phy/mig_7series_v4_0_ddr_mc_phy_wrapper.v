@@ -461,12 +461,13 @@ module mig_7series_v4_0_ddr_mc_phy_wrapper #
 
   //90 deg equivalent to 0.25 for MEM_RefClk <= 300 MHz
   // and 1.25 for Mem_RefClk > 300 MHz
-  localparam PO_OCLKDELAY_INV = (((SIM_CAL_OPTION == "NONE") && (tCK > 2500)) || (tCK >= 3333)) ?  "FALSE" : "TRUE";
+  //localparam PO_OCLKDELAY_INV = (((SIM_CAL_OPTION == "NONE") && (tCK >= 2500)) || (tCK >= 3333)) ?  "FALSE" : "TRUE";//DIV2 change
+  localparam PO_OCLKDELAY_INV = (tCK >= 2500) ?  "FALSE" : "TRUE";//DIV2 change
 
   //DIV1: MemRefClk >= 400 MHz, DIV2: 200 <= MemRefClk < 400,
   //DIV4: MemRefClk < 200 MHz
   localparam PHY_0_A_PI_FREQ_REF_DIV = tCK > 5000 ?  "DIV4" :
-                                       tCK > 2500 ? "DIV2": "NONE";
+                                       tCK >= 2500 ? "DIV2": "NONE";//DIV2 change
 
   localparam FREQ_REF_DIV = (PHY_0_A_PI_FREQ_REF_DIV == "DIV4" ? 4 :
                              PHY_0_A_PI_FREQ_REF_DIV == "DIV2" ? 2 : 1);
@@ -496,10 +497,10 @@ module mig_7series_v4_0_ddr_mc_phy_wrapper #
 
   // Note that simulation requires a different value than in H/W because of the
   // difference in the way delays are modeled
-  localparam integer PHY_0_A_PO_OCLK_DELAY = (SIM_CAL_OPTION == "NONE") ?
-                                               ((tCK > 2500) ? 8 :
+  localparam integer PHY_0_A_PO_OCLK_DELAY = (SIM_CAL_OPTION == "NONE") ?   // DIV2 change
+                                               ((tCK >= 2500) ? 0 :
                                                 (DRAM_TYPE == "DDR3") ? PHY_0_A_PO_OCLK_DELAY_HW : 30) :
-                                             MC_OCLK_DELAY;
+                                               (tCK >= 2500) ? 0 : MC_OCLK_DELAY;
 
   // Initial DQ IDELAY value
   localparam PHY_0_A_IDELAYE2_IDELAY_VALUE = (SIM_CAL_OPTION != "FAST_CAL") ? 0 :

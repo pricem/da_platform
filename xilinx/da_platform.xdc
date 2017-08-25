@@ -65,54 +65,67 @@ set_output_delay -clock ifclk_in -min 0.000 [get_ports {fx2_slrd fx2_slwr}]
 set_output_delay -clock ifclk_in -max 14.000 [get_ports {fx2_slrd fx2_slwr}]
 
 # Isolator interface
-set_property PACKAGE_PIN M4 [get_ports {iso\.mclk}]
-set_property PACKAGE_PIN N4 [get_ports {iso\.amcs}]
-set_property PACKAGE_PIN M3 [get_ports {iso\.amdi}]
-set_property PACKAGE_PIN M2 [get_ports {iso\.amdo}]
-set_property PACKAGE_PIN K5 [get_ports {iso\.dmcs}]
-set_property PACKAGE_PIN L4 [get_ports {iso\.dmdi}]
-set_property PACKAGE_PIN L3 [get_ports {iso\.dmdo}]
-set_property PACKAGE_PIN K3 [get_ports {iso\.dirchan}]
-set_property PACKAGE_PIN R2 [get_ports {iso\.acon[1]}]
-set_property PACKAGE_PIN P2 [get_ports {iso\.acon[0]}]
-set_property PACKAGE_PIN R1 [get_ports {iso\.aovf}]
-set_property PACKAGE_PIN N2 [get_ports {iso\.clk0}]
-set_property PACKAGE_PIN L1 [get_ports {iso\.reset_out}]
-set_property PACKAGE_PIN M1 [get_ports {iso\.srclk}]
-set_property PACKAGE_PIN N1 [get_ports {iso\.clksel}]
-set_property PACKAGE_PIN T1 [get_ports {iso\.clk1}]
-set_property PACKAGE_PIN N6 [get_ports {iso\.slotdata[11]}]
-set_property PACKAGE_PIN M6 [get_ports {iso\.slotdata[10]}]
-set_property PACKAGE_PIN U2 [get_ports {iso\.slotdata[9]}]
-set_property PACKAGE_PIN K6 [get_ports {iso\.slotdata[8]}]
-set_property PACKAGE_PIN R5 [get_ports {iso\.slotdata[7]}]
-set_property PACKAGE_PIN V2 [get_ports {iso\.slotdata[6]}]
-set_property PACKAGE_PIN N5 [get_ports {iso\.slotdata[5]}]
-set_property PACKAGE_PIN P5 [get_ports {iso\.slotdata[4]}]
-set_property PACKAGE_PIN R3 [get_ports {iso\.slotdata[3]}]
-set_property PACKAGE_PIN T3 [get_ports {iso\.slotdata[2]}]
-set_property PACKAGE_PIN U1 [get_ports {iso\.slotdata[1]}]
-set_property PACKAGE_PIN V1 [get_ports {iso\.slotdata[0]}]
 
-#   Make it clear that clk0 and clk1 are clocks at up to 25 MHz.
-create_clock -period 40 -name clk0 [get_ports {iso\.clk0}]
-create_clock -period 40 -name clk1 [get_ports {iso\.clk1}]
+#   New pin assignments as of 8/8/2017
+set_property PACKAGE_PIN F18 [get_ports {iso\.hwflag}]
+set_property PACKAGE_PIN F16 [get_ports {iso\.hwcon}]
+set_property PACKAGE_PIN G17 [get_ports {iso\.cs_n}]
+set_property PACKAGE_PIN G16 [get_ports {iso\.dirchan}]
+set_property PACKAGE_PIN H17 [get_ports {iso\.srclk2}]
+set_property PACKAGE_PIN G14 [get_ports {iso\.srclk}]
+set_property PACKAGE_PIN J14 [get_ports {iso\.mosi}]
+set_property PACKAGE_PIN H14 [get_ports {iso\.miso}]
+set_property PACKAGE_PIN J13 [get_ports {iso\.clksel}]
+set_property PACKAGE_PIN J15 [get_ports {iso\.sclk}]
+set_property PACKAGE_PIN K13 [get_ports {iso\.reset_n}]
+set_property PACKAGE_PIN H16 [get_ports {iso\.mclk}]
 
-#   Unused pins of isolator interface go to unused IOs
-set_property PACKAGE_PIN U6 [get_ports {iso\.slotdata[23]}]
-set_property PACKAGE_PIN V5 [get_ports {iso\.slotdata[22]}]
-set_property PACKAGE_PIN T8 [get_ports {iso\.slotdata[21]}]
-set_property PACKAGE_PIN V4 [get_ports {iso\.slotdata[20]}]
-set_property PACKAGE_PIN R8 [get_ports {iso\.slotdata[19]}]
-set_property PACKAGE_PIN T5 [get_ports {iso\.slotdata[18]}]
-set_property PACKAGE_PIN R7 [get_ports {iso\.slotdata[17]}]
-set_property PACKAGE_PIN T4 [get_ports {iso\.slotdata[16]}]
-set_property PACKAGE_PIN T6 [get_ports {iso\.slotdata[15]}]
-set_property PACKAGE_PIN U4 [get_ports {iso\.slotdata[14]}]
-set_property PACKAGE_PIN R6 [get_ports {iso\.slotdata[13]}]
-set_property PACKAGE_PIN U3 [get_ports {iso\.slotdata[12]}]
+set_property PACKAGE_PIN E18 [get_ports {iso\.slotdata[23]}]
+set_property PACKAGE_PIN F15 [get_ports {iso\.slotdata[22]}]
+set_property PACKAGE_PIN D18 [get_ports {iso\.slotdata[21]}]
+set_property PACKAGE_PIN E17 [get_ports {iso\.slotdata[20]}]
+set_property PACKAGE_PIN G13 [get_ports {iso\.slotdata[19]}]
+set_property PACKAGE_PIN D17 [get_ports {iso\.slotdata[18]}]
+
+set_property PACKAGE_PIN F13 [get_ports {iso\.slotdata[17]}]
+set_property PACKAGE_PIN F14 [get_ports {iso\.slotdata[16]}]
+set_property PACKAGE_PIN E16 [get_ports {iso\.slotdata[15]}]
+set_property PACKAGE_PIN E15 [get_ports {iso\.slotdata[14]}]
+set_property PACKAGE_PIN C17 [get_ports {iso\.slotdata[13]}]
+set_property PACKAGE_PIN C16 [get_ports {iso\.slotdata[12]}]
+
+set_property PACKAGE_PIN C15 [get_ports {iso\.slotdata[11]}]
+set_property PACKAGE_PIN D15 [get_ports {iso\.slotdata[10]}]
+set_property PACKAGE_PIN B17 [get_ports {iso\.slotdata[9]}]
+set_property PACKAGE_PIN B16 [get_ports {iso\.slotdata[8]}]
+set_property PACKAGE_PIN C14 [get_ports {iso\.slotdata[7]}]
+set_property PACKAGE_PIN D14 [get_ports {iso\.slotdata[6]}]
+
+set_property PACKAGE_PIN A16 [get_ports {iso\.slotdata[5]}]
+set_property PACKAGE_PIN A15 [get_ports {iso\.slotdata[4]}]
+set_property PACKAGE_PIN B14 [get_ports {iso\.slotdata[3]}]
+set_property PACKAGE_PIN B13 [get_ports {iso\.slotdata[2]}]
+set_property PACKAGE_PIN B12 [get_ports {iso\.slotdata[1]}]
+set_property PACKAGE_PIN C12 [get_ports {iso\.slotdata[0]}]
+
+#   Make it clear that mclk input is a clock at up to 25 MHz.
+#   And that it's unrelated to the USB clock.
+create_clock -period 40 -name clk0 [get_ports {iso\.mclk}]
+set_false_path -from [get_clocks clk0] -to [get_clocks ifclk_out]
+set_false_path -to [get_clocks clk0] -from [get_clocks ifclk_out]
+
+#   Vivado needs to be chill about BCK pins and clock routing.
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_ports {iso\.slotdata[0]}
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_ports {iso\.slotdata[6]}
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_ports {iso\.slotdata[12]}
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_ports {iso\.slotdata[18]}
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets main/slots[0].ctl/slot_data_IOBUF[0]_inst/O]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets main/slots[1].ctl/slot_data_IOBUF[0]_inst/O]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets main/slots[2].ctl/slot_data_IOBUF[0]_inst/O]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets main/slots[3].ctl/slot_data_IOBUF[0]_inst/O]
 
 set_property IOSTANDARD LVCMOS33 [get_ports iso*]
+set_property DRIVE 4 [get_ports {iso\.slotdata[*]}]
 
 # LED's
 set_property PACKAGE_PIN U9 [get_ports {led_debug[0]}]

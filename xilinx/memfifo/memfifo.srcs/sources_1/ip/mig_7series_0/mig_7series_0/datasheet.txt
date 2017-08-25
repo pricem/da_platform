@@ -1,15 +1,15 @@
 
 
 Vivado Project Options:
-   Target Device                   : xc7a100t-csg324
-   Speed Grade                     : -2
+   Target Device                   : xc7a35t-csg324
+   Speed Grade                     : -1
    HDL                             : verilog
    Synthesis Tool                  : VIVADO
 
 MIG Output Options:
    Module Name                     : mig_7series_0
    No of Controllers               : 1
-   Selected Compatible Device(s)   : xc7a35t-csg324, xc7a50t-csg324, xc7a75t-csg324, xc7a15t-csg324
+   Selected Compatible Device(s)   : xc7a50t-csg324, xc7a75t-csg324, xc7a15t-csg324
 
 FPGA Options:
    System Clock Type               : No Buffer

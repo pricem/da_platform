@@ -210,15 +210,15 @@ localparam   L_IF_ARRAY_MODE = (IF_ARRAY_MODE != "UNDECLARED") ? IF_ARRAY_MODE :
 
 localparam   L_OSERDES_DATA_RATE  = (OSERDES_DATA_RATE != "UNDECLARED")  ? OSERDES_DATA_RATE :  ((PO_DATA_CTL == "FALSE" && PC_CLK_RATIO == 4)  ? "SDR" : "DDR") ;
 localparam   L_OSERDES_DATA_WIDTH = (OSERDES_DATA_WIDTH != "UNDECLARED") ? OSERDES_DATA_WIDTH : 4;
-localparam   real L_FREQ_REF_PERIOD_NS = TCK > 2500.0 ? (TCK/(PI_FREQ_REF_DIV == "DIV2" ? 2 : 1)/1000.0) : TCK/1000.0;
+localparam   real L_FREQ_REF_PERIOD_NS = (TCK >= 2500.0) ? (TCK/(PI_FREQ_REF_DIV == "DIV2" ? 2 : 1)/1000.0) : TCK/1000.0; // DIV2 change
 localparam   real L_MEM_REF_PERIOD_NS = TCK/1000.0;
 localparam   real L_PHASE_REF_PERIOD_NS = TCK/1000.0;
 localparam   ODDR_CLK_EDGE              = "SAME_EDGE";
 localparam   PO_DCD_CORRECTION    = "ON";
 localparam   [2:0] PO_DCD_SETTING = (PO_DCD_CORRECTION == "ON") ? 3'b111 : 3'b000;
 
-localparam   DQS_AUTO_RECAL = (BANK_TYPE == "HR_IO" || BANK_TYPE == "HRL_IO" || (BANK_TYPE == "HPL_IO" && TCK > 2500)) ? 1 : 0;
-localparam   DQS_FIND_PATTERN = (BANK_TYPE == "HR_IO" || BANK_TYPE == "HRL_IO" || (BANK_TYPE == "HPL_IO" && TCK > 2500)) ? "001" : "000";
+localparam   DQS_AUTO_RECAL = (BANK_TYPE == "HR_IO" || BANK_TYPE == "HRL_IO" || (BANK_TYPE == "HPL_IO" && TCK >= 2500)) ? 1 : 0; // DIV2 change
+localparam   DQS_FIND_PATTERN = (BANK_TYPE == "HR_IO" || BANK_TYPE == "HRL_IO" || (BANK_TYPE == "HPL_IO" && TCK >= 2500)) ? "001" : "000"; // DIV2 change
 
 wire [1:0]                         oserdes_dqs;
 wire [1:0]                         oserdes_dqs_ts;

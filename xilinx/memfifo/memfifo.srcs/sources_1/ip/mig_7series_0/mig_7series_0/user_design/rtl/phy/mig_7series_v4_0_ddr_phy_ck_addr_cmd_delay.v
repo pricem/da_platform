@@ -53,7 +53,7 @@
 //  \   \         Application: MIG
 //  /   /         Filename: ddr_phy_ck_addr_cmd_delay.v
 // /___/   /\     Date Last Modified: $Date: 2011/02/25 02:07:40 $
-// \   \  /  \    Date Created: Aug 03 2009 
+// \   \  /  \    Date Created: Aug 03 2009
 //  \___\/\___\
 //
 //Device: 7 Series
@@ -88,18 +88,18 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
    // Completed delaying CK/Address/Commands/Controls
    output           po_ck_addr_cmd_delay_done
    );
-   
+
    localparam TAP_CNT_LIMIT = 63;
 
    //Calculate the tap resolution of the PHASER based on the clock period
-   localparam FREQ_REF_DIV           = (tCK > 5000 ? 4 : 
+   localparam FREQ_REF_DIV           = (tCK > 5000 ? 4 :
                                         tCK > 2500 ? 2 : 1);
 
    localparam integer PHASER_TAP_RES = ((tCK/2)/64);
-   
+
    // Determine whether 300 ps or 350 ps delay required
    localparam CALC_TAP_CNT = (tCK >= 1250) ? 350 : 300;
-   
+
    // Determine the number of Phaser_Out taps required to delay by 300 ps
    // 300 ps is the PCB trace uncertainty between CK and DQS byte groups
 
@@ -110,9 +110,9 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
    //Decrement control byte lanes
    localparam TAP_DEC = (SIM_CAL_OPTION == "FAST_CAL") ? 0 : 29;
 
-   
-   
-                        
+
+
+
    reg       delay_dec_done;
    reg       delay_done_r1;
    reg       delay_done_r2;
@@ -123,8 +123,8 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
    reg       po_cnt_inc;
    reg       po_cnt_dec;
    reg [3:0] wait_cnt_r;
-   
-   assign po_ck_addr_cmd_delay_done = ((TAP_CNT == 0) && (TAP_DEC == 0)) ? 1'b1 : delay_done_r4; 
+
+   assign po_ck_addr_cmd_delay_done = ((TAP_CNT == 0) && (TAP_DEC == 0)) ? 1'b1 : delay_done_r4;
 
    always @(posedge clk) begin
      if (rst || po_cnt_dec || po_cnt_inc)
@@ -132,28 +132,28 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
      else if (cmd_delay_start && (wait_cnt_r > 'd0))
        wait_cnt_r <= #TCQ wait_cnt_r - 1;
    end
-   
+
    always @(posedge clk) begin
      if (rst || (delaydec_cnt_r > 6'd0) || (delay_cnt_r == 'd0) || (TAP_DEC == 0))
        po_cnt_inc      <= #TCQ 1'b0;
      else if ((delay_cnt_r > 'd0) && (wait_cnt_r == 'd1))
        po_cnt_inc      <= #TCQ 1'b1;
-     else 
+     else
        po_cnt_inc      <= #TCQ 1'b0;
    end
-   
+
    //Tap decrement
    always @(posedge clk) begin
      if (rst || (delaydec_cnt_r == 'd0))
        po_cnt_dec      <= #TCQ 1'b0;
      else if (cmd_delay_start && (delaydec_cnt_r > 'd0) && (wait_cnt_r == 'd1))
        po_cnt_dec      <= #TCQ 1'b1;
-     else 
+     else
        po_cnt_dec      <= #TCQ 1'b0;
    end
-   
-   //po_stg2_f_incdec and po_en_stg2_f stay asserted HIGH for TAP_COUNT cycles for every control byte lane   
-   //the alignment is started once the                  
+
+   //po_stg2_f_incdec and po_en_stg2_f stay asserted HIGH for TAP_COUNT cycles for every control byte lane
+   //the alignment is started once the
    always @(posedge clk) begin
      if (rst) begin
        po_stg2_f_incdec <= #TCQ 1'b0;
@@ -181,18 +181,18 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
    // delay counter to count 2 cycles
    // Increment coarse taps by 2 for all control byte lanes
    // to mitigate late writes
-   always @(posedge clk) begin  
+   always @(posedge clk) begin
      // load delay counter with init value
-     if (rst || (tCK > 2500) || (SIM_CAL_OPTION == "FAST_CAL"))
+     if (rst || (tCK >= 2500) || (SIM_CAL_OPTION == "FAST_CAL"))
        delay_cnt_r  <= #TCQ 'd0;
      else if ((delaydec_cnt_r > 6'd0) ||((delay_cnt_r == 6'd0) && (ctl_lane_cnt != N_CTL_LANES-1)))
        delay_cnt_r  <= #TCQ 'd1;
      else if (po_cnt_inc && (delay_cnt_r > 6'd0))
        delay_cnt_r  <= #TCQ delay_cnt_r - 1;
    end
-   
+
    // delay counter to count TAP_DEC cycles
-   always @(posedge clk) begin  
+   always @(posedge clk) begin
      // load delay counter with init value of TAP_DEC
      if (rst || ~cmd_delay_start ||((delaydec_cnt_r == 6'd0) && (delay_cnt_r == 6'd0) && (ctl_lane_cnt != N_CTL_LANES-1)))
        delaydec_cnt_r  <= #TCQ TAP_DEC;
@@ -215,12 +215,12 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
    always @(posedge clk) begin
      if (rst || ~cmd_delay_start)  begin
        delay_dec_done    <= #TCQ 1'b0;
-     end else if (((TAP_CNT == 0) && (TAP_DEC == 0)) || 
+     end else if (((TAP_CNT == 0) && (TAP_DEC == 0)) ||
                  ((delaydec_cnt_r == 6'd0) && (delay_cnt_r == 'd0) && (ctl_lane_cnt == N_CTL_LANES-1))) begin
        delay_dec_done    <= #TCQ 1'b1;
      end
    end
-   
+
 
 
    always @(posedge clk) begin
@@ -229,5 +229,5 @@ module mig_7series_v4_0_ddr_phy_ck_addr_cmd_delay #
      delay_done_r3 <= #TCQ delay_done_r2;
      delay_done_r4 <= #TCQ delay_done_r3;
    end
-   
+
 endmodule

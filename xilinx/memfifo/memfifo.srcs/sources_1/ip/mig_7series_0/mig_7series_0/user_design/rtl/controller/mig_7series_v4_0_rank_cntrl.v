@@ -503,12 +503,16 @@ module mig_7series_v4_0_rank_cntrl #
 
       reg [PERIODIC_RD_TIMER_WIDTH-1:0] periodic_rd_timer_r;
       reg [PERIODIC_RD_TIMER_WIDTH-1:0] periodic_rd_timer_ns;
+      wire periodic_rd_timer_one = maint_prescaler_tick_r &&
+                 (periodic_rd_timer_r == ONE[0+:PERIODIC_RD_TIMER_WIDTH]);
+
       always @(/*AS*/init_calib_complete or maint_prescaler_tick_r
                or periodic_rd_timer_r or int_read_this_rank) begin
         periodic_rd_timer_ns = periodic_rd_timer_r;
         if (~init_calib_complete)
-          periodic_rd_timer_ns = {PERIODIC_RD_TIMER_WIDTH{1'b0}};
-        else if (int_read_this_rank)
+          periodic_rd_timer_ns = PERIODIC_RD_TIMER_DIV[0+:PERIODIC_RD_TIMER_WIDTH];
+          //periodic_rd_timer_ns = {PERIODIC_RD_TIMER_WIDTH{1'b0}};
+        else if (int_read_this_rank || periodic_rd_timer_one)
                 periodic_rd_timer_ns =
                    PERIODIC_RD_TIMER_DIV[0+:PERIODIC_RD_TIMER_WIDTH];
              else if (|periodic_rd_timer_r && maint_prescaler_tick_r)
@@ -516,9 +520,6 @@ module mig_7series_v4_0_rank_cntrl #
                    periodic_rd_timer_r - ONE[0+:PERIODIC_RD_TIMER_WIDTH];
       end
       always @(posedge clk) periodic_rd_timer_r <= #TCQ periodic_rd_timer_ns;
-
-      wire periodic_rd_timer_one = maint_prescaler_tick_r &&
-                 (periodic_rd_timer_r == ONE[0+:PERIODIC_RD_TIMER_WIDTH]);
 
       reg periodic_rd_request_r;
       wire periodic_rd_request_ns = ~rst &&

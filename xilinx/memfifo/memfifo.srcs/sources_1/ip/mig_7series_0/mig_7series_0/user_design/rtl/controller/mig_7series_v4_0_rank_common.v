@@ -281,10 +281,12 @@ module mig_7series_v4_0_rank_common #
       wire maint_busy = upd_last_master_r || new_maint_rank_r ||
                         maint_req_r_lcl || maint_wip_r;
       wire [RANKS+1:0] maint_request = {sre_request, zq_request, refresh_request[RANKS-1:0]};
-      wire upd_last_master_ns = |maint_request && ~maint_busy;
+      //wire upd_last_master_ns = |maint_request && ~maint_busy;
+      wire upd_last_master_ns = |maint_request && ~maint_wip_r;
       always @(posedge clk) upd_last_master_r <= #TCQ upd_last_master_ns;
       always @(posedge clk) new_maint_rank_r <= #TCQ upd_last_master_r;
       always @(posedge clk) maint_req_r_lcl <= #TCQ new_maint_rank_r;
+      wire upd_last_master_pls = upd_last_master_r & (~new_maint_rank_r);
 
 // Arbitrate maintenance requests.
       wire [RANKS+1:0] maint_grant_ns;
@@ -294,7 +296,7 @@ module mig_7series_v4_0_rank_common #
       maint_arb0
       (.grant_ns                        (maint_grant_ns),
        .grant_r                         (maint_grant_r),
-       .upd_last_master                 (upd_last_master_r),
+       .upd_last_master                 (upd_last_master_pls),
        .current_master                  (maint_grant_r),
        .req                             (maint_request),
        .disable_grant                   (1'b0),
@@ -313,20 +315,20 @@ module mig_7series_v4_0_rank_common #
       wire [7:0] present = slot_0_present | slot_1_present;
       integer i;
       reg [RANK_WIDTH-1:0] maint_rank_ns;
-      wire maint_zq_ns = ~rst && (upd_last_master_r
+      wire maint_zq_ns = ~rst && (upd_last_master_pls
                                     ? maint_grant_r[RANKS]
                                     : maint_zq_r_lcl);
       wire maint_srx_ns = ~rst && (maint_sre_r_lcl
                                     ? ~app_sr_req & ~inhbt_srx
-                                    : maint_srx_r_lcl && upd_last_master_r
+                                    : maint_srx_r_lcl && upd_last_master_pls
                                     ? maint_grant_r[RANKS+1]
                                     : maint_srx_r_lcl);
-      wire maint_sre_ns = ~rst && (upd_last_master_r
+      wire maint_sre_ns = ~rst && (upd_last_master_pls
                                     ? maint_grant_r[RANKS+1]
                                     : maint_sre_r_lcl && ~maint_srx_ns);
       always @(/*AS*/maint_grant_r or maint_rank_r_lcl or maint_zq_ns
                or maint_sre_ns or maint_srx_ns or present or rst
-               or upd_last_master_r) begin
+               or upd_last_master_pls) begin
         if (rst) maint_rank_ns = {RANK_WIDTH{1'b0}};
         else begin
           maint_rank_ns = maint_rank_r_lcl;
@@ -337,7 +339,7 @@ module mig_7series_v4_0_rank_common #
                      maint_rank_ns = maint_rank_ns + ONE[RANK_WIDTH-1:0];
           end
           else
-            if (upd_last_master_r)
+            if (upd_last_master_pls)
               for (i=0; i<RANKS; i=i+1)
                 if (maint_grant_r[i]) maint_rank_ns = i[RANK_WIDTH-1:0];
         end

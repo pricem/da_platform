@@ -116,6 +116,7 @@ module mig_7series_0_mig #
                                       //3.TG_TEST : Scrambles Address bits
                                       //            for distributed Addressing.
       
+   //parameter nBANK_MACHS           = 4,
    parameter nBANK_MACHS           = 4,
    parameter RANKS                 = 1,
                                      // # of Ranks.
@@ -233,9 +234,9 @@ module mig_7series_0_mig #
                                      // write PLL VCO multiplier
    parameter DIVCLK_DIVIDE         = 1,
                                      // write PLL VCO divisor
-   parameter CLKOUT0_PHASE         = 337.5,
+   parameter CLKOUT0_PHASE         = 0.0,
                                      // Phase for PLL output clock (CLKOUT0)
-   parameter CLKOUT0_DIVIDE        = 2,
+   parameter CLKOUT0_DIVIDE        = 1,
                                      // VCO output divisor for PLL output clock (CLKOUT0)
    parameter CLKOUT1_DIVIDE        = 2,
                                      // VCO output divisor for PLL output clock (CLKOUT1)
@@ -431,7 +432,7 @@ module mig_7series_0_mig #
                                      // "TRUE" - if pin is selected for sys_rst
                                      //          and IBUF will be instantiated.
                                      // "FALSE" - if pin is not selected for sys_rst
-   parameter FPGA_SPEED_GRADE      = 2,
+   parameter FPGA_SPEED_GRADE      = 1,
                                      // FPGA speed grade
       
    parameter CMD_PIPE_PLUS1        = "ON",

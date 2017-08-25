@@ -1,3 +1,20 @@
+2017.2:
+ * Version 4.0 (Rev. 4)
+ * General: Vivado 2017.2 software support.
+
+2017.1:
+ * Version 4.0 (Rev. 3)
+ * General: Vivado 2017.1 software support.
+
+2016.4:
+ * Version 4.0 (Rev. 2)
+ * General: Vivado 2016.4 software support.
+
+2016.3:
+ * Version 4.0 (Rev. 1)
+ * New Feature: Added GUI option in Memory Controller Options page for number of Bank Machines selection.
+ * Other: Beta Support for Spartan-7 devices.
+
 2016.2:
  * Version 4.0
  * Updated the Maximum supported Frequency values as per the DS 181, DS 182, DS183, DS187 and DS191.
@@ -96,7 +113,7 @@
  * System Reset Pin Polarity selection
  * Additional clocks selection for AXI interface designs
 
-(c) Copyright 2008 - 2016 Xilinx, Inc. All rights reserved.
+(c) Copyright 2008 - 2017 Xilinx, Inc. All rights reserved.
 
 This file contains confidential and proprietary information
 of Xilinx, Inc. and is protected under U.S. and

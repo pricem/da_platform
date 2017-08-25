@@ -359,14 +359,14 @@ module mig_7series_v4_0_ddr_calib_top #
 // Calculate number of slots in the system
   localparam nSLOTS  = 1 + (|SLOT_1_CONFIG ? 1 : 0);
 
-  localparam OCAL_EN = ((SIM_CAL_OPTION == "FAST_CAL") || (tCK > 2500) || (SKIP_CALIB == "TRUE")) ? "OFF" : "ON";
+  localparam OCAL_EN = ((SIM_CAL_OPTION == "FAST_CAL") || (tCK >= 2500) || (SKIP_CALIB == "TRUE")) ? "OFF" : "ON"; //DIV2 change
 
   // Different CTL_LANES value for DDR2. In DDR2 during DQS found all
   // the add,ctl & data phaser out fine delays will be adjusted.
   // In DDR3 only the add/ctrl lane delays will be adjusted
   localparam DQS_FOUND_N_CTL_LANES = (DRAM_TYPE == "DDR3") ? N_CTL_LANES : 1;
 
-  localparam DQSFOUND_CAL    = (BANK_TYPE == "HR_IO" || BANK_TYPE == "HRL_IO" || (BANK_TYPE == "HPL_IO" && tCK > 2500)) ? "LEFT" : "RIGHT"; // IO Bank used for Memory I/F: "LEFT", "RIGHT"
+  localparam DQSFOUND_CAL    = (BANK_TYPE == "HR_IO" || BANK_TYPE == "HRL_IO" || (BANK_TYPE == "HPL_IO" && tCK >= 2500)) ? "LEFT" : "RIGHT"; // DIV2 change IO Bank used for Memory I/F: "LEFT", "RIGHT"
 
   localparam FIXED_VICTIM  = (SIM_CAL_OPTION == "NONE") ? "FALSE" : "TRUE";
   localparam VCCO_PAT_EN   = 1;  // Enable VCCO pattern during calibration
@@ -955,7 +955,7 @@ generate
         calib_in_common <= #TCQ 1'b1;
       end
     end
-  end else if (tCK > 2500) begin: gen_byte_sel_div2
+  end else if (tCK >= 2500) begin: gen_byte_sel_div2  // DIV2 change
 
     always @(posedge clk) begin
       if (rst) begin

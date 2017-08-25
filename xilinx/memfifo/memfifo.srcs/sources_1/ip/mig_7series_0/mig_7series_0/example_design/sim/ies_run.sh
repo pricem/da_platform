@@ -73,18 +73,19 @@
 #libraries path#
 
 #Compile all modules#
-ncvlog -sv -work worklib -messages ../../../sources_1/imports/rtl/*.v > ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/imports/rtl/traffic_gen/*.v >> ies_sim.log
-ncvlog -sv -work worklib -messages ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/mig_7series_0.v >> ies_sim.log
-ncvlog -sv -work worklib -messages ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/mig_7series_0_mig_sim.v >> ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/clocking/*.v >> ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/controller/*.v >> ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/ecc/*.v >> ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/ip_top/*.v >> ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/phy/*.v >> ies_sim.log
-ncvlog -work worklib -messages -sv ../../../sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/ui/*.v >> ies_sim.log
+ncvlog -work worklib -sv -messages mig_7series*.v > ies_sim.log
+ncvlog -sv -work worklib -messages ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/mig_7series_0.v >> ies_sim.log
+ncvlog -sv -work worklib -messages ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/mig_7series_0_mig_sim.v >> ies_sim.log
+ncvlog -work worklib -messages -sv ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/clocking/*.v >> ies_sim.log
+ncvlog -work worklib -messages -sv ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/controller/*.v >> ies_sim.log
+ncvlog -work worklib -messages -sv ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/ecc/*.v >> ies_sim.log
+ncvlog -work worklib -messages -sv ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/ip_top/*.v >> ies_sim.log
+ncvlog -work worklib -messages -sv ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/phy/*.v >> ies_sim.log
+ncvlog -work worklib -messages -sv ../mig_7series_0_ex.srcs/sources_1/ip/mig_7series_0/mig_7series_0/user_design/rtl/ui/*.v >> ies_sim.log
 
 
+
+ncvlog -sv -work worklib -messages example_top.v >> ies_sim.log
 
 #Compile files in sim folder (excluding model parameter file)#
 #$XILINX variable must be set
