@@ -1,88 +1,102 @@
 Partlist
 
-Exported from adc2_v2.brd at 8/26/2017 10:09:00 AM
+Exported from adc2_v2.sch at 10/6/2017 7:08:18 PM
 
 EAGLE Version 5.12.0 Copyright (c) 1988-2011 CadSoft
 
-Part     Value          Package       Library        Position (inch)       Orientation
+Part     Value          Device        Package       Library        Sheet
 
-C1       0.1u           C0603         rcl            (1.235 1.95)          R0
-C2       0.1u           C0603         rcl            (1.22 2.215)          R90
-C3       0.1u           C0603         rcl            (1.015 2.45)          R90
-C4       15n            C0603         rcl            (1.225 2.085)         R90
-C5       15n            C0603         rcl            (1.015 1.9)           R0
-C6       4.7u           C1206         rcl            (0.915 2.475)         R90
-C7       10u            PANASONIC_B   rcl            (1.165 2.565)         R270
-C8       0.1u           C0603         rcl            (1.175 4.25)          R180
-C9       10u            PANASONIC_B   rcl            (1.36 2.275)          R270
-C10      2200u          PANASONIC_H13 cdp            (1.385 1.615)         R180
-C11      0.1u           C0603         rcl            (1.175 4.75)          R0
-C12      0.1u           C0603         rcl            (1.175 3.75)          R180
-C13      0.1u           C0603         rcl            (1.165 3.24)          R180
-C14      10u            PANASONIC_B   rcl            (1.175 3.945)         R0
-C15      10u            PANASONIC_B   rcl            (1.175 3.025)         R0
-C16      0.1u           C0603         rcl            (1.4 3.425)           R180
-C17      10u            C1206         rcl            (1.49 2.72)           R270
-C18      1u             C0603         rcl            (1.365 2.665)         R0
-C19      0.1u           C0603         rcl            (0.95 3.425)          R180
-C20      0.1u           C0603         rcl            (0.58 2.985)          MR0
-C21      10u            PANASONIC_B   rcl            (0.585 2.685)         MR180
-C29      10u            C1206         rcl            (0.255 3.6)           MR90
-C30      10u            C1206         rcl            (0.425 3.525)         MR0
-C31      10u            C1206         rcl            (2.06 3.535)          MR90
-C32      10u            C1206         rcl            (1.885 3.67)          MR180
-C33      10n            C0603         rcl            (1.685 0.465)         R0
-C34      10n            C0603         rcl            (1.685 0.385)         R0
-C35      10u            C1206         rcl            (1.03 1.19)           R270
-C36      1u             C0805         rcl            (1.135 0.645)         R180
-C37      10n            C0402         rcl            (1.335 0.605)         R180
-C38      10n            C0402         rcl            (0.935 0.615)         R0
-C39      10n            C0402         rcl            (1.335 0.295)         R180
-C40      10n            C0402         rcl            (0.935 0.295)         R0
-C41      10u            C1206         rcl            (1.03 0.96)           R90
-C42      1u             C0805         rcl            (1.39 1.23)           R90
-C43      1u             C0805         rcl            (1.39 0.85)           R90
-C44      10u            C1206         rcl            (1.14 0.79)           R180
-C45      330u           CT7343        rcl            (1.58 1.04)           R90
-C71      1u             C0805         rcl            (0.55 0.98)           R270
-J1       MOD-V2         MOD-V2        cdp            (1.2 1.75)            R0
-L2       BEAD           R1206         rcl            (1.39 2.565)          R180
-R1       22             R0603         rcl            (0.945 1.615)         R0
-R2       100k           R0603         rcl            (0.975 4.825)         R0
-R3       1              R0603         rcl            (1.355 2.75)          R180
-R4       100k           R0603         rcl            (0.875 4.7)           R0
-R5       100k           R0603         rcl            (1.475 4.7)           R180
-R6       100k           R0603         rcl            (1.345 4.905)         R0
-R7       1k             R0603         rcl            (1.4 3.575)           R0
-R8       1k             R0603         rcl            (1.365 3.755)         R90
-R9       1k             R0603         rcl            (0.985 3.755)         R90
-R10      1k             R0603         rcl            (0.95 3.575)          R180
-R11      887            R0603         rcl            (1.4 3.5)             R0
-R12      1k             R0603         rcl            (0.765 2.86)          MR0
-R13      1k             R0603         rcl            (0.585 2.86)          MR0
-R14      10             R0603         rcl            (1.35 3.25)           R90
-R15      10             R0603         rcl            (1.275 3.25)          R90
-R16      10             R0603         rcl            (1.05 3.25)           R90
-R17      10             R0603         rcl            (0.975 3.25)          R90
-R18      887            R0603         rcl            (1.29 3.755)          R90
-R19      887            R0603         rcl            (1.06 3.755)          R90
-R20      887            R0603         rcl            (0.95 3.5)            R180
-R21      100            R0603         rcl            (1.535 0.425)         R270
-R22      4.12k          R0603         rcl            (1.185 0.205)         R270
-R23      50             R0603         rcl            (0.785 0.385)         R0
-R24      50             R0603         rcl            (0.785 0.465)         R0
-R25      50             R0603         rcl            (0.715 0.265)         R270
-R26      22             R0603         rcl            (0.695 0.635)         R270
-R27      50             R0603         rcl            (0.37 1.95)           R0
-R28      50             R0603         rcl            (0.37 2.05)           R0
-R29      50             R0603         rcl            (0.37 2.25)           R0
-SV1                     MA04-1        con-lstb       (1.475 5.05)          R180
-SV2                     MA04-1        con-lstb       (0.875 5.05)          R180
-U1       AK5572         QFN48_EP_AKM  cdp            (0.925 2.15)          R180
-U2                      LFCSP24       cdp            (1.175 3.45)          R270
-U3       ADP7142        SOT23-DBV     cdp            (0.43 3.655)          MR90
-U4       ADP7182        SOT23-DBV     cdp            (1.88 3.525)          MR270
-U5       ADA4004-4      SO14          analog-devices (1.175 4.5)           R0
-U6       AD9515         LFCSP32       cdp            (1.135 0.465)         R180
-U8       ADM7154        SO8-EP        cdp            (1.22 1.08)           R0
-U12      LF50ABDT       DPACK         cdp            (0.6 1.23)            R90
+C1       0.1u           C-USC0603     C0603         rcl            1
+C2       0.1u           C-USC0603     C0603         rcl            1
+C3       0.1u           C-USC0603     C0603         rcl            1
+C4       15n            C-USC0603     C0603         rcl            1
+C5       15n            C-USC0603     C0603         rcl            1
+C6       4.7u           C-USC1206     C1206         rcl            1
+C7       100u           CPOL-USE      PANASONIC_E   rcl            1
+C8       0.1u           C-USC0603     C0603         rcl            1
+C9       100u           CPOL-USE      PANASONIC_E   rcl            1
+C10      2200u          CPOL-US       PANASONIC_H13 cdp            1
+C11      0.1u           C-USC0603     C0603         rcl            1
+C12      0.1u           C-USC0603     C0603         rcl            1
+C13      0.1u           C-USC0603     C0603         rcl            1
+C14      10u            CPOL-USB      PANASONIC_B   rcl            1
+C15      10u            CPOL-USB      PANASONIC_B   rcl            1
+C16      0.1u           C-USC0603     C0603         rcl            1
+C17      220u           CPOL-USD      PANASONIC_D   rcl            1
+C18      0.1u           C-USC0603     C0603         rcl            1
+C19      0.1u           C-USC0603     C0603         rcl            1
+C20      0.1u           C-USC0603     C0603         rcl            1
+C21      10u            CPOL-USB      PANASONIC_B   rcl            1
+C22      10u            CPOL-USB      PANASONIC_B   rcl            1
+C24      4.7u           C-USC1206     C1206         rcl            1
+C25      4.7u           C-USC1206     C1206         rcl            1
+C29      10u            C-USC1206     C1206         rcl            1
+C30      10u            C-USC1206     C1206         rcl            1
+C31      10u            C-USC1206     C1206         rcl            1
+C32      10u            C-USC1206     C1206         rcl            1
+C33      10n            C-USC0603     C0603         rcl            1
+C34      10n            C-USC0603     C0603         rcl            1
+C36      1u             C-USC0805     C0805         rcl            1
+C37      10n            C-USC0402     C0402         rcl            1
+C38      10n            C-USC0402     C0402         rcl            1
+C39      10n            C-USC0402     C0402         rcl            1
+C40      10n            C-USC0402     C0402         rcl            1
+C41      10u            C-USC1206     C1206         rcl            1
+C42      1u             C-USC0805     C0805         rcl            1
+C43      1u             C-USC0805     C0805         rcl            1
+C44      10u            C-USC1206     C1206         rcl            1
+C45      330u           CPOL-USCT7343 CT7343        rcl            1
+C71      1u             C-USC0805     C0805         rcl            1
+C78      1u             C-USC0603     C0603         rcl            1
+C79      1u             C-USC0603     C0603         rcl            1
+C80      4.7u           C-USC1206     C1206         rcl            1
+C83      4.7u           C-USC1206     C1206         rcl            1
+C84      4.7u           C-USC1206     C1206         rcl            1
+C85      4.7u           C-USC1206     C1206         rcl            1
+J1       MOD-V2         MOD-V2        MOD-V2        cdp            1
+R1       0              R-US_R0603    R0603         rcl            1
+R2       100k           R-US_R0603    R0603         rcl            1
+R3       0              R-US_R0603    R0603         rcl            1
+R4       100k           R-US_R0603    R0603         rcl            1
+R5       100k           R-US_R0603    R0603         rcl            1
+R6       100k           R-US_R0603    R0603         rcl            1
+R7       1k             R-US_R0603    R0603         rcl            1
+R8       1k             R-US_R0603    R0603         rcl            1
+R9       1k             R-US_R0603    R0603         rcl            1
+R10      1k             R-US_R0603    R0603         rcl            1
+R11      887            R-US_R0603    R0603         rcl            1
+R12      1k             R-US_R0603    R0603         rcl            1
+R13      1k             R-US_R0603    R0603         rcl            1
+R14      10             R-US_R0603    R0603         rcl            1
+R15      10             R-US_R0603    R0603         rcl            1
+R16      10             R-US_R0603    R0603         rcl            1
+R17      10             R-US_R0603    R0603         rcl            1
+R18      887            R-US_R0603    R0603         rcl            1
+R19      887            R-US_R0603    R0603         rcl            1
+R20      887            R-US_R0603    R0603         rcl            1
+R21      100            R-US_R0603    R0603         rcl            1
+R22      4.12k          R-US_R0603    R0603         rcl            1
+R23      50             R-US_R0603    R0603         rcl            1
+R24      50             R-US_R0603    R0603         rcl            1
+R25      50             R-US_R0603    R0603         rcl            1
+R26      22             R-US_R0603    R0603         rcl            1
+R27      50             R-US_R0603    R0603         rcl            1
+R28      50             R-US_R0603    R0603         rcl            1
+R29      50             R-US_R0603    R0603         rcl            1
+R30      50             R-US_R0603    R0603         rcl            1
+R31      0              R-US_R0603    R0603         rcl            1
+R32      49.9k          R-US_R0603    R0603         rcl            1
+R61      49.9k          R-US_R0603    R0603         rcl            1
+SV1                     MA04-1        MA04-1        con-lstb       1
+SV2                     MA04-1        MA04-1        con-lstb       1
+U1       AK5572         AK5572        QFN48_EP_AKM  cdp            1
+U2       ADA4932-2      ADA4932-2     LFCSP24       cdp            1
+U3       ADP7142        ADP7142       SOT23-DBV     cdp            1
+U4       ADP7182        ADP7182       SOT23-DBV     cdp            1
+U5       ADA4004-4      AD8644R       SO14          analog-devices 1
+U6       AD9515         AD9515        LFCSP32       cdp            1
+U8       ADM7154        ADM7154       SO8-EP        cdp            1
+U11      ADM7160        ADM7160       SOT23-DBV     cdp            1
+U12      LF50ABDT       78XXS         DPACK         cdp            1
+U15      LT3042DD       LT3042DD      DFN10         cdp            1
+U16      LT3042DD       LT3042DD      DFN10         cdp            1
