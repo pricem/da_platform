@@ -71,8 +71,11 @@ Errata for version 2 (2017)
 
 Mechanicals:
     PSU is bunched up close to transformers, and transformer wiring is a bit tight (with crimp connectors).
+        -> Switch to a vertical header with some kind of retention?
     Think about whether to solder/crimp and also if it's feasible to adjust board placement.
     What about a (beefy) 7-pin header that attaches to a 7-conductor ribbon cable soldered to the transformer terminals?
+    All screw holes for standoffs should be enlarged to handle M3 screws/standoffs since those are cheaper (hole dia = .135 maybe?)
+        Note: M2.5 standoffs/screws seem to work, so far.
 
 2-ch IV stage (version 2):
     LED as voltage reference had wrong voltage.  Bias currents too high.
@@ -84,11 +87,15 @@ PSU (version 2)
     Add an indicator LED (through hole) that the power is on
     Consider separating the grounds for the +/- supplies (i.e. not supporting center tap)
         although this would be incompatible with my strategy of using a cap across the rails to limit ripple currents on ground
-    
+    Consider adding an inrush current limiter (thermistor).  Blew a resistor and tantalum cap when I hit the power switch too hard.
     
 Clock test board
     SMA connector for output of ECL receiver is too close to PSU header - collides
         (Of course, I can use indiv. wires to PSU to rectify this)
+
+All
+    (Clock source and modules) ADM7154 max input is 5.5 V.  Need to prereg down to 5 V instead of hooking directly to D7VU.
+    (Clock source and modules) LF50 prereg had 10u 1206 ceramic cap on output.  Must be changed to electrolytic with higher ESR to avoid oscillation.
 
 Regulators
     FIXED Small transistor footprint in Jung regs. is narrower than BC807 - check package (the BC817 is fine)
@@ -100,4 +107,16 @@ Regulators
 
 Carrier
     Hole for JST connector locating pin is on wrong side of footprint (currently left of notch, needs to be right)
+
+Isolator
+    Zener diodes in Jung regs - pads are spaced too far apart for diodes MMSZ5226BS-FDICT-ND (SOD-323)
+        They are OK for SOD-123 though, so that's what should be ordered.
+
+DAC2
+    FIXED DAC pads need to be extended out a ways.  Impossible to solder (or touch up) by hand, as it is.
+    FIXED LPF amps need their (active low) disable pins tied to V+ to lower input bias current.  Also add resistors to V- to cancel the bias current.
+
+ADC2
+    Input buffer opamp needs larger local decoupling (10+ uF) to lower LF noise floor
+    
     

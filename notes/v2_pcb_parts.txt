@@ -99,3 +99,19 @@ Surface mount headers for jumpers etc.
     1x4 female  	S5596-ND  $0.83
     
 1000uf 50v cap UVY1H102MHD-ND
+
+
+V2 module parts
+
+2200uf, 10 V cap for reference filtering
+    PCE3456CT-ND $1.32  Size code H13
+    
+10uf, 16 V cap for +/- 5 V opamp supply bypassing, and AKM supply bypassing
+    PCE4179CT-ND  $.32  Size code B
+
+-5 V reg ADP7182ACPZ-5.0-R7CT-ND $4.00
+
+
+6.8 V SMB zener diode
+
+1uf 0603 X5R cap for ADM7160 decoupling: 587-4281-1-ND 

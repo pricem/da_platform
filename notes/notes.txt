@@ -3276,14 +3276,1507 @@ Got an initial placement of everything.  288 airwires left.
     Oh well, probably won't make much difference.  Can slit the DGND plane if worried about that (probably counterproductive).
 
 Tomorrow, to do:
-- Route signals from modules into serdes chips above module 3
-- Figure out power/ground distribution for isolators and other small chips
-- Consider moving isolators to the left
-- Route direction control signals to isolators
-- Route the carrier signals starting from the left end of the connector, just enough to properly position the isolators
-- Route clocks (both sides of isolators)
-- Route data buses (module side)
-- Route everything else on the module side
-- Route carrier side.  Strict direction rules per layer to allow tapping off for debug.
+DONE    - Route signals from modules into serdes chips above module 3
+DONE    - Figure out power/ground distribution for isolators and other small chips
+DONE    - Consider moving isolators to the left
+DONE    - Route direction control signals to isolators
+DONE    - Route the carrier signals starting from the left end of the connector, just enough to properly position the isolators
+DONE    - Route clocks (both sides of isolators)
+DONE    - Route data buses (module side)
+DONE    - Route everything else on the module side
+DONE    - Route carrier side.  Strict direction rules per layer to allow tapping off for debug.
 
 Reminder: Need to test regs for the max current.
+
+
+7/23/2017
+---------
+Routing along and marking things as done.
+
+What are the capacitances going to be like?
+    a) Each trace (10 mil  = 0.254 mm wide, 35 um thick) to the ground plane beneath (0.18 mm spacing)
+    12" of 0.1" wide trace - top layer to DGND plane will be ~30 pF
+    With 10 mA drive from isolator, should be 3 ns/V - 10 ns rise time
+        Max BCK freq: 64 * 192 kHz = 12.288 MHz - 81 ns period
+    b) Traces to each other: assume 15 mil = 0.381 mm spacing which is usually the case.
+
+Got to first complete route.  Dinner break time.
+
+To do:
+1.  Make component names make sense.
+    Categories:
+        - Regs - 3xx (+special codes 5xx for LM317 only options)
+        - Isolation 2xx (+special codes 4xx for bypass resistors and ground connect ferrite)
+            Isolators for mod 0 are 20x, mod 1 are 21x, mod 2 are 22x, mod 3 are 23x
+            Dirchan inverter is 24x
+            Unidirectional isolators are 26x
+            Dirchan deserializer is 27x
+            3.3 V supply is 28x
+        - Other digital and support regs 1xx, in other words the "base" components
+            Chips are 11x
+            Clock receiver is 12x
+            3.3 V supply for ser/des is 18x
+    DONE.
+    Also tweaked silkscreen to avoid overlap.
+    
+1b. Add test points
+
+2.  Review
+    - Schematic sanity checks
+    TODO: Add pulldowns for some of the signals coming from modules (HWFLAG? MISO? figure out which ones)
+    - Power planes
+    - Clocks
+    - Test points
+    - Mechanical (mounts, heat spreader, keepouts)
+    - Whether to test Jung reg under heavy load first
+
+3.  Make module-adapter board
+    AD9515/ADM7154 clock receiver; SMA clock output; ensure SPI works for either DAC or ADC; tie off unused signals 
+
+4.  Gerber generation
+5.  PCB ordering
+6.  Component ordering
+
+[Then after all this]
+7.  Design new ADC8/DAC8 modules.
+
+7/24/2017
+----------
+Started on a module adapter board.  Should go to work though.
+    Actually going to be hard to fit everything I thought of.
+    Stare at the layout a bit...
+    
+7/26/2017
+---------
+Trying to tie up layout.   Some nets will not be fully connected, they will be one side or the other.
+    +15: OK, left only - 1 airwire
+    -15: OK, right only - 1 airwire
+    D3.3: OK, some from both sides - 1 airwire
+    
+    A5.0: OK, left side only - 1 airwire
+    
+    D7VU: OK, left side only - 1 airwire
+    A7VU: OK, left side only - 1 airwire
+    AP22VU: OK, left side only, 1 airwire
+    AN22VU: OK, left side only, 1 airwire
+    
+    AGND: OK, module is connected from right.  3 airwires
+    
+    DGND: TODO, 14 airwires
+    A3.3: NOT CONNECTED -> just threw down a cheap DPAK reg. NCP1117.  Not going to be best performance.
+    
+Got everything connected (though DGND is kind of shitty).
+Next up are:
+-   Sanity checking 2 level serdes scheme
+-   Adding pulldown resistors and other features I thought of to isolator
+
+7/30/2017
+---------
+Did Verilog sim for 2 level serdes.  Can be made to work, but definitely need srclk2 to be routed to modules.
+    Have some paper notes on this.
+
+SRCLK2 dilemma:
+    Only 2 DGND pins in the signal routing portion of the module connector
+    Both are used as clock shields.
+    -> Eliminate a clock shield, or enlarge the connector?
+    Look at the layout to see if enlarging is feasible.
+    Connector availability: 1x27 pin female header?  currently 26.  
+        Doesn't look like there is any difference in availability.
+
+Implementation fix:
+    - Stretched out module header by 0.1", 27 pins each side.
+    - New DGND at 16L, new SRCLK2 at 15R.  On each side, other pins moved down.
+    - Implementation on module adapter: have to shift some stuff around, but otherwise not bad
+    Keep hole positions or move outward?
+    Look at isolator board before deciding.  
+
+Adapter board: airwire checks
+    +15 OK 1
+    -15 OK 1
+    +5 OK 1
+    A3.3 OK 0
+    D3.3 OK 1
+    AGND OK 3
+    DGND OK 0
+    +22U OK 1
+    -22U OK 1
+    D7U OK 1
+    A7U OK 1
+    Total airwires = 11 - matches total from Eagle.  Everything is connected.
+    Connection robustness = OK, as good as it's going to get with this crappy layout.
+    
+Time to update isolator...
+    I think there is space to spread out the holes.
+    Holes are currently 3" apart.
+    Let's make that 3.1".
+
+That wasn't as bad as I expected.  DRC and airwires are clean again.
+Now following up on review. (7/23)
+    1b. Add test points - all done, along bottom edge
+    - Schematic sanity checks
+        Who needs pulldowns?  
+        DIR - pull up -- Default direction should be 1 (DAC)
+        CHAN - pull down
+        HWFLAG - pull down
+        MISO - pull down
+        [N/A] I2S lines - don't pull since, if there is no module, dir will be DAC so FPGA will drive them
+        What's the right pull down value?  33k = 0.1 mA.  If I use 10k (0.33 mA), current draw will be max 4 mA.  So that's OK.
+    -> Pulldowns done
+    
+    - Power planes
+    Unreg.  D7VU OK.  A7VU OK. AP22VU OK.  AN22VU OK.  
+    Reg. D3V3 OK.  A5V OK.  AP15V OK.  AN15V OK.  D3V3SD OK.  D3V3ISO OK.  C3V3 OK.
+    Ground  DGND OK. AGND OK.  CGND OK.
+    -> Power planes OK
+    Biggest weakness is the 86 mil inner layer traces connecting the modules.   (100 mOhm across all of them)
+    
+    - Clocks - check each on module side and carrier side
+    
+    MCLK - OK
+    Module diff clocks - OK
+    SCLK - OK -> note close spacing/coupling on carrier side.  Some close spacing, not much, on module side
+    SRCLK - OK
+    SRCLK2 - OK
+    -> Clock checks done
+    
+    - Test points
+    Done above
+    
+    - Debug headers
+    SRCLK2? Got it.
+    -> Debug headers look good
+
+    - Mechanical (mounts, heat spreader, keepouts)
+    Dimensions: 14 x 5.  OK.
+    Heat spreader dim: 2.5 x 5. (2x6 will work for initial testing)
+        HF has a bench top drill press for $70...
+    Plenty of holes.
+    Board conflicts?
+        Clock source may hit the isolation barrier; consider a redesign of the clock source?
+        -> Move it 0.1" to the right.  Fixed.
+        Accessing the debug connector is going to be a little harrowing (right next to PSU caps), not much I can do.
+        I put components under the shielding barrier.  Doh.
+            (Bottom side - D3V3ISO reg)
+        -> Rearranged that.  Fixed.
+        No components on top in module area
+        Only isolators and caps on top in carrier area
+    -> Mechanicals look good.
+    
+    - Whether to test Jung reg under heavy load first
+    [Decide over dinner]
+    
+    I want to test it, but how?  Test board doesn't have the ability to dissipate heat, esp. from the input regulator
+        And also doesn't have separate inputs for the LV regs.
+        But I bet I could check the +/- 15 V regs without much trouble.
+        What should happen when you overload the reg?
+        a) Over current - base drive to the pass transistor will be starved 
+            But if HFE is > 100, this will happen over 2 A
+        b) Thermal - something gets too hot and dies
+            I don't think the reg is protected against this.
+            For +/- 15 regs, preregs will limit drop across the pass transistor to 2.3 V.  And it's a beefy device that will be heatsinked.
+            So if we have 22 V in, the LM317 will see about 4 V.  And that shuts down at Tj=180 C.
+            Seem to have good design margin... 
+        c) Line regulation of unreg supply -- 0.5 ohm resistors currently.
+        So basically, there should be no problem at 1 A.   But should test with a module plug-in board.
+        
+    1.  Prototype the test procedures on the LM317 board.
+    2.  2 stages of load current:
+        200 mA - should carry indefinitely
+        500 mA - should get hot
+        1 A - ???
+    -> NM, just going to order 
+    
+    Also, what about making a dummy load board?
+        that plugs into the module slots and draws (selectable by jumper) currents and has heatsinks?
+    That would be a better test.
+        2.4 x 3.5" board should be really cheap and quick to design.
+
+    Module adapter board
+    -> Done
+    
+    Power load test board
+        Let's say each board can draw up to 500 mA from each rail, in 4 increments (125-200-375-500).
+        +/- 15 V - 125 mA from one is 2.25 W - use 10 W sandcast resistors from PE
+        Resistor pad spacing 2" for 10 W, 1" for 5 W resistors
+        Resistor width (including some space for airflow) = 0.5"
+        Area = 1 in^2 for one resistor used
+        This is a problem for area... the two headers are only 2" pitch apart
+        -> OK, step back to 5 W resistors.  125 mA * 22 V = 2.75 W.
+        Well, why not use a load that can be accommodated by 1 W resistors, for 7 V.
+        125 mA should be OK for 7 V... 8 V would give 1 W
+        11 mm body length for the RSF1 resistor; assume PE resistors are close to that; 12.5 mm lead spacing
+        4 mm body diameter - assume 6.35 mm / .25" pitch
+    -> Done, this will be a fun board.
+        For each one, order:
+        8x 100 ohm, 8x 180 ohm (5 W)
+        8x 56 ohm, 4x 39 ohm, 4x 27 ohm (1 W)
+        8x 4x2 male 0.1" header
+        2x 27x1 male 0.1" header
+
+    
+[Re-check schematics - both boards]
+Power load: OK
+Module adapter: OK
+Isolator
+    Sheet 1 OK
+    Sheet 2 OK
+    Sheet 3 OK
+    Sheet 4 OK
+    Sheet 5 OK
+    Sheet 6 OK
+-> OK
+
+4.  Gerber generation
+Isolator: done, checked in EasyEDA
+
+5.  PCB ordering
+Done
+
+6.  Component ordering
+That's a project for tomorrow.  Parts lists have been exported.
+
+Done for the day.  Todo:
+-   Component ordering (note: include hardware like standoffs)
+-   Start AKM 8 ch DAC/ADC designs
+
+8/2/2017
+--------
+Putting together component orders
+PE: $45 for resistors?  Wow...
+    Ebay has 10-packs of 5 W resistors for $3, which would save a few dollars.
+    Wow, Digikey is cheaper? $0.33 each at qty 30 for the 5 W resistors.
+-> Good to know, just get resistors from DK
+
+Got the Eagle exported parts lists merged into one spreadsheet.
+Need to clean up which parts are needed for which isolator stuffing option
+Then: Python script to compute required quantity of each part type for a "basket" of boards
+    2 module adapters
+    4 power loads
+    2 isolator baseboards
+        1 bypass option
+        1 isolator option
+        1 Jung option
+        1 LM317 option
+Say, I could probably just process the exported parts list myself... oh well.
+    That would require extra effort to deal with variants based on part indices.
+    
+Then: identify suppliers and order
+    I have a feeling headers are going to kill me.  16x 27 pin female headers?
+
+8/3/2017
+--------
+Tracked down parts suppliers.
+What to do about headers?
+    They could get expensive.
+    Need 16x 27-pin female header, for isolator module sockets.
+    Can get these from Samtec at $1.52 - DK is $2.10 (difference: $9.25)
+    
+8/4/2017
+--------
+Parts ordering:
+    27 pin female headers: direct from Samtec, $24
+    LME49710: Mouser, $13
+    Passives and a few chips: Digikey, $105 + tax/shipping
+    Fancy chips: Arrow, $51
+    Standoffs/screws: Ebay, $31
+
+Mechanical stuff:
+    Let's count up the hardware.  Just standoffs for now, can get screws anywhere.
+    PSU: 
+        4 standoffs. (already have, with #4-40 screws)
+    Isolator: 
+        6 main standoffs
+        16 standoffs under modules
+        3 clamps to heat spreader
+        Total = 26 standoffs + 20 that go on top = ~50 per assembly
+        4 standoffs under clock and carrier boards
+    Standoff height must match heat spreader and D2PAK power device height.
+        Earlier meas. of D2PAK = 0.182"
+        Vishay says 0.16 to 0.19, Onsemi says 0.17 to 0.18
+        Figure 0.18 + 0.25 bar = 0.43" = 7/16, or 11 mm
+        10 mm is a common size, but that's too small
+            -> unless, put a washer under each one 
+            -> unless, you find a supplier for 11mm standoffs on Ebay
+    Securing modules:
+        SSA height will be .215 (insertion depth up to .130)
+        Male header plastic height will be .098 (note: post length .230, so sticks out an extra .100?)
+        Stacked height expected to be .313 = 5/16" = about 8 mm
+    So, can get another set of standoffs that are 8 mm long, and short screws
+    Also, I need female headers for the clock and carrier boards.  Oops.
+        -> Just get extra single-row headers and parallel them for same height
+        OR, order more from Samtec: SSW series is a std female header
+            $1.680 for the 27x1 one... should have just gotten that, oh well
+            Height over PCB = 0.335, which means 0.433 = 7/16", with insertion depth up to .250
+        For standoffs, should assume taller height.
+            With SSW, 0.433 PCB spacing = 11 mm
+            With SSA, and 0.230 long male pins at 11 mm spacing, insertion depth will be 0.120 which is fine
+        -> Just get a shit ton of 11 mm spacers.
+    Spacer size: probably should do M2.5 instead of M3, since the plated holes are about .118 ID
+        which is the same size as an M3 screw, which is supposed to have 3.2mm = .126
+        M2.5 screw is .098 dia with .104-.110 recommended hole dia
+        vs. 4-40 screw which is .116-.129 hole dia
+        So why aren't there 4-40 spacers?  Not used in China, I guess.
+    Confirmed: Al bar + D2PAK device thickness = .432 = 11 mm
+    Bought both M3 and M2.5 screws/spacers (qty 50 each) so I can try both.   $12.54 for M3 and $18.45 for M2.5.
+
+Also, I'm going to need a lot of RCA connectors and cables when I do the 8 channel AKM modules.
+    Monoprice has 2m RCA stereo cables for $.87 each: https://www.monoprice.com/Product?p_id=659
+    PE has stereo RCA jacks (typical solder lug) for $1.95/pr: 090-278
+    or buyout PCB mount jacks $.68 each: 099-003
+    Digikey: RA RCA jacks are $.73 - CP-1402-ND and CP-1401-ND
+    Could make a cheap PCB that just has tons of connectors on it.  (in which case it would be easier to have a vertical RCA)
+    Anyway, deal with this later
+    Ebay: $11 for 10pr of chassis mount jacks http://www.ebay.com/itm/20-Pcs-24K-Gold-Plated-RCA-Female-Chassis-Panel-Mount-Jack-Socket-Connector-/282590956304?hash=item41cbbbcb10:g:bb0AAOSwvT5ZfDQx
+
+    Already have cheap 3x2 connectors (6) -- this will work for a cheesy test
+    
+That raises the questions of what the build configurations/plan will be.
+    Initial isolator boards: 2
+        Isolator A: LM317 regs and bypassed isolators
+        Isolator B: Jung regs and ADUM isolators
+    Initial module adapter: 2
+        Used to test v1 DAC2/ADC2 and DAC8/ADC8 boards
+
+Desired end state:
+    Complete low cost build (Ministreamer, 2 channel DAC without isolation) in Pesante chassis
+        This is just to make a point--not sure I would use it.
+        Should probably have Rpi/USBstreamer/DAC8 to be useful as digital XO/streaming server.  Cost would be around $400.
+            Or is there a suitable FPGA cheaper than USB streamer?
+            Also, DIYINHK has a USBstreamer competitor: http://www.diyinhk.com/shop/audio-kits/101-xmos-multichannel-high-quality-usb-tofrom-i2sdsd-spdif-pcb.html
+        Give it to Mike, maybe.
+    Complete high end build (RPi/FPGA, isolators, Jung, ADC2 + 2x DAC2 + DAC8--2 in, 12 out) in Slimline chassis
+    Testing build in wood protochassis
+        Use for: developing Bluetooth/SPDIF, modules; debugging
+
+Steps:
+    Update FPGA design for v2 isolator (constraints, 2-level serdes, etc.)
+    Assemble isolator A and module adapters
+    Test/debug isolator A with v1 modules in wooden proto chassis
+    Assemble isolator B and test/debug in wooden proto chassis
+    Build v2 DAC8/ADC8 modules; using isolator B, debug full 16 channel I/O performance
+    Build v2 DAC2/ADC2 modules
+    Build Bluetooth/SPDIF input option (prototype, then revise carrier board)
+    Assemble Slimline chassis with heat spreader and chassis divider
+    Test regulators under load
+    
+When I want to make a wider heat spreader: see https://www.remingtonindustries.com/raw-materials/aluminum-flat-bar-1-4-x-2-1-2-6061-general-purpose-plate-12-length-t6511-mill-stock/
+
+For modules - AKM parts to use
+    DAC2    AK4490 (SNR 120, THD 112) DK 974-1060-1-ND $5.08
+    DAC8    AK4458 (SNR 115, THD 107) DK 974-1082-1-ND $5.97
+    ADC2    AK5572 (SNR 121, THD 112) DK 974-1116-1-ND $8.29
+    ADC8    AK5558 (SNR 115, THD 106) DK 974-1128-1-ND $9.09
+    Got the datasheets.  May as well design/order the 4 boards together.
+    Feasible to have diff I/O on all boards?
+    Sure, why not?  But 8 ch boards will use multipin headers.
+    Seems pretty straightforward.  Let's make some footprints.
+    
+Let's make some footprints
+    AK5558 is 64 QFN.  Pads are .25 wide .4 long .5 pitch.  package is 9 mm square.  exposed pad 6.15 mm square.
+    Let's give ourselves .1 mm on inside and .3 mm on outside for solder adhering.
+    X: -4.5 - .3 = -4.8 to -4.5 + .4 + .1 = -4
+    
+Let's make some boards.
+    AK4490 config: Each output (p/n) swings +/- 1.4 V which is 1 V RMS.  Rated SNR is 120 dB A-weighted.  So let's assume 10k BW; 10 nV/rtHz.  Amplifying this will amplify the noise.  But the standard is 2 V... and feedback gets harder for ADA4899-1.
+    Stick with unity gain.
+    
+    If we have no gain, we'll get 1 V SE or 2 V diff.
+    Load capacitance (for op amp): coax cable seems to be 100 pf/m.  Assume 1 nF max.
+    10 ohm series res. + 1 nF cap. gives 16 MHz zero which is fine.
+
+ADA4899-1 quiescent current is 15 mA.  We have 4.
+    Assume 10 mA load current, regs need to supply 100 mA at +/- 5 V.
+    The ADP7142/7182 will be OK.  Just need to get footprints (annoying).
+
+Notes on connectivity
+    AGND 3
+    AP22VU 1
+    AN22VU 1
+    A7VU 1
+    D7VU 1
+    D3V3 1
+    A5V 1
+    AP15V 1
+    AN15V 1
+    DGND 1
+    -> Adds up to 12.  We're good.
+    
+Got DAC board done.  Dinner break then ADC2.
+
+ADC2: architecture decision
+    What input structure to use?  I want something that can withstand 2 V RMS single-ended.
+    i.e. input is from -2.8 to +2.8
+    output is from 1.1 to 3.9 V
+    ADA4932-2 would be nice.  $9, and seems to hold up with diff output swing up to 9 V (+/- 2.25 each side)...
+    Not quite enough swing.  Specs say within 1.2 V of the rail.
+    Of course, we could just shrink the gain a tiny bit... -1 dB is enough to prevent ADA4932 from clipping with 2 V RMS SE or diff input
+        ADC performance is specified out to -1 dB anyway.
+        How's the noise?  Depends on the resistors.  With 1k resistors, 11 nV/rtHz diff.
+        AK5572 input range is 2 V RMS diff. (3.9/1.1 to 1.1/3.9 = +/- 2.8 V = 5.6 Vpp)
+        and its claimed SNR is 121 dB A-weighted, which is about 10k Hz. -> 1.78 uV diff. -> 17.8 nV/rtHz.
+        They recommend NE5534 with 3.3k resistors (620 in the feedback).  Aren't those resistors a bit big?
+            NE5534: 3.5 nV/rtHz
+        OK, so 11 nV isn't too bad, but 1k is a tough load for the source.  Desire 10k+.
+            -> Add op amp buffers powered by +/- 15 V?
+        That takes away a lot of the benefits.
+        But let's see if a good quad op amp is available.
+        ADA4004-4 (SOIC or LFCSP) seems OK, but probably not that linear.  See what's speced for linearity.
+        -> Just try it.
+        
+Almost got draft of ADC2 done also, not quite.  Need sleep.
+
+
+8/7/2017
+--------
+More layout.  Airwire countdown:
+    AGND 3
+    AN15V AP15V D3V3 A5V D7VU A7VU AP22VU AN22VU - 1 each
+    This should be 11, but I have 14.
+    Fixed, just some DGND junk.
+
+OK, time for bed.  Clean up silkscreen, DRC tomorrow and it'll be ready for (later) review.
+
+8/8/2017
+--------
+Got boards.
+    Visual inspection is good, except for some nonuniformity of soldermask on vias.  And some extra solder on big mounting holes?
+    Mechanically, looks like it will fit but the clock board comes close to front edge of chassis, so might have to shift rearward.
+    Probing with multimeter:
+        Supplies and grounds appear to be hooked up right, no shorts.
+        Data signals are getting across to the isolators, and from isolators to carrier connector.
+    Should just assemble and see.
+
+To do before boards assembly (Wednesday?)
+1.  Finish ADC2 layout (initial version, pre-review) -- done
+2.  Prepare FPGA design
+
+Got started on FPGA design (including constraints), but need to finish combing through the code and updating everything.
+    Especially hwcon and hwflag stuff.
+    Need to get simulation working - add better test code when possible (not now).
+
+8/12/2017
+---------
+Most parts are here, starting isolator assembly.
+2 boards, one is low cost, one is full feature.
+Assemble all common parts and then all needed for low cost board.
+
+
+Notes from assembly:
+    Got 0805 caps instead of 1206 for 1u value.  Used for C35* and, on Jung board, C361/362.  Will need substitutes for C363, C364, C371. -> Used 0.1u 1206
+    1k 0603 resistors not needed, Jung only?  R301 R302 R353 R363 R382
+    Good to check supply shorts.. found one from -15 to gnd on Jung board (32 ohm).  Reason: bad soldering around C362, fixed.
+    My solder syringe sucks.  Need a new one.
+    Have some extra solder paste I'm guessing; should reflow chips with hot air.
+    On Jung board, lifted trace near U116 moved - HWCON probably will be broken
+        May need to remove chip to fix with reflow
+    Installed regs and big caps only on LM317 board.  Headers too - only go ahead with those if things look good.
+    Test point pads had soldermask over them - rub out with fiberglass pen
+
+Bypass/LM317 board is ready for testing 1 module.
+Time to assemble the module adapters.
+
+It is hilariously hard to insert/remove a module.
+    Find looser headers?
+
+Didn't do pwrload boards yet.  Nothing to test.
+
+Should be able to to power supply and bring up of bypass/LM317 board tomorrow.
+
+8/13/2017
+---------
+Initial bringup - isolator with bypass/LM317
+    Power supply connections checked out.  No shorts, just big caps.
+    Voltages:   Initial     +Adapter
+        D7VU    7.56        7.13
+        A7VU    8.22        7.44
+        AP22VU  22.9        22.8
+        AN22VU  -22.9       -22.8
+        D3V3    3.37        3.36
+        A5V     5.11        5.11
+        AP15V   15.28       15.27
+        AN15V   -15.13      -15.13
+    All OK, though digital supply being lower is somewhat surprising.  It does have some small loads though.
+    +/- 22 V supply still discharges slowly (not dangerously; couple of minutes to get under 5 V).
+    Local 3.3 V supply on adapter: 0.52 Analog, 3.31 Digital
+    Serdes supply on isolator: 0.53 (digital)
+        Maybe I hooked up the regulators wrong...
+        NCP1117: GND, OUT, IN (tab is OUT)
+        UA78MXX: IN, GND, OUT (tab is GND)
+        Yep.... ok, definitely need to order some 78M33s.  (Part: UA78M33CKVURG3 , $.56 on Arrow)
+        Thank goodness for whatever protection is in the NCP1117.
+    Should be able to test clocking regardless.
+    With clock board, D7VU is down to 6.41 and A7VU to 7.35.
+        Adding module adapter dropped it by 430 mV
+        Adding clock board dropped it by 720 mV
+    Transformer is rated 2.5 A from each secondary, 5 V AC
+        1.65 V clock output observed at the oscillator but not on adapter board.
+        Differential clock shows continuity.  Will need to examine signals more on adapter.
+    Another screw up: Clock receiver for FPGA is powered by D3V3ISO, meaning the 2nd regulator is necessary.
+    
+    Input levels for AD9515 look OK but clock output is at 0 V.
+    Try other adapter board?    Why not.
+        This one does have a clock output.
+        So, investigate the soldering on the first one.
+        D7VU is  6.59 on this one, also (180 mV higher).
+        
+
+With no isolators, should be able to bring up carrier if the MCLK supply issue is fixed.
+    Have any DPAK UA78M33 lying around?
+    The one I used on the clock board was SOT223-4 not DPAK.
+    The ones I used on the regtest board were 5.0 not 3.3 V.
+    So, definitely need to buy more before I can do anything, but:
+        Jury rig the supplies (D3V3SD, D3V3ISO) to 3.3 V regulated?
+        (After removing the NCP1117s.)
+    On the plus side, original DAC2 and ADC2 don't use A3V3 supply, so I don't need to worry about the reg on the adapter yet.
+
+It would be nice if I could screw the board down... looking forward to those standoffs.
+    
+Carrier fits in... overall stacking height = about 2.625
+    Should be able to try it and probe signals at the adapter, since it has its own supply (with RPi)
+    Well, SCLK is already getting to the module... from the previous FPGA design
+    Shouldn't need MCLK for anything to do with SPI.
+    But chip select won't work because serdes is out.
+    Oh well, check data?
+
+End of day notes:
+Ordered regs, but they won't be here for a while.  Mean time, get SPI working and then hack around regulator issues to get I2S working.    
+In the process of debugging SPI.
+    SCLK looks OK.  Data is getting in.  Need to figure out why it isn't getting to slot controller control FIFO (then to SPI master).
+    Continue ILA debugging next.
+
+8/15/2017
+---------
+Moved VM to HDD for now after SSD ran out of space.  New SSD on the way.
+
+SPI issue is reproducible in simulation.  If MCLK isn't running then the slots don't come out of reset.
+    I guess that needs to be fixed?
+    -> Yes.  Just hack the supplies to make MCLK work and then things should work.  Or at least you can debug with ILA.
+
+8/16/2017
+---------
+Did a few things:
+    New UA78M33 regulators arrived (though oddly, someone had torn the packaging apart and left the tape of 10 chips untouched on my front porch).
+    Removed NCP1117 regulators, replaced them with UA78M33
+    Added reg for D3V3SD on bypass board (needed for MCLKF)
+    Reflowed AD9515 on the module adapter that wasn't driving clock properly
+
+So tomorrow I can try things out (SPI) and debug with Logicport/ILA.
+
+
+8/19/2017
+---------
+Power up
+    A5V     5.11
+    A7VU    8.22
+    AP22VU  23.2
+    AN22VU  -23.2
+    AP15V   15.28
+    AN15V   -15.13
+    D7VU    6.79
+    D3V3    3.36
+    Clock: running  - CMCLK appears OK, at least to multimeter
+    A3V3 on module adapter: 3.27
+
+SPI still doesn't work, at least according to ILA.
+    Slots don't appear to be in reset
+    cs_n isn't getting serialized.
+    ss_cycle_counter appears to increment, but that's just to create the right pulse width on cs_n out
+    bit_counter not monitored, but probably not incrementing
+    With lots of ILA probing: data_ser_next looks OK but then srclk gets there before srclk, and it gets reset
+    
+
+Also, I've been overloading the input of the ADM7154 all this time.  Max input is 5.5 V.
+    Need to update PCB designs with a prereg to 5.0 V.
+    78M05 of any shape would be fine... max load = 600 mA
+    Absolute max input is 7 V.  Hmm... most likely I'm triggering the ESD protection diodes.
+
+Upgrade to Vivado 2017.2....
+    Sim doesn't work the way it used to.  Why?
+    Changing FX2 model did the trick.  Weird.
+    I know there were some oddities in the simulation...
+    This may have been a bad idea.  JTAG issues too.  Had to switch VMware to USB 3.0...
+    Can get debug core to appear when I program the device via FWLoader rather than JTAG
+    SPI test just hangs.  Can't tell what is going on.
+    -> Wait no.. it just takes a really long time
+    Comment out resetDevice and we're good.
+
+Finally, SPI works.
+What about I2S?
+    Doesn't look like it.  All zeros.
+    Pinout, constraints?
+    Poking with multimeter: RESET_N, SRCLK2, MCLK look ok
+    Maybe the signal names within da_platform didn't change yet (still hardcoded for DSD1792).
+    Easy enough to fix that.  (Re-synthesize...)
+    While that works... let's bring up a DAC2 module, make sure nothing explodes.
+        11.2896 MHz Tent XO still works.
+        Power supplies show nothing broken although 22V is now 20.9.
+        With no signal, DAC output spectrum via ARTA is around -146 at mid/high freq (44.1k/64k/Hanning)
+        Some spurs which may be related to the sound card.
+    With a signal... doesn't look clean, probably some glitches (bad I2S connections?)
+        Try replacing the jumper wires.
+        Try pulling out Logicport.
+        Oops, now we have a new problem: -22 unreg rail is broken (now at +5)
+        Shorted?  Blow a diode with inrush?  Or maybe a resistor?
+            It was when I heard a sharp click when flipping the power switch.
+            I'm pretty sure one of the resistors is open, and I didn't buy any extras.  (A109908CT-ND)
+            Note: PSU layout should probably have more copper for cooling them.
+            Inrush current can be up to ... 40 A.
+            Good reason to get an inrush current limiter... though they're like $2 each.
+            Also, I bought some 0.5 resistors for the regtest boards.  Look for those.  (1 ohm was used)
+        But something else probably got hit too.  Seeing 93 ohms to ground from -22 V, on PSU board.
+        Dammit.  Cap?
+            Yes, 10uF tantalum.  Have more, I think...
+            Rated 35 V.
+            Fine, leave it off until we have more.
+            And get 50 V rated ceramic caps next time.
+        Anyway, now I can see the signal without the Logicport around.  And it is bad.
+            -> need more cap on I2S lines?
+            Try setting drive to 4 mA. (Options are 4/8/12/16)  .  There is also a slew attribute (fast/slow).
+            Wow, that cleaned it up right away.
+            More THD than I expected (0.0085 = -80 dB or so?)
+            Try full scale. -> Looks like .0018/.0020 = -95 dB / -94 
+            So what's up with the lower amplitudes?
+                -40 dB level, THD = 0.1% or so (-60 dB)
+                That's not so great.  Oh well, should just listen to it.
+
+Say, does CLKSEL work?
+    Yes.  I set it to 0, it plays at 2.176 kHz = 96/44.1.
+    How about 192 kHz?
+        Can't program SPI registers.  Let's make DRIVE=4 only for the slot data... in case that was it.
+        -> Yep, now SPI is reliable.
+        But still, SPI registers won't change the sample rate.  You have to change BCK.
+        This is currently hardcoded in the design.  Oops.  Well, that's the next upgrade.  Until then it's 44.1 or 96 kHz.
+        And when I use the Crystek 22.5792, it'll be 88.2 or 96 kHz.
+        
+        
+Planning time.
+    Seems that DAC2 is going to work OK with the bypass/LM317 board.
+    Next steps (options)
+        Bring up ADC2 and test loopback, same board
+        Bring up iso/Jung board and try DAC2
+        Test aux features like HWCON / HWFLAG
+        Mount board in chassis and put it in the audio system
+            Note: Wood chassis won't ever have the heat spreader, so it's OK if it's up high
+    My desired course of action is
+        Add ADC2, get it working (note: includes adding more headers, and debugging 2nd module adapter)
+        Mount up and listen to the DAC part
+        Meanwhile, solder iso/Jung stuff on the other board.
+
+2nd module adapter: still no clock out.  How to diagnose?
+    Supply is OK.  Input clocks are OK.
+    Can see ESD diodes to ground on the input pins, but not the output pin.
+    Poke the output pin itself, and I get a reading, but nothing on the resistor.  So, focus on that pin.
+    A dab of extra solder paste fixed it.
+    
+Time to try ADC2.
+    S0 = LRCK S1 = BCK S2 = Data
+    It does something.  But LRCK isn't what you'd expect.
+    DIR = 0, so it knows it's an ADC
+    How's HWCON working?
+        Might be that's part of the problem - ADC2 board has its own deserializer for HWCON.
+        The module adapter shows what I'm expecting the module to do: shift in with SRCLK and load with SRCLK2.
+        But on the ADC2 board, it's shifting in with SCLK and loading with SRCLK. That will not do the right thing.
+        Try setting HWCON to 0 to get something stable.
+            -> Yes, clean LRCK, but no DATA.
+        What can I do with HWCON?
+            Set all slots to same thing?  No, doesn't work.
+        As a last ditch effort, let's try using it with HWCON = 0.  Just to feel good.
+        Seems to work reliably, but wrong frequency and poor analog performance.
+        Freq = 2.76 kHz.  Oh, maybe it needs the other clock.
+        My clock frequencies aren't what I thought they were?
+            Logicport says 12.288 / 5.644 MHz.  1/2 of expected.
+    Maybe I should put in DAC2 as well to check this.
+    Try SPI?  There is no SPI.
+    I guess the main question is why the analog performance is so bad.
+    I think I just have shitty I2S connectivity.  Flying leads are no good (unless you can limit the drive...)
+    So, give up on ADC2 for now.
+
+Let's mount this shit.
+    Got it.  In stereo, initial test was free of obvious problems.
+
+Plan for tomorrow: assemble other board (Jung/iso)
+    Test Jung regs first before soldering $100 worth of isolators.
+    Then transfer boards over and see if it sounds/performs any different.
+    And while you're at it, test HWCON/HWFLAG on the two adapters I have.
+
+8/20/2017
+---------
+Soldered Jung/iso board.  Didn't follow my earlier advice about testing.
+Bringup: (no boards installed) all voltages good.
+    Clock seems OK.
+    With module adapter: SE clock OK.  No change in voltages.
+    With DAC installed: SPI seems to work but DIRCHAN are all 0, so we can't send I2S data
+    
+    Let's pull out the Logicport.
+        DIR at the board = 1, chan = 0
+        At other DIR pins (modules 1-3): also 1 (due to pull ups)
+        DIRCHAN (isolated domain) - hard to probe
+        SCLK, SRCLK, SRCLK2 reaching modules all look OK
+        Suspect bad soldering around those chips
+        Oh, let's look at CDIRCHAN.  -- pretty sure it's just low
+        So, to really debug, need to look at the dirchan serializer.  (Bottom of PCB)
+        .55 V on pin 1 (SRCLK) of U111?
+        -> that pin has no solder.  Fixed.
+    Try with FPGA before flipping everything over again.
+    Yep, now we think there are DACs.
+    It plays.  Same distortion as before.
+    -> Remount everything...
+
+Back up and running.  Next:
+    Review/order new ADC2/DAC2 boards
+        At the very least, need prereg for ADM7154.
+        But this was the main goal for "before vacation" (besides isolator/chassis bringup)
+    Try getting rid of startup pop-  was it select_clock()?
+    And, stretch goal would be Bluetooth
+    Think about background noise/hum, does it just need shielding?
+    Determine power dissipation, why are transformers so hot?
+    Mount connectors (DC power, audio out)
+    Try ADC2 on new iso board, see if results are any better?
+    
+Also, looking ahead to connectors:
+    4x2 RCA jack is  	SC1537-ND  (make a small PCB with that and connector for ribbon cable?) - $3.89
+    Width of that is 2.165" so there is room.  Height = 1.063"
+    My XLR connectors mounting panel are about 1" x 1.25"
+    Indiv RCAs are going to need .75" x .75"
+    Should probably think more about twinaxial cable/connectors for diff IOs
+        DAC2/ADC2 will have coax/twinax cable soldered directly to indiv. connectors
+    As it stands, for each module I can fit either:
+        4x2 RCA for DAC8/ADC8
+        2 XLR and 2 RCA for DAC2/ADC2
+    Can't do both.  (Not enough room)
+    -> Chassis holes will depend on the desired module configuration
+
+8/21/2017
+---------
+First, some listening notes:
+    Only listened to bypass/LM317 version briefly.
+        Good dynamics, especially in the bass. Impressively distinct beats.
+        Maybe a little grainy?
+    Iso/Jung version:
+        More liquid (this came to mind with crooning electric guitars).  Treble is clean.
+            (Except maybe Better than Ezra treble, grainier than I remember?)
+            Maybe a little better in this respect than the v1 version?
+        Bass doesn't seem to stand with out as much crispness, but can still be fairly intense.  Clean.
+        Sonichrome sounded really rough at 90+ dB, but not that fatiguing.
+        Upper midrange slightly nasal/congested, not painful but still not right.
+            Maybe the speakers need to break in again, they haven't been used like this in a while.
+            Or maybe this is the way they sound. :)
+        Overall downward tilted tonal balance, it seemed, on everything but Sonichrome.
+            Will need to listen more to determine whether any clarity was lost.
+
+BTW, the startup pop is fixed.  Was resetting on every file.
+    Now have 1 startup script that does the reset and sets clock freq, when MPD is started.
+    There is still the issue of preventing a pop when changing the clock freq.
+
+Updating DAC2/ADC2
+    Easy enough to stick a DPAK 3-term reg in there to protect the ADM7154
+
+8/22/2017
+---------
+Need to do some planning to figure out what boards to order and when.
+    Goal is to get ALL boards done, in other words complete electrically, by end of Sept.
+    Enclosure and firmware/software work can then happen in Oct.
+    Concerned that DAC/ADC2 will take too long to get useful feedback before ordering DAC/ADC8.
+    
+8/23/2017
+----------
+Attenuator plan:
+    1 Diff. attenuator per channel with 4 SPST switches
+    Parts: Try DG9424EDQ-T1-GE3CT-ND .  ADG1613 is drop in replacement (16 TSSOP).
+    
+Started drawing on schematic:  To do:
+    Finish hooking up, make readable
+    Add HWCON deserializer
+    Test HWCON (and HWFLAG?) on existing board
+    Figure out layout
+    Check it over and order boards
+
+Finishing this up and ordering is only remaining goal for this week.
+
+Did some layout work.
+Note: cap size B for op amps can be larger than 10 uF recommended in datasheet
+    This may be necessary for low frequency filtering... but maybe not, who knows.
+    Imagine: 1 V RMS (+/- 1.4 V) into 100 ohm.  14 mA peak current.  Will get dumped into ground.
+    The problem is the ripple currents.
+    P15085CT-ND 68 uf 10 V has the lowest ESR of any cap that size.
+
+Think I got it done.... 12:07 am.  Tomorrow:
+- Check over boards especially vs. DAC/ADC datasheet
+- Test HWCON on iso platform
+And Friday, order boards.
+
+
+8/24/2017
+----------
+First some listening.
+    Seems clean and relatively relaxed in the midrange, with Basia Bulat or Alison Krauss at 75--80 dB.
+    Tone is somewhat dark, but I'm listening with the fan on.  I bet the detail's still there, check by listening in quiet room.
+    On the compressed recordings you can tell they're compressed; doesn't seem to extract more impact like some setups.
+    DMB Remember Two Things sounds great, even though you can tell it's an amateur recording.
+
+HWCON testing:
+    Off the bat, get all zeros.
+    Logicport to investigate.
+    SRCLK and SRCLK2 look normal, but my commands aren't making HWCON move from 0.
+    Going to start synthesizing with ILA and meanwhile probe around on board.
+    All looks good inside, slot_hwcon is getting set according to SW and iso.hwcon looks like a serial bitstream.
+    Time to probe HW, what does CHWCON look like?
+        DC value definitely responds to SW commands.
+    OK, time to figure out bottom side probing.
+    DC of both CHWCON / HWCON is about 0.61 steady state
+        SRCLK at deser = 3.06
+        Definitely some missing solder on the power pin of the deser.
+        Pins 4 and 5 appear shorted.  (S2_HWCON / S3_HWCON)
+        Fixed power to deser.  DC on outputs: 1.2 V for slots 2,3, 0.0 V for 0,1
+        DC at in is still 0.61, would expect more.  Try to get JTAG in there for ILA?  Or Logicport.
+    Now, the HWCON register per-slot isn't being updated. ???
+        No clock?  Solved that problem.
+        At end of test with all slots 0xFF, modules 2/3 have 3.3 V and 0/1 have 0 V
+    Let's reflow this shit.
+    Now HWCON looks good going into the module, that means the deser on the iso board is working.
+    But the indiv outputs on the module adapter are all low.
+        Nothing is ever easy...
+    Inspect solder?
+        Reflowed, no change.
+    Run jumper wires to module adapter.
+        Wait a minute.  SRCLK and SRCLK2 are swapped.
+        That sucks.  Looks like isolator and DAC/ADC2 are OK.
+        Can swap wires on the headers now...
+        Actually, never mind, it's just the label on the module adapter that's messed up.   Ordering is OK.
+            Probe voltages...
+            SRCLK 3.06 at debug header, 0.12 at deser pin -> investigate
+                Resoldered the pin, didn't fix it.
+                2nd time is the charm.  Ugh.
+                
+            SRCLK2 3.24 at header, 3.24 at reg pin
+        OK, now Logicport it up again.
+            Getting there.
+            Bit 5 is bad.  When all 8 bits are high, it's high.  But 0x20 doesn't work.
+            -> Fixed.  All 8 bits behave as expected.
+In summary: My soldering sucks.  But HWCON works.
+    11:56 pm
+    
+Tomorrow: review and order boards I guess
+
+8/25/2017
+---------
+Late start.
+Reviewed ADC2 board, seems clean.  Generated Gerbers.
+Same for DAC2.  Ordered boards.  $42 with DHL shipping.
+    There was a small issue on bottom silkscreen, didn't bother fixing.
+    
+Next: order parts.  And relax.
+    Do this Sat morning.
+    Build 2 boards.
+    
+8/26/2017
+---------
+Sorted through parts - had quite a few already
+Placed parts orders
+    Digikey $52 - passives, AKM, other chips
+    Arrow   $56 - ADI parts
+    Digikey $26 - ADA4899-1 which Arrow didn't have
+-> Cost of building these boards is around $180.
+
+Time for vacation...?
+
+When I get back, todo is:
+    Build/test DAC2 and ADC2 v2 boards 
+        (with RCA/XLR connectors, but not mounted to chassis because I want to leave room for the 16/16-channel setup...)
+    If that goes well, design/order DAC8, ADC8 and RCA connector boards
+    And the next steps are
+        a) chassis integration
+        b) Bluetooth/SPDIF
+
+
+9/5/2017
+--------
+Back from vacation.  Notes from memory:
+For DAC8, going to use AK4458 datasheet suggested output topology.  SE output only.
+    Main
+
+Both ADC/DAC8 will have low cost deserializer, but with a decent regulator (ADM7160?)
+
+For ADC8, TI has a fully diff amp with 4 amps/pkg.  Cheaper than ADI.
+    Also, OPA1604 looks like a good quad op amp.
+    Still need op amps in front to increase input impedance
+
+ADC8 may actually end up better quality than ADC2.  We'll see
+    Esp with the channel summing feature - need jumpers at input to support this.
+    SE input only.
+
+OK, time to assemble DAC/ADC2.
+    Hot air first.
+    Ugh.  DAC fucked up.
+    ADC was a breeze by comparison.
+
+9/20/2017
+---------
+After much delay due to traveling and being tired, it's time to resume DAC2/ADC2 assembly.
+Got all ICs and some passives on.  No obvious supply shorts created.
+
+9/21/2017
+---------
+Assembly continued. Why am I missing parts?
+ADC: R1, R3, R7-10, R12, R13, R21, R26, 
+DAC: R1, R2, R3, R9, R10, R30-35
+Values: 22, 1, 100, 825, 1k
+All of which I should already have.  dig around.
+Found.  Probably just fell out of the box.
+
+2200u ref decoupling caps can wiggle after soldering - consider hot glue
+
+Next: testing.
+
+9/23/2017
+---------
+Installed DAC2, ADC2 in iso/Jung board.
+Bring up: 
+    - High pitched sound (ridiculous oscillation + microphonics?).  What the heck?
+        Note: probing the clock output (AD9515) on ADC2 board changes the sound.  So may be related to that supply.
+        LF50 reg outputs have 0.125 V AC on them?  (input to ADM7154)
+            1u cap on input, 10u on output (both ceramic)
+            LF50 datasheet asks for a 2.2 uF (min.) electrolytic cap.  Probably wants some ESR.
+            Datasheet mentions ESR from 0.1 to 10 ohm.
+            10u 1206 cap datasheet shows ESR of 6 mOhm.  Hmm, maybe the reg is oscillating.
+            How to solve?
+            Stick a lytic on there?
+            -> Yes. Fixed.  There was 120 mV AC on each LF50 output, now closer to 0.
+            
+        
+    - Supply voltages normal
+        Local regs on both boards look fine (+/- 5 for amps, +5/+3.3 for clock recv)
+    - Clocks: 1.6 V DC at AD9515 output on both modules.
+    - SPI: Can't read DAC SPI regs--should investigate
+        Also try reading ADC SPI regs
+        There was a Python code bug.
+        OK, I can read registers, but they're all 0.  SPI format should be?
+            16 bit transaction.  First byte is 
+                [7:6] Chip address
+                [5] Read/write
+                [4:0] Address
+            Second byte is data.
+        Oops. AK4490 and AK5572 are write only SPI.  Can't read them.
+        So, should probably get some connectors wired up.  See what the AK4490 puts out.
+
+        
+    - I2S: FPGA delivers reasonable looking I2S for DAC. (at least when I look at DC)
+        BCK input seems to draw a lot of current.
+            DC voltage at module input is 1.1 V, 0.8 on other side of 50 ohm resistor
+            Other modules: 1.65 V
+            Diodes/short at input?
+                Same 1.1 V drop to ground on all I2S lines (AK4490 + AK5572) - might be isolators
+            What's on carrier side?
+                1.65 V, i.e. 50%
+            DC current
+                1.143 to 0.807 over 50 ohm -> 6.7 mA at DC
+        Also, 1.2 V at D0 when I'd expect 0s.  Significant DC current there also.
+            LRCK appears fine.
+            
+        Why does it seem the DAC is driving currents out of its I2S inputs?
+            Suspiciously similar drop across 50 ohm res. for BCK (.335) and D0 (-.335)
+        They are all inputs in all modes.  Doesn't make sense.
+        Anything that could be wrong with the isolator?
+            Check DC levels with the module removed, I guess.
+        
+        Other DAC pins:
+            No VREF current, VREF pins at 5 V
+            VCML = 0.15 V VCMR = 0 V
+            VOUTL = 0.45 V VOUTR = 5.0 V
+        I bet the DAC is FUBARed.  Too much soldering.
+        Try reflowing it, just to be sure.
+        Nope, bent the pins.  Got to be more careful.
+        
+    - DAC analog out: lots of junk there at idle.
+        LPF op amps have 0.56 V at input and output. Why?
+        With disable pin floating, ADA4899-1 has typ. -6 uA of input bias current.  Meaning it sends 6 uA to the input.
+        And I have a 100k load. -> 0.6 V
+        -> Need to connect disable pin to +Vs.  How?
+            tiny wire wrap wire?
+            Also add resistor to V- to draw off current (but exact value not known, could be very large)
+            Definitely a PCB error.
+        Alt. for now, decrease DC resistance. 
+            1 uF + 100k -> 1.6 Hz
+            1 uF + 10k -> 16 Hz, which is probably fine.  And that will reduce the offset to 60 mV.
+
+Outcome of all this: ordered more AK4490 chips.  Move on to testing AK5572, which seems to have a better chance of success.
+
+Then did some AK5572 testing.
+    Wow, got some valid samples right off the bat. (Driving input differentially, through isolation transformer.)
+    Lots of 60 Hz and harmonics, but no major THD at 1k/-20 dB.
+    Try to configure registers for 44k sampling.
+    Nothing I do (writing 0x22) seems to have an effect on SPI.
+    DC levels?
+        Input: 0
+        Opamp out: 0.
+        Diff amp out: 2.41
+        ADC in: 2.41
+    AC levels?
+        Input: .112
+        Opamp out: .108
+        Diff amp out: .097
+        ADC in: .097
+    Crank it up a bit.  (Gen at -20, speaker vol at max.)
+        No difference.  Set gen to -0.
+        AC is now 0.946 / 0.955.  See what samples look like.
+        Crazy clipped. -> Not actually clipping, just numerical format.
+        Ideally I could switch to I2S... this is because it's MSB justified.
+        Well, with soundcard gen at -6, I get a clean waveform.  About -95 dB THD.  Lots of 60 Hz though (-65 dB). And a spur at 19k.
+        -> Don't know how much of the junk is coming from the sound card.  Will need loopback.
+        Note that when I tested with inputs floating, I got a reasonably flat noise floor, no 60 Hz.
+        With input floating (100k SE input) RMS = -81 dB.
+        Same with input shorted.  What?  Should be lower noise.
+            Short P/N to ground separately... same.  -80 dB.  Investigate later.
+            
+    Main task for now is to figure out why SPI is broken.
+    Once DAC is working, can do loopback tests and analyze audio quality
+    But wait.  I have a DAC, it's just an older DAC.  (DSD1792)
+    Will need to update loopback_test script with code from ztex_test.py
+        Or make somekind of multithread capable driver. Not really that hard.
+
+
+Connectors will need to be added.
+    Plan for this enclosure is:
+        - Support 8ch SE IO for all 4 modules - drill to pattern of 8 ch connector that I can find on Digikey
+        - And for each module also have 2 XLRs.
+        - Plus 2 indiv RCAs for 2ch modules SE IO?
+
+Todo:
+    DONE    Add connectors to chassis panel (for XLRs, order DAC-ADC-DAC-ADC)
+    Figure out why SPI to AK5572 isn't having an effect (e.g. I2S mode, sampling rate control) - Logicport?
+    DONE    Get loopback working (DSD1792 to AK5572)
+    
+9/24/2017
+---------
+Looking at noise, ADC spec is 112 dB SNDR / 121 dB DR
+    ADA4932-2 diff amp config. gives output diff 11 nV/rtHz
+    Assuming the ADC has perfect front end filtering, that integrates over 22k Hz to 1.6 uV -> 122 dB
+    But if you assume we only have the RC filter on board, F3 = 530k and integrated noise is 7.8 uV -> 108 dB
+    So, experiment with that filtering (resistance/capacitance) and see if it impacts noise at all.
+
+Adding connectors.
+a)  4x2 RCA array
+    Hole dia. = 7/16 = .4375 (connector centering ring dia = 0.394, 10 mm)
+    This allows for some slop / drill tolerance.
+    Hole spacing = 0.551 vertical, 0.551 horizontal (14 mm)
+    -> Array width = 2.165 in, height = 1.063 (but don't mount it right at the bottom, need clearance for PCB)
+b) XLR input (female)
+    Plate dims (behind panel) = 1.013 x 1.252
+    Centering ring dia = about 0.93
+    Probably wants a 15/16 hole for exact fit.  But I don't think I can drill that accurately.
+c) XLR male
+    Same diameter/shape
+    Screw holes (#4?) - 15/16 V spacing, 
+
+What a pain, that took like 3 hr.
+    And the acrylic split a lot.
+    Use aluminum next time, and get a drill preess.
+
+9/25/2017
+---------
+Starting loopback testing - DSD1792 to AK5572
+1.  With no signal - reasonably flat noise floor with a couple humps, no 60 Hz, a little 120 Hz
+    RMS = -74.8 dBFS
+2.  Time for loopback code.
+    With gen level = -20 dB, 1 kHz.  RMS = -17.9, FFT is clean except for noise.  
+    No harmonics visible above the noise floor of -100 to -105 dB.
+    Some spectral spreading (but we did window it)
+    I think some 60 Hz harmonics "grass" are visible.
+    Overall, the noise is my main concern.
+    Increase the level to clipping... just below clipping is -11.3 dB.
+    (6 dB lost to numerical clipping - MSB justified vs. I2S.  should fix that.)
+    But still, no visible harmonics.  Noise floor is the main concern.
+    Signal ampl = 78.2, noise around -35, so it's better than -110 dB THD.
+    Also, setting level to -80 (68.7 less) makes signal ampl 9.5 (68.7 less).  Linear?  So far.
+    
+Cool.  That was easy.
+
+So, what causes the noise?
+    I don't remember the DAC having a noise problem.
+    So let's focus on the ADC.
+    First, let's get the levels straight.
+    At -11.3, AC RMS (differential) is 1.120 according to multimeter.  This makes sense.
+    Interestingly, I got some distortion products (2nd and 3rd) and 60 Hz harmonics to come out when I probed.  Try again without probing?
+    Maybe it's the EMI environment.  60 Hz harmonics are still there at -17 dB (-95 rel. signal)
+    Record for a shorter time and they're gone.  Interesting - interaction with FPGA or something?
+        Seems to be true.  Investigate later (but for now, record short clips)
+    With noise floor at -115 with 64k FFT, integrated noise is -67 (rel 1.12 V RMS) which is 0.5 mV RMS.
+    
+Uhh...
+    Input buffer?  Op amp has 1.8 nV/rtHz down to 10 Hz.    PSRR starts to roll off at 100 Hz, but noise floor is flat.
+    Diff amp?  Total diff output noise was expected to be 10.8 nV/rtHz or 9.5 uV at 500 kHz BW. (Not nearly what I'm seeing.)
+    Diff amp oscillating and that crap getting folded back into the audio spectrum?
+    How would I tell?
+    Multimeter shows a few millivolts on each of the diff amp outputs (after series resistance)
+    Noise looks about the same in both channels.
+    Should check the power supplies (+/- 5) also
+        Hey, what about using the scope?
+
+Todo for Tuesday:
+    1) Debug noise (about 500 uV RMS diff) with the help of a scope
+    2) Debug SPI - note max CLK is 5 MHz
+    3) Collect more measurements if you can
+    
+    
+9/28/2017
+---------
+Noise debug:
+    Hard to see things on the scope, because everywhere I probe, I see an oscillation of about 50 mV p-p at just under 2 MHz.
+    Even from AGND on 1 side of the board to the other. (Smaller signal when I probe the same AGND pin the scope lead is attached to.)
+    What could be causing that?
+    Well, +15 supply has a 175 mV p-p oscillation at that frequency.
+    -15 supply is quieter (same as AGND); other supplies have different waveform shapes, but all have smaller noise and no obvious oscillation
+    Note that +7 digital supply has a lot of ripple (400 mV p-p?)... By design, I guess?  (Heavy load... consider bumping up cap.)
+    
+OK, so what could be screwing up the +15 supply?
+    a) Bad design
+    b) One of the modules
+    c) Really big oscillating load current / resonance
+    What decoupling do I have?
+        - 100 uF in the Jung
+        - Smaller caps distributed on the modules
+
+Also, what impact does this have on +/- 5 V supplies used on ADC2?
+    They look fine.  In fact, better than the other supplies (local regulation...)
+
+Note that the +15 supply powers ADA4004-4 at a frequency where it has about 20 dB of +PSRR (10 dB of -PSRR).
+    So... looks like about +/- 200 mV at that pin. (140 mV RMS)
+    Is the op amp causing the oscillation?  Maybe it needs more decoupling.
+    But anyway, this would put 14 mV RMS at the output, at 2 MHz, and the diff amp would pass it on.
+    Not sure what kind of CM to DM conversion would be taking place.
+    -> Try more decoupling.  At the opamp.
+    Added 100 uF across the existing 0.1 uF.
+    Same oscillation is there, maybe a little smaller (especially at the opamp).
+    No major change in noise.   Lowers the LF noise floor of the channel coming from the DAC (good I guess?)
+    SMA output of module adapter shows same osc. on 15 V supply, and apparent noise/osc on other supplies.
+    So I guess the only good regulator is a local regulator.  Oh well.
+    But in the meantime, would 2 MHz junk degrade ADC noise-floor?
+        Input clock is 11.2896 MHz.
+    Noise doesn't appear correlated between the two channels...
+    Try removing other modules. DAC2v1 is easiest.
+    -> Actually this helped a bit.  Oscillation is smaller, a few dB less noise.
+        Still not low enough to see the noise of 100k resistors (floating vs. shorted input).
+        Logical question is what happens when I remove DAC2v2?
+    So, with ADC2 the only module installed, the noise appears to have fallen farther. (lb11.wav)
+    And maybe I can see the difference between 100k res. and shorted?
+        Don't know which channel is which, but one integrates to -79 dBFS and the other is -78.4
+        Still pitiful regardless.
+    100k res noise would be 40 nV/rtHz SE, 64 nV/rtHz diff, integrated over 40 kHz is 12.8 uV
+        And right now 0 dBFS = 1.12 V diff.  So that would be close to -100 dB.
+    Nope, just getting terrible noise still.  Around 100 uV, not 500 uV.  Progress.
+    Try adding decoupling to reg. supplies?
+    This helps by another 0.4 dB?
+
+Other interesting note: noise floor rises above 20 kHz.
+    Restricting the bandwidth from 130 to 20k: now the integrated noise is -94 and -89 dBFS
+    (dBFS/bin = about -130 and -135)
+    Add 41 dB to dBFS/bin to get dbFS over 20k BW
+    -89 dBFS = 40 uV.  Not explained by resistors only.
+    
+9/29/2017
+---------
+Ideas for further investigation:
+-   Turn off SCLK (optionally; user should be able to enable it to get HWFLAG back)
+-   Turn off I2S clocks for modules not being used (definitely needs user input; big glitches if starting/stopping an I2S interface)
+-   Tie AGND/DGND at isolator board (short ferrite bead)
+-   Tie AGND/DGND at ADC2 module
+-   Add local decoupling for negative supply (opamp input buffer)
+-   Move big decoupling caps around; try removing one at a time and see which supply has the most impact
+
+Added some HDL features and tried them out.
+    I2S turn off: before = 93.69 89.17 after = 93.67 89.18 -> not much difference
+    SCLK turn off: Actually, seems to be necessary to get clean output with current bitstream.
+    MSB justified: doesn't seem to work
+        Start of HW experiments: [-93.97952802 -89.29305024]
+        Remove +5 cap: [-92.3448468  -88.75339128]
+        Replace +5 cap, remove +3.3 cap: [-93.75603106 -89.11390528]
+        Replace +3.3 cap, remove -15 cap: [-93.64773623 -89.13332926]
+        Replace -15 remove +15: [-92.92768472 -88.84775391]
+    Sensitivity to that cap: 
+        +5 V: 1.63 dB
+        +3.3 V: 0.22 dB
+        -15 V: 0.33 dB
+        +15 V: 1.05 dB
+    Tried adding a wire between AGND/DGND - at module 3 connector, not great, but we'll see
+        [-93.44559658 -88.97882576] -> degraded (but repeated runs showed about the same)
+    Tried short AGND to DGND, wire on left side of module: [-93.4734368  -88.85719646]
+    Tried adding decoupling to -15V at op amp buffer.  No significant difference.
+    Soldering big decoupling caps to module.  No significant difference.
+    CM vs diff short at input.  No significant difference.  (It was actually shorted.  Good.)
+    
+Tomorrow: Poke around with the scope.  Still have about 20 dB to go.
+    Current -93.5 dBFS (ref 1.12 V) = 24 uV or 170 nV/rtHz.  
+    Should have -117 dBFS (ref 2.25 V) = 3.2 uV or 22 nV/rtHz at 44.1k sampling.
+    Also, why not change the pace and look at SPI.  Glitches?  Can even use scope...
+    
+Other note: floating input, in addition to 100k resistor noise has op amp input current noise dropped on 100k
+    1.2 pA/rtHz -> 120 nV/rtHz -> 126 with resistor noise added -> 179 diff -> 25 uV over 20k BW
+    -93.5 -89.0 dBFS -> 25uV 40uV
+    I can almost believe that's why I'm seeing the increased noise in that channel
+
+DC bias (VOCM) = 2.40 V.  VDD = 5.01 V, so I'm at 0.48 VDD.
+    Datasheet recommends being closer to 50%, but I can't see that making much difference in noise.
+    
+More brainstorming/ideas
+    Increase series resistance at AD9515 output to slow MCLK edges (but this increases phase noise...)
+    Increase filter caps at ADC input to see if HF from ADA4932-2 has anything to do with it
+        Put the corner in the audio band?
+    Re-check supplies on scope with new setup
+    Reflow AK5572, incase the ground connection was bad or something
+    And again, see what the deal is with SPI.
+    
+9/30/2017
+---------
+Visual inspection
+    Looks OK, but could use some cleanup.
+    No obvious opens.
+    VREF cap isn't flat on the board, pad seems to have lifted a bit, but multimeter indicates it's hooked up.
+    
+Did a (iron only) solder cleanup.
+Also put 1u 0603 cap across C5 (AIN1)
+    [-94.12610469 -91.28382535]
+    So, not much improvement; this leads me to believe that most of the issue is in the ADC itself.
+    Short both inputs to see.
+    [-93.73258163 -94.26296504]
+
+Poking around with the scope again.
+    Supplies, e.g. 15/-15, have smaller ripple at what looks like higher freq (4 MHz?)
+    AGND pins on the right side of the board have sharp spikes at 11.2 MHz (MCLK)
+        Could be scope related, but... they are 130 mV p-p.
+    -> Definitely try increasing clock output series resistor.
+    Right now, 22 ohm, = 150 mA (15 V/ns with 10 pF).  Try 249 ohm (13 mA, 1.3 V/ns)
+        Same spikes, same performance.
+    But it could just be the supply for the AD9515 indep. of output current.
+    What to do about that?
+    Or, what if it's the logic within the AK5572 itself
+        It is after all, connected to AGND (both digital and analog grounds) as recommended by the datasheet.
+        And there's a bit of modulation to it which probably corresponds to the AK5572
+        Try decoupling VDD18 and/or TVDD pins better?
+        VDD18 only has C6 (4.7u).  Maybe needs something better at HF?
+        Or a bypass wire from C6 GND to the upper right AGND pins, so the return currents don't go through the GND traces under the board/ADC
+
+So, experimenting with AK5572 grounding/decoupling
+    Soldered a heavy wire from - side of C6 (VDD18 digital decoupling cap) to AGND
+        [-96.97392311 -97.06734616] - a 3 dB improvement.
+    A little thinking: If power is usually 33 mA (5 V) = 150 mW, then each spike at MCLK is ~14 nJ 
+        (if all power goes to switching, which isn't true)
+    Add a smaller decoupling cap with better HF resp.?
+        0603 0.1u + 0805 1u
+        [-96.74108611 -97.04142715] - not much different
+    Add a wire from - side of C10 (VREF cap) and C9 (+5V cap)
+        [-95.30628292 -95.94232311] - actually made things worse.  Remove.
+        [-95.72658942 -96.20077468] with the wire connected to right side AGND module pins.
+    Move heavy wire from C6 GND to left side AGND pins
+        [-94.16624331 -94.6058271] - go back...
+    Increase C9 with parallel cap
+        [-101.29791305 -101.73399057] - nice. (4 dB improvement)
+    What does this tell us?
+        AVDD, as seen by the AK5572, was noisy.
+    Try cutting trace on bottom so digital decoupling paths (C3/6/7) don't go under ADC?
+        [-101.43229136 -102.16842924] - a little better, but not much different
+    Voltage spikes seem biggest at the ADC itself.
+    Basically, this chip really needs a local 5 V regulator close to the pins.
+        (Separate reg for VREF maybe.)
+    ADC8 will be 4 layer... and ADC2 will be ditched.
+    D3V3 supply looks oscillatory too.  At least relative to AGND.  DGND shows the same thing so it's probably not the reg.
+        6 MHz or so?
+        Try shorting AGND/DGND again.   [-101.42095217 -101.98143631]
+        No difference from the ADC's perspective, but maybe for other modules it would hurt.
+        
+Well, now I have the noise down to about 10 uV.  And I know the ADC2 board is shit.
+Things that I can do:
+    Keep thinking about noise.
+    Debug SPI
+    Try loopback with DAC2v1
+    Try DAC2v2 with new AK4490
+
+First, DAC2v1 loopback.
+    No signal: [-87.27420565 -87.53835008] -> 14 bits
+    Max signal: Still -11.3 dB because MSB justified isn't workinig.  (ILA)
+    THD: 2nd at -109, 3rd at -113.
+    Noise: Noise floor is a few dB better than it was... [-86.4754508  -87.35540303]
+    But still a lot worse than with just the ADC.
+    THD goes down once I back off amplitude by 3 dB.  But it's not as good as it was.  (Why?  Supply decoupling hacks?)
+    At 5 kHz, HD2 is -110 and HD3 is -112... that's good I guess
+    At 10k, HD3 creeps up to -105 in one channel.  (But that's 30 kHz.)
+    At 100, 60 Hz stuff is higher than harmonics.  Still works though.
+
+SPI: It looks like SPI is broken since I can't read from DSD1792.  So, that will need to be ILAed.
+    That and MSB justified.
+    ILA thinks SPI is OK.  Scope?
+    SCLK and MISO look fine.  CS isn't driven.  (Works for slot 2).  Probe around...
+    Move to slot 2? -> Bingo, works fine.  I2S and 44k.
+    Note for HW debug: CS come from a deser chip on bottom of PCB.  So it's going to be annoying to get at.
+
+MSB justified: fixed.  2 bugs, one software and one hardware.
+    Now I can get some distortion out of it...
+    Clip level is -5.3.  At -6 dBFS drive (2 V RMS), HD2 is -99 and HD3 is -96.
+    Noise now looks lower: [-92.64288797 -93.74413098] - 15.5 bits
+        (but distortion is higher than I'd like at full scale, so this doesn't really count)
+    At -9 dB and below, higher harmonics go away
+    
+Results at 44k sampling
+    Noise floor (dBFS) [-95.70748569 -95.34048273] rel 2.24 V.  38 uV.
+    Can't tell if any of the improvement is from moving away from the DAC...
+    With DAC running but inputs shorted: [-96.77356674 -96.22544276]  34 uV.
+    With DAC removed, module adapter still there: [-110.82683514 -110.87028153].  
+        Wow.  That's getting closer.  6.5 uV.   (6 dB worse than datasheet.)
+        Because the CS input was floating?  Is slot 2 better for some other reason?
+        Now I have to try slot 0 also.
+    Note: not much difference without module adapter.
+    Moved ADC2 to slot 0.. [-110.64330492 -110.14000147]
+        So, about the same as slot 2.
+    Back in slot 1 and tie CS high?
+        Doesn't make a differenec. [-79.61088475 -79.91222932]
+        So what's wrong with slot 1?
+            It is above some regulators...
+            But there's a shield (DGND) in between.
+
+OK, now focus on how to reduce the impact of adding the DAC.
+    Noise floor is -110 dB without DAC, -96 dB with it.  14 dB worse.
+    As I recall, 5 V supply was the most problematic for the ADC.
+    DAC2v1 actually has a decent amount of decoupling on A5V.  About 100u in total.
+        47u from VCC1 to each of VCOML/R ("internal bias decoupling pin")
+        10u+0.1u from each of VCC2L/R ("channel DACFF" supply) to AGND
+        10u from VCC1 to AGND
+    Why not add 100u on the module adapter...
+        Only caveat is that module adapter draws A5V from left side, but connects AGND on right side.
+        Straddle?  No, use right side, where GND is.
+        No benefit; -95 dBFS noise
+        Decouple the digital one too?  It's powered through a bead (smart).
+        What about +/- 15?
+            More caps... don't help.
+    Latest loopback result: [-94.97746058 -94.87805132]
+
+Lesson learned: should probably downscale the input to the DSD1792 to reduce distortion,
+    as long as noise isn't too bad.
+
+What next?  Getting tired of ADC2...
+    Try to get AK4490 DAC2 working.
+        Going to clean up, take DAC2v1 out for now.
+        Get ready for "fresh start" on DAC2v2.
+        Though it will probably have some of the same issues as ADC2.
+    ADC8 (AK5578) design will be next.
+    
+Questions to ponder
+    1) why it was so hard to keep the addition of the DAC from screwing up the ADC performance.
+    2) what's wrong with slot 1?
+
+Tried putting on a new AK4490
+    Ref. pins shorting to ground?  Not good...
+    Too much heat for caps?  I hope it's the caps.
+    I powered it up, and ref. voltages are 1.27 and 3.05.  What?  (Resistors and 5 V supply are OK)
+        So they're drawing... 170 mA and 90 mA
+    Digital inputs appear to be inputs at least.
+    Outputs at 2.63 V on one side, 0.98 on the other.
+    AC ?  None.
+
+    I don't know, it looks like I may have killed this one also.
+    -> PCB redesign needed.
+
+Calling it a night.  Need to replan.
+
+10/2/2017
+---------
+Short term plan is:
+1)  Redesign DAC2 and ADC2 boards.  
+    Figure out how to do things right before moving on to ADC8/DAC8. 
+    Don't skip anything.  It will take time.
+2)  While waiting for parts, get this thing open sourced.
+    You don't know how long it will take to be "done".
+3)  Secondary concern, start planning for chassis construction.
+    Need to have a "testing" model and an "active stereo" model.
+
+Checked in board files...
+
+So, DAC2 first.  Changes needed:
+    DONE    Better footprint for DAC - longer/square cornered pads
+    DONE    Local regulators
+        Already have A3V3 - ADM7160 from A5V.  This makes sense since ADM7160 has limited rejection. 
+            But it's small and only needs 1 uF (0603) in/out caps.  Yay.
+        Need D3V3 - another ADM7160 (can probably get away with hanging it off A5V)
+        Need VREF supply (sharing left/right? probably fine with separate 22 ohm resistors)  Filt BW = 3 Hz.
+            So, 100 nV/rtHz will be closer to 3 by 100 Hz.
+            ADP7118 will do.  AUJZ is $1.70, 5 pin TSOT-23
+                But its LF noise is pretty high - 1 uV/rtHz at 10 Hz 
+            Ah, just use another LT3042.  They're small.  And you won't worry about noise.
+        Need VDDL/R 5 V (sharing OK I'm going to say) - LT3042
+        Note: Both ADM7160 and ADP7142 are about 10 uV from 10-100k which is 100 nV/rtHz.
+        LT3042 (200 mA) or LT3045 (500 mA) look pretty good.
+    4 layer board - solid AGND plane
+
+10/3/2017
+---------
+Doing some DAC2 layout
+Question of VREF comes up.
+    I have 2 big caps to filter VREF (RC filters)
+    AK4490 datasheet says nothing about RC filtering.
+    Does it draw significant VREF current?
+    Going to put 0 ohm resistors for now.  Try increasing if there is a noise problem, but it probably won't matter.
+    
+Got initial layout done, will check over later after doing ADC2 also.
+
+10/4/2017
+---------
+ADC2 schematic changes and layout changes done
+
+DAC2 layout: need to check grounding around VREF supply, looks close to digital reg.
+
+Also, need to add DSD support (hook up the appropriate pins to connector) to DAC/ADC2.  Shouldn't be that hard.
+    Done for ADC. Still need to do for DAC
+    
+Todo:
+    DAC - add DSD connections
+    DAC - add (regulated input) bulk decoupling
+    DAC - check VREF grounding
+    Check attenuation (DC levels) on board I currently have
+    Silkscreen/DRC cleanup
+    PCB Ordering
+    Open sourcing / documentation of what I have
+    Later: parts ordering - DAC2/ADC2 minus ICs, and parts for another isolator
+    
+10/5/2017
+---------
+Progress:
+    DAC already had DSD pins hooked up.
+    Added regulated input bulk decoupling
+    Adjusted grounding around VREF regulator
+    DAC DRC/silkscreen cleanup done
+    ADC DRC/silkscreen cleanup done
+
+DAC airwires: +15 -15 +5 A7VU D3V3 D7VU -22 +22 = 8
+ADC airwires: +15 -15 +5 +3.3 A7VU D7VU -22 +22 = 8
+
+HWCON attenuator testing
+    Slot 2 doesn't work.  OK, already knew that.
+    Slot 0: With HWCON set to 0xFF, HWCON input voltage is 3.3.  Good.
+    Of the 5 vias near the switches, all are high except the middle one.
+        Leftmost is +3.3 V supply, other 4 are (left to right) 0, 1, 2, 3
+        So what's up with HWCON1?  Probably bad soldering or bad PCB.  Just solder a little wire once I find the break.
+        Got an intermittent connect when I was fiddling around.
+    OK.  Added 1k on top of R8 to bring the offset down.
+        Left outputs are:
+        HWCON = 0: 0.009 0.577 = 568 mV 
+        HWCON = 1: 0.290 0.295 = 5 mV   41.1 dB
+        HWCON = 2: 0.284 0.301 = 17 mV  30.5 dB
+        HWCON = 4: 0.264 0.320 = 56 mV  20.1 dB
+        HWCON = 8: 0.203 0.381 = 178 mV 10.1 dB
+    Yes.  Whew.
+    So they cause attenuation at DC.  And hopefully they will at AC too, without much nonlinearity.
+    Peak voltage = 1.4 V either side (2.8 V diff)
+        100 ohm load each side -> 14 mA
+        Switch resistance is about 1.5 ohm -> voltage across switch is 21 mV * 2 = 42 mV
+        Resistance changes by about 0.5 ohm over 3 V -> 0.17 Ohm/V -> change should be <7 mOhm -> error < 100 uV (-80 dB)
+    So we'll see.  Concept is validated though.
+
+PCB ordering
+    DAC2 looks good.  Swapped LF50 output cap from ceramic to electrolytic.
+    ADC2: same, and cleared AGND plane under the ADA4932-2 to reduce cap. load
+    Done.  $97 including DHL.
+    Hope this works.
+
+Anyway, next up:
+    Open sourcing (write documentation this weekend?)
+    Parts ordering
+    Also think about chassis ordering and tools
+    

@@ -1,0 +1,67 @@
+
+
+Name: Multichannel digital audio I/O platform for DIY
+
+
+Fragments of writeup about DA platform
+---------------------------------------
+For the home audio DIYer looking at D/A and A/D conversion, there are many compromises.  
+Most effort in this area has gone towards 2-channel D/A converters for stereos.
+Several building blocks are available, including USB I2S interfaces, power supplies, and DAC boards.
+But what if you have a multichannel system (e.g. home theater) or use digital crossovers?
+What if you want to record music, or do measurements on electronics or speakers?
+What if you want to experiment (e.g. A/B test) with different components and circuit toplogies?
+There are always solutions but some of them are unwieldy or expensive.
+Multiple PCBs need to be wired up and mounted in one or more chassis.
+It's time consuming to adjust a system configuration (i.e. adding more channels) or change something in the signal chain (i.e. different DAC, clock or I/V stage).
+The point I'm getting to is that without a common platform, DIY digital audio is unnecessarily complicated.
+In this project I attempt to provide such a platform and document the tradeoffs that it creates.
+
+The main capabilities I pursued are:
+
+- Removable DAC/ADC modules with a common mechanical and electrical specification.
+  The modules can be swapped out based on system configuration needs, budget limitations, or listening preferences.
+  DIYers can contribute novel converter and analog designs by designing a module, without "reinventing the wheel" for everything else.
+  The platform carries up to 4 modules with up to 8 channels each.
+
+- Support for FPGA-based asynchronous FIFO
+  The platform can be driven through a ZTEX 2.13a board containing a Xilinx XC7A35T FPGA and 256 MB of DRAM.
+  I provide firmware for the FPGA to act as a set of large asynchronous FIFOs in both directions.
+  This allows the use of a local master clock and makes performance independent of software and USB behavior.
+  
+- Support for built-in music streaming server and real-time FIR filtering using Raspberry Pi
+  The Raspberry Pi can connect to a wired or wireless Ethernet network.
+  MPD is used as a music server that can be controlled by an Android mobile app.
+  It can play music stored on another computer or NAS, and stream music from another device.
+  ALSA configuration options allow some channels to be directed through the speakers library or another filtering engine.
+
+- Support for galvanic isolation of modules
+  The complex digital portions of the system (typically Raspberry Pi and FPGA) have a separate power supply from the modules and clock sources.
+  Digital signals (e.g. I2S, SPI) are routed through Analog Devices transformer isolators which allow these supplies to use separate grounds.
+  The purpose of this is to reduce the currents flowing in the grounds (both digital and analog) used by the modules and clock sources.
+
+- Stuffing options for different budgets
+  In order to broaden the accessibility of this platform, different versions can be built with different capabilities.
+  The only constant is the underlying PCBs, which are inexpensive.  (Est $20 in quantity)
+  The cost of building this system can range from TBD.  (Est $300 to $800)
+  If an asynchronous FIFO and low-jitter clocking are not needed, a USBStreamer or Ministreamer I2S interface can be used.
+  The system can be built with jumpers in place of the galvanic isolators.
+  Different DAC and ADC modules, clock sources, power supplies, and chassis can also be chosen for the desired system cost.
+
+- Moderate performance limitations
+  This platform will never achieve the same performance as a carefully designed and tweaked, purpose-built setup for a particular application.
+  However, I believe it can get close.
+  The isolator board does not carry analog audio signals.
+  EMI can be suppressed by installing a conductive divider that places the modules in a Faraday cage.
+  Modules can (optionally) provide their own supply regulation.
+  The clock distribution scheme limits excess phase noise added to that of the clock sources.  One module can (optionally) use an onboard clock, which is distributed to the other modules.
+
+The rest of this guide describes the design and audio performance of the platform in more detail, along with an initial set of DAC/ADC modules.
+
+Outline for remaining sections
+    Power supplies
+    Clocking
+    Mechanical design
+    Modules and analog performance
+    Build procedures and costs
+

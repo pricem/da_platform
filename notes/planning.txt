@@ -90,7 +90,8 @@ Order of operations plan
     Clock dist prototyping
         DONE Design/order clock board and a mating diff-SE board (SMAs out) with long traces (and headers?)
         DONE Verify functionality with clock and PSU PCBs, in LVDS and CML modes (+ all combinations)
-        Stretch goal: check phase noise of each oscillator option before/after the link
+        DONE Stretch goal: check phase noise of each oscillator option before/after the link
+            * Need to verify HF spurs on final system
     Supply regulator prototyping (before including supplies on underside of isolator)
         DONE Design/order reg board with +/- 15, A5, D3.3 outputs
         DONE Measurements: noise spectra, output impedance, Jung and 3-terminal variants
@@ -98,7 +99,16 @@ Order of operations plan
         DONE Design/order carrier A board, check that it can work with v1 isolator
         POSTPONED Design/order carrier B board, USB/mini-streamers, check that they can work with v1 isolator
     Then add isolator and chassis
+        DONE Design/order isolator board with module adapter
     Then design new modules
         Additional idea: expand carrier with Bluetooth and SPDIF inputs 
     And of course, work on software
-    
+
+Revision/introduction plan:
+    Seek paper design review feedback
+    During paper feedback period, improve software/usability
+    Seek evaluation in system
+        Give out 2 setups:
+        -   plain 2 channel DAC (should be good, though)
+        -   digital XO with multichannel output (same configuration as my system)
+    Publish code/documentation
