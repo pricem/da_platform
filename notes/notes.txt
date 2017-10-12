@@ -294,7 +294,7 @@ S/N 2 I/V stage debug
 At this point, the hacky setup is working as 2-channel DAC (see pictures).
     Stereo output (with isolation transformer) is reasonably clean.  
     THD < -80 dB in both channels at -30 dB and up
-    Added to rack and configured Michelle's laptop for testing with speakers
+    Added to rack and configured laptop for testing with speakers
     Initial listening impressions: (comparing to memory of modified RCD-855 CD player)
         Reasonably relaxed, haven't been driven out of the room.
         Midrange a little more spacious?
@@ -851,7 +851,7 @@ Need to think about the next steps, given hardware debug situation on the origin
 Order of operations after thinking about planning:
 1.  Try ADC boards and debugging other issues (SPI, 5 V reg) with current setup
 2.  Assemble and test new DAC output boards
-3.  Figure out Netflix streaming and other practical needs (i.e. Michelle's phone)
+3.  Figure out Netflix streaming and other practical needs (i.e. someone's phone)
 4.  Try digital crossover - work on speakers library
 
 General goal: Get as far as you can with current platform, and do some extra SW/integration work for:
@@ -1978,8 +1978,8 @@ Also, the 5V regulator was broken again
 Now porting the circuit over.
 
 Reference redux: MAX6220 looks like a good deal at $2.42 (MAX6220ASA-2.5+-ND )
-    1.5µVp-p 0.1-10 Hz
-    1.3µVrms  10-10k
+    1.5uVp-p 0.1-10 Hz
+    1.3uVrms  10-10k
     15 nV/rtHz above 100 Hz... needs 1 uF cap from NR to ground
 
 How to mount the D2PAK devices when there are caps on same side?  (cap height = 10.2 mm D2PAK height = 4.4 mm)
@@ -2014,7 +2014,7 @@ After reducing Q1 current and replacing: 2.14 V out, not quite started up
     I have some of these lying around from discrete I/V stage
     
 Anyway, the hack of using 2 LEDs in series got me going again.
-    Listened in the afternoon with Ed and Alice
+    Listened in the afternoon with friends
     Need to listen more to evaluate.
     
 Finished a 1-sided layout of pos reg
@@ -2320,7 +2320,7 @@ Tomorrow:
             and 2 7/16 spacers + long screws for that
             
     DONE Assemble PSU test boards.
-    NOT DONE Help Michelle with bookcase.
+    NOT DONE Help with bookcase.
 
 6/3/2017
 ---------
@@ -2747,8 +2747,6 @@ And consider whether regs should be a separate board for modularity?
 
 6/27/2017
 ---------
-While Michelle naps and I can't cut wood for the bookcase
-
 Thinking about bad line input on the Jung board:
     See what happens when I use a lower voltage Zener setting the input
         With 11 V zener, I get 14.09 at pos input
@@ -4779,4 +4777,32 @@ Anyway, next up:
     Open sourcing (write documentation this weekend?)
     Parts ordering
     Also think about chassis ordering and tools
-    
+
+10/10/2017
+----------
+Open sourcing.  
+    SVN to Git conversion done.
+    Need to clean up and make sure licensing is clean before pushing to Github.
+
+Licensing questions came up:
+
+- Using code that came from other sources (verilog/contrib): Need to make sure it is OK for publication
+    MIT: Still have to figure this out or re-write the modules.
+    ZTEX: E-mailed them to ask what acceptable licenses would be.  Solderpad/LGPLv3 acceptable.
+    Micron: no license, public domain; probably OK
+    P&B (MIG model): no license, public domain; probably OK
+
+- Xilinx IP: Probably shouldn't publish the MIG code.  (Though others have definitely done that.)
+    -> Need to re-do Vivado projects in Tcl script form.
+    Can check in XCI core file for MIG, but not the .v sources that get generated.
+    Done
+
+Remaining work:
+    Replace modules that originated at MIT
+    Split licenses
+    Clean up software dirs
+    Write some basic documentation
+
+
+
+

@@ -274,8 +274,8 @@ set_property IOSTANDARD DIFF_SSTL15 [get_ports {ddr3_dqs_p[1]}]
 set_property SLEW FAST [get_ports {ddr3_dqs_n[1]}]
 set_property IN_TERM UNTUNED_SPLIT_40 [get_ports {ddr3_dqs_n[1]}]
 set_property IOSTANDARD DIFF_SSTL15 [get_ports {ddr3_dqs_n[1]}]
-set_property PACKAGE_PIN H4 [get_ports {ddr3_dqs_n[1]}]
 set_property PACKAGE_PIN J4 [get_ports {ddr3_dqs_p[1]}]
+set_property PACKAGE_PIN H4 [get_ports {ddr3_dqs_n[1]}]
 
 # PadFunction: IO_L7P_T1_AD6P_35
 set_property SLEW FAST [get_ports {ddr3_ck_p[0]}]

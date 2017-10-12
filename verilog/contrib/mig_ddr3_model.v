@@ -1,4 +1,5 @@
-//	Obtained from ftp://ftp.probo.com/pub/mig_ddr3_bfm/mig_ddr3_model.v on July 21, 2012
+//	Obtained from ftp://ftp.probo.com/pub/mig_ddr2_bfm/mig_ddr2_model.v on July 21, 2012
+//  Please see: http://www.probo.com/mig_ddr2_bfm.php
 //	Subsequently modified by Michael Price (pricem@mit.edu) for: dense memory storage
 //	Subsequently modified by Michael Price (pricem@mit.edu) for: MIG 7-series DDR3 modeling
 
