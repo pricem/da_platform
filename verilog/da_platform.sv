@@ -20,17 +20,19 @@ module da_platform #(
     //  (As of 8/3/2016 the memory controller is yet to be implemented...)
     host_width = 16,
     mem_width = 32,
-    sclk_ratio = 8,
+    sclk_ratio = 16,
     num_slots = 4
 ) (
+    input reset,
+    
     //  Generic memory interface
-    ClockReset.client cr_mem,
+    input clk_mem,
     FIFOInterface.out mem_cmd,
     FIFOInterface.out mem_write,
     FIFOInterface.in mem_read,
     
     //  Generic host interface
-    ClockReset.client cr_host,
+    input clk_host,
     FIFOInterface.in host_in,
     FIFOInterface.out host_out,
     
@@ -41,7 +43,7 @@ module da_platform #(
     output [3:0] led_debug
 );
 
-`include "commands.v"
+`include "commands.vh"
 
 //  Internal FIFO log depth
 localparam M = 10;
@@ -49,10 +51,9 @@ localparam M = 10;
 genvar g;
 
 //  Core clock domain - for now, just attached to host
-ClockReset cr_core ();
+logic clk_core;
 always_comb begin
-    cr_core.clk = cr_host.clk;
-    cr_core.reset = cr_host.reset;
+    clk_core = clk_host;
 end
 
 //  Drive isolator reset line
@@ -62,20 +63,26 @@ logic reset_local_hold;
 logic [7:0] reset_local_counter;
 localparam reset_local_timeout_cycles = 200;
 always_comb begin
-    iso.reset_n = !(cr_core.reset || reset_local);
+    iso.reset_n = !(reset || reset_local);
 end
 
 //  SCLK generation, along with a reset synchronized to it
+reg sclk_en;
+reg sclk_en_latched;
+wire sclk_ungated;
 wire sclk_last;
 reg reset_sclk;
 
-clk_divider #(.ratio(sclk_ratio)) mclkdiv(cr_core.reset, cr_core.clk, iso.sclk);
-delay sclk_delay(cr_core.clk, cr_core.reset, iso.sclk, sclk_last);
+always_latch if (!sclk_ungated) sclk_en_latched <= sclk_en;
+always_comb iso.sclk = sclk_ungated && sclk_en_latched;
 
-always @(posedge cr_core.clk) begin
-    if (cr_core.reset)
+clk_divider #(.ratio(sclk_ratio)) mclkdiv(reset, clk_core, sclk_ungated);
+delay sclk_delay(clk_core, reset, sclk_ungated, sclk_last);
+
+always @(posedge clk_core) begin
+    if (reset)
         reset_sclk <= 1;
-    else if (!iso.sclk && sclk_last)
+    else if (!sclk_ungated && sclk_last)
         reset_sclk <= 0;
 end
 
@@ -86,7 +93,7 @@ logic srclk2_fpga_launch;
 logic srclk2_fpga_capture;
 
 logic [5:0] cycle_count;
-always_ff @(posedge iso.sclk)   
+always_ff @(posedge sclk_ungated)   
     if (reset_sclk) cycle_count <= 0;
     else cycle_count <= cycle_count + 1;
 
@@ -94,18 +101,18 @@ logic srclk_en;
 logic srclk2_modules_en;
 logic srclk2_fpga_launch_en;
 logic srclk2_fpga_capture_en;
-always_latch if (!iso.sclk) srclk_en = (!reset_sclk && (cycle_count % 8 == 0));
-always_latch if (!iso.sclk) srclk2_fpga_launch_en = (!reset_sclk && (cycle_count % 64 == 1));
-always_latch if (!iso.sclk) srclk2_modules_en = (!reset_sclk && (cycle_count % 64 == 17));
-always_latch if (!iso.sclk) srclk2_fpga_capture_en = (!reset_sclk && (cycle_count % 64 == 33));
+always_latch if (!sclk_ungated) srclk_en = (!reset_sclk && (cycle_count % 8 == 0));
+always_latch if (!sclk_ungated) srclk2_fpga_launch_en = (!reset_sclk && (cycle_count % 64 == 1));
+always_latch if (!sclk_ungated) srclk2_modules_en = (!reset_sclk && (cycle_count % 64 == 17));
+always_latch if (!sclk_ungated) srclk2_fpga_capture_en = (!reset_sclk && (cycle_count % 64 == 33));
 always_comb begin
     iso.srclk = !(iso.sclk && srclk_en);
     iso.srclk2 = !(iso.sclk && srclk2_modules_en);
-    srclk2_fpga_launch = !(iso.sclk && srclk2_fpga_launch_en);
-    srclk2_fpga_capture = !(iso.sclk && srclk2_fpga_capture_en);
+    srclk2_fpga_launch = !(sclk_ungated && srclk2_fpga_launch_en);
+    srclk2_fpga_capture = !(sclk_ungated && srclk2_fpga_capture_en);
 end
 
-always_ff @(posedge iso.sclk) begin
+always_ff @(posedge sclk_ungated) begin
     srclk_sync <= !(cycle_count % 8 == 7);
     srclk2_sync <= !(cycle_count % 64 == 63);
 end
@@ -114,7 +121,7 @@ reg [3:0] clk_inhibit;
 reg [3:0] reset_slots;
 
 wire mclk_last;
-delay mclk_delay(cr_core.clk, cr_core.reset, iso.mclk, mclk_last);
+delay mclk_delay(clk_core, reset, iso.mclk, mclk_last);
 
 
 //  Parallel versions of serialized signals
@@ -122,45 +129,39 @@ delay mclk_delay(cr_core.clk, cr_core.reset, iso.mclk, mclk_last);
 //  Coming from modules to FPGA - dirchan and hwflag
 wire [7:0] dirchan_parallel;
 wire [7:0] hwflag_parallel;
-deserializer dirchan_des(iso.sclk, iso.dirchan, iso.srclk, dirchan_parallel);
-deserializer hwflag_des(iso.sclk, iso.hwflag, iso.srclk, hwflag_parallel);
+deserializer dirchan_des(sclk_ungated, iso.dirchan, iso.srclk, dirchan_parallel);
+deserializer hwflag_des(sclk_ungated, iso.hwflag, iso.srclk, hwflag_parallel);
 
 //  Going from FPGA to modules - hwcon and cs_n
 wire [7:0] hwcon_parallel;
 wire [7:0] cs_n_parallel;
-serializer #(.launch_negedge(1)) hwcon_ser(iso.sclk, iso.hwcon, srclk_sync, hwcon_parallel);
-serializer #(.launch_negedge(1)) cs_n_ser(iso.sclk, iso.cs_n, srclk_sync, cs_n_parallel);
+serializer #(.launch_negedge(1)) hwcon_ser(sclk_ungated, iso.hwcon, srclk_sync, hwcon_parallel);
+serializer #(.launch_negedge(1)) cs_n_ser(sclk_ungated, iso.cs_n, srclk_sync, cs_n_parallel);
 
 
 //  FIFOs for clock domain conversion (host interface (USB/FX2) to core)
-FIFOInterface #(.num_bits(host_width)) host_in_core (cr_core.clk);
-FIFOInterface #(.num_bits(host_width)) host_out_core (cr_core.clk);
+FIFOInterface #(.num_bits(host_width)) host_in_core (clk_core);
+FIFOInterface #(.num_bits(host_width)) host_out_core (clk_core);
 
 wire [M:0] host_in_wr_count;
 wire [M:0] host_in_rd_count;
 wire [M:0] host_out_wr_count;
 wire [M:0] host_out_rd_count;
 
-fifo_async_sv2 #(.width(host_width), .depth(1 << M)) host_in_h2c(
-    .clk_in(cr_host.clk),
-    .reset_in(cr_host.reset),
+fifo_async #(.Nb(host_width), .M(M), .N(1 << M)) host_in_h2c(
+    .reset,
     .in(host_in),
-    .count_in(host_in_wr_count),
-    .clk_out(cr_core.clk),
-    .reset_out(cr_core.reset),
+    .in_count(host_in_wr_count),
     .out(host_in_core.out),
-    .count_out(host_in_rd_count)
+    .out_count(host_in_rd_count)
 );
 
-fifo_async_sv2 #(.width(host_width), .depth(1 << M), .debug_display(1)) host_out_c2h(
-    .clk_in(cr_core.clk),
-    .reset_in(cr_core.reset),
+fifo_async #(.Nb(host_width), .M(M), .N(1 << M)) host_out_c2h(
+    .reset,
     .in(host_out_core.in),
-    .count_in(host_out_wr_count),
-    .clk_out(cr_host.clk),
-    .reset_out(cr_host.reset),
+    .in_count(host_out_wr_count),
     .out(host_out),
-    .count_out(host_out_rd_count)
+    .out_count(host_out_rd_count)
 );
 
 reg [7:0] slot_index;
@@ -194,7 +195,7 @@ reg [7:0] cmd_data_waiting;
 
 //  Monitor AMCS and DMCS to estimate what the values are on the board
 wire [7:0] cs_n_parallel_est;
-deserializer cs_n_des(iso.sclk, iso.cs_n, iso.srclk, cs_n_parallel_est);
+deserializer cs_n_des(sclk_ungated, iso.cs_n, iso.srclk, cs_n_parallel_est);
 
 //  Things which are replicated for each slot
 assign cs_n_parallel[7:4] = 4'b1111;
@@ -208,14 +209,14 @@ assign hwcon_parallel[7:4] = 4'b0000;
       The connection of these FIFOs is reversed for the "in" and "out" directions.
  */
 
-FIFOInterface #(.num_bits(32)) aud_slots_in_write[num_slots] (cr_core.clk);
-FIFOInterface #(.num_bits(32)) aud_slots_in_read[num_slots] (cr_core.clk);
+FIFOInterface #(.num_bits(32)) aud_slots_in_write[num_slots] (clk_core);
+FIFOInterface #(.num_bits(32)) aud_slots_in_read[num_slots] (clk_core);
 
-FIFOInterface #(.num_bits(32)) aud_slots_out_write[num_slots] (cr_core.clk);
-//  FIFOInterface #(.num_bits(32)) aud_slots_out_read[num_slots] (cr_core.clk);
+FIFOInterface #(.num_bits(32)) aud_slots_out_write[num_slots] (clk_core);
+//  FIFOInterface #(.num_bits(32)) aud_slots_out_read[num_slots] (clk_core);
 
-FIFOInterface #(.num_bits(host_width)) ctl_slots_in[num_slots] (cr_core.clk);
-FIFOInterface #(.num_bits(host_width)) ctl_slots_out[num_slots] (cr_core.clk);
+(* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_in[num_slots] (clk_core);
+(* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_out[num_slots] (clk_core);
 
 //  RAM-based arbiter for audio FIFOs
 //  (in both directions; that's why num_ports = num_slots * 2
@@ -233,20 +234,20 @@ logic [31:0] arb_out_data[num_slots * 2];
 generate for (g = 0; g < num_slots; g++) always_comb begin
     //  Audio in (DAC) has arbitrator I/O ports from 0 to num_slots - 1
     aud_slots_in_write[g].ready = arb_in_ready[g];
-    arb_in_enable[g] = aud_slots_in_write[g].enable;
+    arb_in_enable[g] = aud_slots_in_write[g].valid;
     arb_in_data[g] = aud_slots_in_write[g].data;
 
     arb_out_ready[g] = aud_slots_in_read[g].ready;
-    aud_slots_in_read[g].enable = arb_out_enable[g];
+    aud_slots_in_read[g].valid = arb_out_enable[g];
     aud_slots_in_read[g].data = arb_out_data[g];
     
     //  Audio out (ADC) has arbitrator I/O ports from num_slots to 2 * num_slots - 1
     aud_slots_out_write[g].ready = arb_in_ready[num_slots + g];
-    arb_in_enable[num_slots + g] = aud_slots_out_write[g].enable;
+    arb_in_enable[num_slots + g] = aud_slots_out_write[g].valid;
     arb_in_data[num_slots + g] = aud_slots_out_write[g].data;
     /*
     arb_out_ready[num_slots + g] = aud_slots_out_read[g].ready;
-    aud_slots_out_read[g].enable = arb_out_enable[num_slots + g];
+    aud_slots_out_read[g].valid = arb_out_enable[num_slots + g];
     aud_slots_out_read[g].data = arb_out_data[num_slots + g];
     */
 end
@@ -256,7 +257,8 @@ logic [31:0] fifo_write_counters[num_slots * 2];
 logic [31:0] fifo_read_counters[num_slots * 2];
 
 fifo_arbiter #(.num_ports(num_slots * 2), .mem_width(mem_width)) arbiter(
-    .cr_core(cr_core),
+    .reset,
+    .clk_core,
     /*
     .ports_in(arb_in.in),
     .ports_out(arb_out.out),
@@ -269,7 +271,7 @@ fifo_arbiter #(.num_ports(num_slots * 2), .mem_width(mem_width)) arbiter(
     .ports_out_enable(arb_out_enable),
     .ports_out_data(arb_out_data),
     
-    .cr_mem(cr_mem),
+    .clk_mem,
     .mem_cmd(mem_cmd),
     .mem_read(mem_read),
     .mem_write(mem_write),
@@ -281,13 +283,13 @@ fifo_arbiter #(.num_ports(num_slots * 2), .mem_width(mem_width)) arbiter(
 //  Master FIFO interfaces that the logic below deals with
 //  (port connection is automatically selected)
 
-FIFOInterface #(.num_bits(32)) aud_in_write (cr_core.clk);
-FIFOInterface #(.num_bits(32)) aud_in_read (cr_core.clk);
-FIFOInterface #(.num_bits(32)) aud_out_write (cr_core.clk);
-//  FIFOInterface #(.num_bits(32)) aud_out_read (cr_core.clk);
+FIFOInterface #(.num_bits(32)) aud_in_write (clk_core);
+FIFOInterface #(.num_bits(32)) aud_in_read (clk_core);
+FIFOInterface #(.num_bits(32)) aud_out_write (clk_core);
+//  FIFOInterface #(.num_bits(32)) aud_out_read (clk_core);
 
-FIFOInterface #(.num_bits(host_width)) ctl_in (cr_core.clk);
-//  FIFOInterface #(.num_bits(host_width)) ctl_out (cr_core.clk);
+FIFOInterface #(.num_bits(host_width)) ctl_in (clk_core);
+//  FIFOInterface #(.num_bits(host_width)) ctl_out (clk_core);
 
 //  Extra flow control for host input FIFO
 logic host_in_ready_int;
@@ -313,7 +315,7 @@ end
 
 //  Global enable - used to atomically start/stop groups of slots
 //  in order to get perfect output synchronization
-logic [num_slots - 1 : 0] slot_fifo_en;
+(* keep = "true" *) logic [num_slots - 1 : 0] slot_fifo_en;
 
 //  New experiment for slot muxing - 8/9/2016
 logic ctl_slots_in_ready[num_slots];
@@ -327,7 +329,7 @@ generate for (g = 0; g < num_slots; g++) begin: ctl_slot_map
     
         ctl_slots_in_ready[g] = ctl_slots_in[g].ready;
         ctl_slots_out[g].ready = ctl_slots_out_ready[g];
-        ctl_slots_out_enable[g] = ctl_slots_out[g].enable;
+        ctl_slots_out_enable[g] = ctl_slots_out[g].valid;
         ctl_slots_out_data[g] = ctl_slots_out[g].data;
     end
 end
@@ -335,20 +337,20 @@ endgenerate
 
 always_comb begin
     aud_in_write.ready = 0;
-    //  aud_out_read.enable = 0;
+    //  aud_out_read.valid = 0;
     //  aud_out_read.data = 0;
     for (int i = 0; i < num_slots; i++) if (slot_index == i) begin
         aud_in_write.ready = arb_in_ready[i];
-        //  aud_out_read.enable = arb_out_enable[num_slots + i];
+        //  aud_out_read.valid = arb_out_enable[num_slots + i];
         //  aud_out_read.data = arb_out_data[num_slots + i];
     end
     
     ctl_in.ready = 0;
-    //  ctl_out.enable = 0;
+    //  ctl_out.valid = 0;
     //  ctl_out.data = 0;
     for (int i = 0; i < num_slots; i++) if (slot_index == i) begin
         ctl_in.ready = ctl_slots_in_ready[i];
-        //  ctl_out.enable = ctl_slots_out_enable[i];
+        //  ctl_out.valid = ctl_slots_out_enable[i];
         //  ctl_out.data = ctl_slots_out_data[i];
     end
 end
@@ -359,12 +361,12 @@ generate for (g = 0; g < num_slots; g++) begin: slots
     //  but assignment to master interfaces has to be done with assign.
     always_comb begin
         if (slot_index == g) begin
-            aud_slots_in_write[g].enable = aud_in_write.enable;
+            aud_slots_in_write[g].valid = aud_in_write.valid;
             aud_slots_in_write[g].data = aud_in_write.data;
             //  aud_slots_out_read[g].ready = aud_out_read.ready;
         end
         else begin
-            aud_slots_in_write[g].enable = 0;
+            aud_slots_in_write[g].valid = 0;
             aud_slots_in_write[g].data = 0;
             //  aud_slots_out_read[g].ready = 0;
         end
@@ -373,13 +375,13 @@ generate for (g = 0; g < num_slots; g++) begin: slots
     //  Muxing of control FIFOs.
     always_comb begin
         if (slot_index == g) begin
-            ctl_slots_in[g].enable = ctl_in.enable;
+            ctl_slots_in[g].valid = ctl_in.valid;
             ctl_slots_in[g].data = ctl_in.data;
             //  ctl_slots_out[g].ready = ctl_out.ready;
 
         end
         else begin
-            ctl_slots_in[g].enable = 0;
+            ctl_slots_in[g].valid = 0;
             ctl_slots_in[g].data = 0;
             //  ctl_slots_out[g].ready = 0;
         end
@@ -413,21 +415,12 @@ generate for (g = 0; g < num_slots; g++) begin: slots
     //  Slot controllers
     //  Note: control protocol uses 8 LSBs only
     slot_controller ctl(
-        .clk_core(cr_core.clk), 
+        .clk_core(clk_core), 
         .reset(reset_slots[g]),
-        .ctl_rd_valid(ctl_slots_in[g].enable), 
-        .ctl_rd_data(ctl_slots_in[g].data[7:0]), 
-        .ctl_rd_ready(ctl_slots_in[g].ready),
-        .ctl_wr_valid(ctl_slots_out[g].enable), 
-        .ctl_wr_data(ctl_slots_out[g].data[7:0]), 
-        .ctl_wr_ready(ctl_slots_out[g].ready),
-        .ctl_wr_waiting(ctl_slots_out_waiting[g]),
-        .aud_rd_valid(aud_slots_in_read[g].enable), 
-        .aud_rd_data(aud_slots_in_read[g].data), 
-        .aud_rd_ready(aud_slots_in_read[g].ready),
-        .aud_wr_valid(aud_slots_out_write[g].enable), 
-        .aud_wr_data(aud_slots_out_write[g].data), 
-        .aud_wr_ready(aud_slots_out_write[g].ready),
+        .ctl_rd(ctl_slots_in[g]),
+        .ctl_wr(ctl_slots_out[g]),
+        .aud_rd(aud_slots_in_read[g]),
+        .aud_wr(aud_slots_in_write[g]),
         .spi_ss_out(slot_spi_ss_out), 
         .spi_ss_in(slot_spi_ss_in),
         .spi_sck(slot_spi_sck), 
@@ -435,7 +428,7 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         .spi_miso(slot_spi_miso),
         .slot_data(iso.slotdata[(g+1)*6-1:g*6]), 
         .slot_clk(slot_clk), 
-        .sclk(iso.sclk), 
+        .sclk(sclk_ungated), 
         .dir(slot_dir), 
         .chan(slot_chan),
         .hwcon(slot_hwcon), 
@@ -454,8 +447,8 @@ endgenerate
 localparam audio_out_fifo_depth = 128;
 localparam audio_out_fifo_timeout_cycles = 1200;  //  should normally be 48000 (1 ms), but that makes simulation longer
 
-FIFOInterface #(.num_bits(32)) audio_out_fifo_in(cr_core.clk);
-FIFOInterface #(.num_bits(32)) audio_out_fifo_out(cr_core.clk);
+FIFOInterface #(.num_bits(32)) audio_out_fifo_in(clk_core);
+FIFOInterface #(.num_bits(32)) audio_out_fifo_out(clk_core);
 logic [$clog2(audio_out_fifo_depth):0] audio_out_fifo_count;
 logic [1:0] audio_out_fifo_slot;
 logic audio_out_fifo_write_active;
@@ -467,8 +460,9 @@ logic audio_out_lsb_pending;
 
 logic [15:0] audio_out_fifo_timeout_counter;
 
-fifo_sync_sv #(.width(32), .depth(audio_out_fifo_depth)) audio_out_fifo(
-    .cr(cr_core),
+fifo_sync #(.Nb(32), .M($clog2(audio_out_fifo_depth))) audio_out_fifo(
+    .clk(clk_core),
+    .reset,
     .in(audio_out_fifo_in.in),
     .out(audio_out_fifo_out.out),
     .count(audio_out_fifo_count)
@@ -476,10 +470,10 @@ fifo_sync_sv #(.width(32), .depth(audio_out_fifo_depth)) audio_out_fifo(
 
 always_comb begin
     //  Connect selected arb_out port to audio_out_fifo_in when audio_out_fifo_write_active = 1
-    audio_out_fifo_in.enable = 0;
+    audio_out_fifo_in.valid = 0;
     audio_out_fifo_in.data = 0;
     if (audio_out_fifo_write_active) begin
-        audio_out_fifo_in.enable = arb_out_enable[num_slots + audio_out_fifo_slot];
+        audio_out_fifo_in.valid = arb_out_enable[num_slots + audio_out_fifo_slot];
         audio_out_fifo_in.data = arb_out_data[num_slots + audio_out_fifo_slot];
     end
     //  Stall audio_out_fifo_out when host isn't ready
@@ -501,8 +495,8 @@ endgenerate
 localparam ctl_out_fifo_depth = 32;
 localparam ctl_out_fifo_timeout_cycles = 480;   //  10 us
 
-FIFOInterface #(.num_bits(host_width)) ctl_out_fifo_in(cr_core.clk);
-FIFOInterface #(.num_bits(host_width)) ctl_out_fifo_out(cr_core.clk);
+FIFOInterface #(.num_bits(host_width)) ctl_out_fifo_in(clk_core);
+FIFOInterface #(.num_bits(host_width)) ctl_out_fifo_out(clk_core);
 logic [$clog2(ctl_out_fifo_depth):0] ctl_out_fifo_count;
 logic [1:0] ctl_out_fifo_slot;
 logic ctl_out_fifo_write_active;
@@ -510,8 +504,9 @@ logic ctl_out_fifo_read_active;
 
 logic [15:0] ctl_out_fifo_timeout_counter;
 
-fifo_sync_sv #(.width(host_width), .depth(ctl_out_fifo_depth)) ctl_out_fifo(
-    .cr(cr_core),
+fifo_sync #(.Nb(host_width), .M($clog2(ctl_out_fifo_depth))) ctl_out_fifo(
+    .clk(clk_core),
+    .reset,
     .in(ctl_out_fifo_in.in),
     .out(ctl_out_fifo_out.out),
     .count(ctl_out_fifo_count)
@@ -520,11 +515,11 @@ fifo_sync_sv #(.width(host_width), .depth(ctl_out_fifo_depth)) ctl_out_fifo(
 always_comb begin
     //  Connect selected ctl_out port to audio_out_fifo_in when audio_out_fifo_write_active = 1
     for (int i = 0; i < num_slots; i++) ctl_slots_out_ready[i] = 0;
-    ctl_out_fifo_in.enable = 0;
+    ctl_out_fifo_in.valid = 0;
     ctl_out_fifo_in.data = 0;
     if (ctl_out_fifo_write_active) begin
         ctl_slots_out_ready[ctl_out_fifo_slot] = ctl_out_fifo_in.ready;
-        ctl_out_fifo_in.enable = ctl_slots_out_enable[ctl_out_fifo_slot];
+        ctl_out_fifo_in.valid = ctl_slots_out_enable[ctl_out_fifo_slot];
         ctl_out_fifo_in.data = ctl_slots_out_data[ctl_out_fifo_slot];
     end
     //  Stall audio_out_fifo_out when host isn't ready
@@ -533,22 +528,16 @@ end
 
 
 //  Temporary echo FIFO
-reg echo_wr_valid;
-reg [7:0] echo_wr_data;
-wire echo_wr_ready;
-reg echo_rd_ready;
-wire echo_rd_valid;
-wire [7:0] echo_rd_data;
+
+FIFOInterface #(.num_bits(8)) echo_wr(clk_core);
+FIFOInterface #(.num_bits(8)) echo_rd(clk_core);
+
 wire [4:0] echo_fifo_count;
 fifo_sync #(.Nb(8), .M(4)) echo_fifo(
-	.clk(cr_core.clk), 
-	.reset(cr_core.reset),
-	.wr_valid(echo_wr_valid), 
-	.wr_data(echo_wr_data),
-	.wr_ready(echo_wr_ready),
-	.rd_ready(echo_rd_ready),
-	.rd_valid(echo_rd_valid), 
-	.rd_data(echo_rd_data),
+	.clk(clk_core), 
+	.reset(reset),
+	.in(echo_wr.in),
+	.out(echo_rd.out),
 	.count(echo_fifo_count)
 );
 reg [3:0] echo_count;
@@ -556,19 +545,19 @@ reg [3:0] echo_count;
 //  Sequential logic
 integer i;
 
-always @(posedge cr_core.clk) begin
-    if (cr_core.reset) begin
+always @(posedge clk_core) begin
+    if (reset) begin
         host_in_ready_int <= 0;
-        host_out_core.enable <= 0;
+        host_out_core.valid <= 0;
         host_out_core.data <= 0;
         
         slot_index <= 0;
         report_slot_index <= 0;
         
-        aud_in_write.enable <= 0;
+        aud_in_write.valid <= 0;
         aud_in_write.data <= 0;
         //  aud_out_read_ready_int <= 0;
-        ctl_in.enable <= 0;
+        ctl_in.valid <= 0;
         ctl_in.data <= 0;
         //  ctl_out_ready_int <= 0;
 
@@ -585,13 +574,15 @@ always @(posedge cr_core.clk) begin
         current_report <= 0;
         state <= STATE_IDLE;
         
+        sclk_en <= 1;
+        
         report_data_waiting <= 0;
         report_msg_length <= 0;
         report_checksum <= 0;
 
-        echo_wr_valid <= 0;
-        echo_wr_data <= 0;
-        echo_rd_ready <= 0;
+        echo_wr.valid <= 0;
+        echo_wr.data <= 0;
+        echo_rd.ready <= 0;
         echo_count <= 0;
 
         cmd_stall <= 0;
@@ -621,15 +612,15 @@ always @(posedge cr_core.clk) begin
     end
     else begin
         host_in_ready_int <= 0;
-        if (host_out_core.ready) host_out_core.enable <= 0;
+        if (host_out_core.ready) host_out_core.valid <= 0;
 
-        if (aud_in_write.ready) aud_in_write.enable <= 0;
+        if (aud_in_write.ready) aud_in_write.valid <= 0;
         //  aud_out_read_ready_int <= 0;
-        if (ctl_in.ready) ctl_in.enable <= 0;
+        if (ctl_in.ready) ctl_in.valid <= 0;
         //  ctl_out_ready_int <= 0;
 
-        echo_wr_valid <= 0;
-        echo_rd_ready <= 0;
+        echo_wr.valid <= 0;
+        echo_rd.ready <= 0;
         clk_inhibit <= 0;
 
         if (reset_local) begin
@@ -648,7 +639,7 @@ always @(posedge cr_core.clk) begin
             end
         end
 
-        if (host_out_core.ready && host_out_core.enable)
+        if (host_out_core.ready && host_out_core.valid)
             report_checksum <= report_checksum + host_out_core.data;
 
         case (state)
@@ -656,7 +647,7 @@ always @(posedge cr_core.clk) begin
             
             host_in_ready_int <= 1;
 
-            if (host_in_core.ready && host_in_core.enable) begin
+            if (host_in_core.ready && host_in_core.valid) begin
                 slot_index <= host_in_core.data;
                 word_counter <= 0;
                 state <= STATE_HANDLE_INPUT;
@@ -693,7 +684,7 @@ always @(posedge cr_core.clk) begin
                 
                 //  Update cycle counter for timeout
                 if (audio_out_fifo_write_active) begin
-                    if (audio_out_fifo_in.enable)
+                    if (audio_out_fifo_in.valid)
                         audio_out_fifo_timeout_counter <= 0;
                     else if (audio_out_fifo_timeout_counter < audio_out_fifo_timeout_cycles)
                         audio_out_fifo_timeout_counter <= audio_out_fifo_timeout_counter + 1;
@@ -720,7 +711,7 @@ always @(posedge cr_core.clk) begin
                 
                 //  Update cycle counter for timeout
                 if (ctl_out_fifo_write_active) begin
-                    if (ctl_out_fifo_in.enable)
+                    if (ctl_out_fifo_in.valid)
                         ctl_out_fifo_timeout_counter <= 0;
                     else if (ctl_out_fifo_timeout_counter < ctl_out_fifo_timeout_cycles)
                         ctl_out_fifo_timeout_counter <= ctl_out_fifo_timeout_counter + 1;
@@ -753,7 +744,7 @@ always @(posedge cr_core.clk) begin
                 - Byte counter = 1 to N - 1: command-specific data
             */
             host_in_ready_int <= 1;
-            if (host_in_core.ready && host_in_core.enable) begin
+            if (host_in_core.ready && host_in_core.valid) begin
                 word_counter <= word_counter + 1;
                 if (word_counter == 0) begin
                     current_cmd <= host_in_core.data;
@@ -798,6 +789,14 @@ always @(posedge cr_core.clk) begin
                         reset_local_hold <= 0;
                         state <= STATE_IDLE;
                     end
+                    STOP_SCLK: begin
+                        sclk_en <= 0;
+                        state <= STATE_IDLE;
+                    end
+                    START_SCLK: begin
+                        sclk_en <= 1;
+                        state <= STATE_IDLE;
+                    end
                     endcase
                 end
                 else case (current_cmd)
@@ -826,17 +825,17 @@ always @(posedge cr_core.clk) begin
                         if (current_cmd == AUD_FIFO_WRITE) begin
                             //  Data is written to target FIFO
                             if (sample_bit_counter + host_width >= 32) begin
-                                aud_in_write.enable <= 1;
+                                aud_in_write.valid <= 1;
                                 sample_bit_counter <= 0;
                             end
                             else begin
-                                aud_in_write.enable <= 0;
+                                aud_in_write.valid <= 0;
                                 sample_bit_counter <= sample_bit_counter + host_width;
                             end
                             aud_in_write.data <= {aud_in_write.data, host_in_core.data};
                         end
                         else if (current_cmd == CMD_FIFO_WRITE) begin
-                            ctl_in.enable <= 1;
+                            ctl_in.valid <= 1;
                             ctl_in.data <= host_in_core.data;
                         end
                         /*
@@ -882,8 +881,8 @@ always @(posedge cr_core.clk) begin
                         echo_count <= host_in_core.data;
                     end
                     else begin
-                        echo_wr_valid <= 1;
-                        echo_wr_data <= host_in_core.data;
+                        echo_wr.valid <= 1;
+                        echo_wr.data <= host_in_core.data;
                         if (word_counter == echo_count + 1) begin
                             word_counter <= 0;
                             report_slot_index <= slot_index;
@@ -910,7 +909,7 @@ always @(posedge cr_core.clk) begin
         
             //  Monitor audio output FIFO and stop it once we collected the right number of samples
             if (audio_out_fifo_write_active) begin
-                if (audio_out_fifo_in.ready && audio_out_fifo_in.enable) begin
+                if (audio_out_fifo_in.ready && audio_out_fifo_in.valid) begin
                     audio_out_fifo_write_count <= audio_out_fifo_write_count + 1;
                     if (audio_out_fifo_write_count == fifo_read_length - 1)
                         audio_out_fifo_write_active <= 0;
@@ -920,7 +919,7 @@ always @(posedge cr_core.clk) begin
             if (host_out_core.ready) begin
 
                 word_counter <= word_counter + 1;
-                host_out_core.enable <= 1;
+                host_out_core.valid <= 1;
                 if (word_counter < 4) case (word_counter)
                     //  Header
                     0:  host_out_core.data <= report_slot_index;
@@ -933,7 +932,7 @@ always @(posedge cr_core.clk) begin
                     case (current_report)
                     AUD_FIFO_REPORT: begin
                         audio_out_fifo_read_active <= 1;
-                        if (audio_out_fifo_out.ready && audio_out_fifo_out.enable) begin
+                        if (audio_out_fifo_out.ready && audio_out_fifo_out.valid) begin
                             //  This will need to be reworked if host width is changed from 16 bits
                             host_out_core.data <= audio_out_fifo_out.data[15:0];
                             audio_out_lsb_word <= audio_out_fifo_out.data[31:16];
@@ -945,17 +944,17 @@ always @(posedge cr_core.clk) begin
                         end
                         else begin
                             //  Skip...
-                            host_out_core.enable <= 0;
+                            host_out_core.valid <= 0;
                             word_counter <= word_counter;
                         end
                     end
                     CMD_FIFO_REPORT: begin
                         ctl_out_fifo_read_active <= 1;
-                        if (ctl_out_fifo_out.ready && ctl_out_fifo_out.enable)
+                        if (ctl_out_fifo_out.ready && ctl_out_fifo_out.valid)
                             host_out_core.data <= ctl_out_fifo_out.data;
                         else begin
                             //  Skip...
-                            host_out_core.enable <= 0;
+                            host_out_core.valid <= 0;
                             word_counter <= word_counter;
                         end
                     end
@@ -984,13 +983,13 @@ always @(posedge cr_core.clk) begin
                         endcase
                     end
                     ECHO_REPORT: begin
-                        echo_rd_ready <= 1;
-                        if (echo_rd_valid) begin
-                            host_out_core.data <= echo_rd_data;
+                        echo_rd.ready <= 1;
+                        if (echo_rd.valid) begin
+                            host_out_core.data <= echo_rd.data;
                         end
                         else begin
                             //  Skip...
-                            host_out_core.enable <= 0;
+                            host_out_core.valid <= 0;
                             word_counter <= word_counter;
                         end
                     end

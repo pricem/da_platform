@@ -32,15 +32,12 @@ FIFOInterface #(.num_bits(48)) samples_local(bck);
 
 logic [2:0] count_in;
 logic [2:0] count_out;
-fifo_async_sv2 #(.width(48), .depth(4), .debug_display(1)) sample_fifo(
-    .clk_in(bck),
-    .reset_in(reset_bck),
+fifo_async #(.Nb(48), .M(2)) sample_fifo(
+    .reset(reset_bck),
     .in(samples_local.in),
-    .count_in(count_in),
-    .clk_out(sample_clk),
-    .reset_out(reset_sck),
+    .in_count(count_in),
     .out(samples),
-    .count_out(count_out)
+    .out_count(count_out)
 );
 
 int cycle_counter;
@@ -54,7 +51,7 @@ logic left_not_right;
 always @(posedge bck) begin
     lrck_last <= lrck;
     
-    samples_local.enable <= 0;
+    samples_local.valid <= 0;
     
     if (lrck && !lrck_last) begin
         cycle_counter <= 0;
@@ -66,7 +63,7 @@ always @(posedge bck) begin
         sample_left <= 0;
         left_not_right <= 1;
         $display("%t %m: received I2S samples left = %h, right = %h", $time, sample_left, sample_right);
-        samples_local.enable <= 1;
+        samples_local.valid <= 1;
         samples_local.data <= {sample_left, sample_right};
     end
     else

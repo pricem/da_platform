@@ -12,16 +12,20 @@ module da_platform_tb #(
     mem_log_depth = 20
 ) ();
 
+localparam int SLOT_DAC = 0;
+localparam int SLOT_ADC = 1;
 
-`include "commands.v"
+`include "commands.vh"
 `include "structures.sv"
 
-ClockReset cr_mem ();
-FIFOInterface #(.num_bits(65 /* $sizeof(MemoryCommand) */)) mem_cmd (cr_mem.clk);
-FIFOInterface #(.num_bits(mem_width)) mem_write (cr_mem.clk);
-FIFOInterface #(.num_bits(mem_width)) mem_read (cr_mem.clk);
+logic reset;
 
-ClockReset cr_host ();
+logic clk_mem;
+FIFOInterface #(.num_bits(65 /* $sizeof(MemoryCommand) */)) mem_cmd (clk_mem);
+FIFOInterface #(.num_bits(mem_width)) mem_write (clk_mem);
+FIFOInterface #(.num_bits(mem_width)) mem_read (clk_mem);
+
+logic clk_host;
 wire tb_host_clk;
 FIFOInterface #(.num_bits(host_width)) host_in (tb_host_clk);
 FIFOInterface #(.num_bits(host_width)) host_out (tb_host_clk);
@@ -61,7 +65,7 @@ assign tb_host_clk = fx2_ifclk;
 da_platform_wrapper dut(
     .fxclk_in(fx2_ifclk),
     .ifclk_in(fx2_ifclk),
-    .reset(cr_host.reset),
+    .reset(reset),
     .ddr3_dq(ddr3_dq),
     .ddr3_dqs_n(ddr3_dqs_n),
     .ddr3_dqs_p(ddr3_dqs_p),
@@ -148,17 +152,18 @@ ddr3_model mem (
 `else
 //  Instantiate core DA Platform logic directly
 
-assign tb_host_clk = cr_host.clk;
+assign tb_host_clk = clk_host;
 
 da_platform #(
     .mem_width(mem_width),
     .host_width(host_width)
 ) dut(
-    .cr_mem(cr_mem.client),
+    .reset,
+    .clk_mem,
     .mem_cmd(mem_cmd.out),
     .mem_write(mem_write.out),
     .mem_read(mem_read.in),
-    .cr_host(cr_host.client),
+    .clk_host,
     .host_in(host_in.in),
     .host_out(host_out.out),
     .iso(iso.fpga),
@@ -173,7 +178,7 @@ localparam mem_depth = (1 << mem_log_depth);
 logic [mem_width - 1 : 0] memory[mem_depth];
 MemoryCommand cur_cmd;
 logic [mem_width - 1 : 0] cur_write_val;
-always @(posedge cr_mem.clk) begin
+always @(posedge clk_mem) begin
     mem_cmd.read(cur_cmd);
     if (cur_cmd.read_not_write) begin
         for (int i = 0; i < cur_cmd.length; i++)
@@ -194,7 +199,7 @@ logic [15:0] send_cmd_data[1024];
 logic [9:0] receive_counter;
 logic [15:0] receive_data[1024];
 always @(posedge tb_host_clk) begin
-    if (host_out.ready && host_out.enable) begin
+    if (host_out.ready && host_out.valid) begin
         receive_data[receive_counter] = host_out.data;
         receive_counter++;
     end
@@ -236,7 +241,7 @@ endtask
 task transaction(input logic [7:0] destination, input logic [7:0] command, input logic [23:0] data_length, input logic [15:0] wait_cycles, output logic [9:0] receive_length);
     receive_counter = 0;
     send_cmd(destination, command, data_length);
-    for (int i = 0; i < wait_cycles; i++) @(posedge cr_host.clk);
+    for (int i = 0; i < wait_cycles; i++) @(posedge clk_host);
     receive_length = receive_counter;
 endtask
 
@@ -289,14 +294,15 @@ end
 logic [7:0] spi_receive_data;
 logic [15:0] test_receive_length;
 initial begin
-    @(negedge cr_host.reset);
+    @(negedge reset);
     
-    @(posedge cr_host.clk);
+    @(posedge clk_host);
     
     //  Wait 10 us for config information (dir/chan) to be serialized by isolator and received
     //  and for SS chip selects to be all deasserted (clock startup; ser/des) 
     #10000 ;
     
+    /*
     //  Test clock select
     //  send_cmd_data[0] = 8'h0D;
     //  send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
@@ -305,19 +311,19 @@ initial begin
     
     //  Try some SPI setup stuff.  First, 16 bit transactions (8-bit addr/data).
     //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
-    spi_write(8'h00, 0, 0, 8'h47, 8'hA3);
+    //  spi_write(8'h00, 0, 0, 8'h47, 8'hA3);
     //  spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
     //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
     
     //  Stop early
-    #50000 $finish;
+    //  #50000 $finish;
     
     //  Now, 24 bit transactions, 16 bit addr + 8 bit data.
     spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
     spi_write(8'h01, 1, 0, 16'h0829, 8'hA3);
     spi_read(8'h01, 1, 0, 16'h0819, spi_receive_data);
     spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
-    
+    */
 
     
     /*
@@ -338,10 +344,11 @@ initial begin
     send_cmd_data[0] = 4'b0000;
     send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
     
-    //  Enable recording
+    //  Enable recording on slot 1 - ADC
     send_cmd_data[0] = SLOT_START_RECORDING;
     send_cmd_data[1] = 0;
-    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+    send_cmd(SLOT_ADC, CMD_FIFO_WRITE, 2);
+    
     /*
     //  Short audio test
     for (int i = 0; i < 10; i++) send_cmd_data[i] = (2 * i) + ((2 * i + 1) << 8);
@@ -361,7 +368,7 @@ initial begin
         send_cmd_data[2 * i] = i / 256;
         send_cmd_data[2 * i + 1] = i % 256;
     end
-    send_cmd(8'h01, AUD_FIFO_WRITE, 512);
+    send_cmd(SLOT_DAC, AUD_FIFO_WRITE, 512);
 
     //  Now unblock ADC and DAC simultaneously
     send_cmd_data[0] = 4'b0011;
@@ -371,12 +378,12 @@ initial begin
         #750000     //  1/1/2017: Test audio FIFO read
         send_cmd_data[0] = 0;
         send_cmd_data[1] = 64;
-        send_cmd_simple(8'h00, AUD_FIFO_READ, 2);
+        send_cmd_simple(SLOT_ADC, AUD_FIFO_READ, 2);
     end
 
     send_cmd_data[0] = SLOT_STOP_RECORDING;
     send_cmd_data[1] = 0;
-    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+    send_cmd(SLOT_ADC, CMD_FIFO_WRITE, 2);
 
     //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
     #50000 send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
@@ -387,25 +394,23 @@ end
 
 //  Clocks
 `ifndef verilator
-always #2.5 cr_mem.clk = !cr_mem.clk;
-always #10.4166 cr_host.clk = !cr_host.clk;
+always #2.5 clk_mem = !clk_mem;
+always #10.4166 clk_host = !clk_host;
 `else
 logic clk_global;
 always_comb begin
-    cr_mem.clk = clk_global;
-    cr_host.clk = clk_global;
+    clk_mem = clk_global;
+    clk_host = clk_global;
 end
 `endif
 
 //  Setup
 initial begin
-    cr_mem.reset = 1;
-    cr_mem.clk = 0;
-    cr_host.reset = 1;
-    cr_host.clk = 0;
+    reset = 1;
+    clk_mem = 0;
+    clk_host = 0;
     
-    #100 cr_mem.reset = 0;
-    cr_host.reset = 0;
+    #100 reset = 0;
 end
 /*
 `ifndef verilator
@@ -418,7 +423,7 @@ end
 //  Time limit
 logic [31:0] cycle_counter;
 initial cycle_counter = 0;
-always @(posedge cr_host.clk) begin
+always @(posedge clk_host) begin
     cycle_counter <= cycle_counter + 1;
     if (cycle_counter > 1000000) $finish;
 end

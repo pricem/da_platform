@@ -2,15 +2,15 @@
 
 interface FIFOInterface #(num_bits = 8) (input logic clk);
     logic ready;
-    logic enable;
+    logic valid;
     logic [num_bits - 1 : 0] data;
 
-    modport out(input ready, output enable, output data);
-    modport in(output ready, input enable, input data);
+    modport out(input clk, input ready, output valid, output data);
+    modport in(input clk, output ready, input valid, input data);
 
     //  Testbench tasks - not synthesizable, merely a convenience.
     task init_write;
-        enable = 0;
+        valid = 0;
         data = 0;
     endtask
     
@@ -20,28 +20,21 @@ interface FIFOInterface #(num_bits = 8) (input logic clk);
 
     task write(input logic [num_bits - 1 : 0] val);
         @(posedge clk);
-        enable <= 1;
+        valid <= 1;
         data <= val;
         @(posedge clk);
         while (!ready) @(posedge clk);
-        enable <= 0;
+        valid <= 0;
     endtask
     
     task read(output logic [num_bits - 1 : 0] val);
         ready <= 1;
         @(posedge clk);
-        while (!enable) @(posedge clk);
+        while (!valid) @(posedge clk);
         ready <= 0;
         val = data;
     endtask
 
-endinterface
-
-interface ClockReset;
-    logic clk;
-    logic reset;
-    
-    modport client(input clk, input reset);
 endinterface
 
 /*

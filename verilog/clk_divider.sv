@@ -1,17 +1,17 @@
 
 `timescale 1ns / 1ps
 
-module clk_divider(reset, clkin, clkout);
+module clk_divider #(
+    parameter int ratio = 3,
+    parameter int B = 16,
+    parameter int threshold = ratio / 2
+) (
+    input reset, 
+    input clkin,
+    output logic clkout
+);
 
-parameter ratio = 3;
-parameter B = 16;
-parameter threshold = ratio / 2;
-
-input reset;
-input clkin;
-output reg clkout;
-
-reg [B-1:0] counter	/*	synthesis syn_keep = 1	*/;
+logic [B-1:0] counter;
 
 initial begin
     counter <= 0;

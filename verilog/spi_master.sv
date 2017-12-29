@@ -1,28 +1,23 @@
-module spi_master(clk, reset, clk_serial,
-    request_valid, request_data, request_ready, 
-    response_valid, response_data, response_ready,
-    sck, ss_out, ss_in, mosi, miso, state
+`timescale 1ns / 1ps
+
+module spi_master #(
+    parameter int M = 2
+) (
+    input clk,
+    input reset,
+    input clk_serial,
+
+    FIFOInterface.in request,
+    FIFOInterface.out response,
+
+    output logic sck,
+    output logic ss_out,
+    input ss_in,
+    output logic mosi,
+    input miso,
+    
+    output logic [3:0] state
 );
-
-parameter M = 2;
-
-input clk;
-input reset;
-input clk_serial;
-
-input request_valid;
-input [34:0] request_data;
-output request_ready;
-
-output response_valid;
-output [31:0] response_data;
-input response_ready;
-
-output sck;
-output reg ss_out;
-input ss_in;
-output reg mosi;
-input miso;
 
 reg request_isread;
 reg request_addr_bytes;
@@ -36,15 +31,13 @@ parameter STATE_SEND_DATA = 4'h2;
 parameter STATE_READ_DATA = 4'h3;
 parameter STATE_RESPOND = 4'h4;
 
-output reg [3:0] state;
-
 reg [3:0] bit_counter;
 reg [4:0] num_ss_cycles;
 reg [4:0] ss_cycle_counter;
 
 assign sck = !clk_serial & !ss_in;
 
-always @(*) begin
+always_comb begin
     case (state)
         STATE_SEND_ADDR: mosi = (request_addr_contents >> bit_counter);
         STATE_SEND_DATA: mosi = (request_data_contents >> bit_counter);
@@ -56,52 +49,30 @@ end
 wire [M:0] request_fifo_wr_count;
 wire [M:0] request_fifo_rd_count;
 
-wire request_fifo_rd_valid;
-wire [34:0] request_fifo_rd_data;
-wire request_fifo_rd_ready;
+FIFOInterface #(.num_bits(35)) request_int(clk_serial);
 
-fifo_async request_fifo(
-	.reset(reset),
-	.wr_clk(clk), 
-	.wr_valid(request_valid), 
-	.wr_data(request_data),
-	.wr_ready(request_ready), 
-	.wr_count(request_fifo_wr_count),
-	.rd_clk(clk_serial), 
-	.rd_valid(request_fifo_rd_valid),
-	.rd_ready(request_fifo_rd_ready), 
-	.rd_data(request_fifo_rd_data), 
-	.rd_count(request_fifo_rd_count)
+fifo_async #(.Nb(35), .M(M)) request_fifo(
+	.reset,
+	.in(request),
+	.in_count(request_fifo_wr_count),
+	.out(request_int.out),
+	.out_count(request_fifo_rd_count)
 );
-defparam request_fifo.Nb = 35;
-defparam request_fifo.M = M;
-
 
 wire [M:0] response_fifo_wr_count;
 wire [M:0] response_fifo_rd_count;
 
-reg response_fifo_wr_valid;
-reg [31:0] response_fifo_wr_data;
-wire response_fifo_wr_ready;
+FIFOInterface #(.num_bits(32)) response_int(clk_serial);
 
-fifo_async response_fifo(
-	.reset(reset),
-	.wr_clk(clk_serial), 
-	.wr_valid(response_fifo_wr_valid), 
-	.wr_data(response_fifo_wr_data),
-	.wr_ready(response_fifo_wr_ready), 
-	.wr_count(response_fifo_wr_count),
-	.rd_clk(clk), 
-	.rd_valid(response_valid),
-	.rd_ready(response_ready), 
-	.rd_data(response_data), 
-	.rd_count(response_fifo_rd_count)
+fifo_async #(.Nb(32), .M(M)) response_fifo(
+	.reset,
+	.in(response_int.in),
+	.in_count(response_fifo_wr_count),
+	.out(response),
+	.out_count(response_fifo_rd_count)
 );
-defparam response_fifo.Nb = 32;
-defparam response_fifo.M = M;
 
-
-assign request_fifo_rd_ready = (state == STATE_IDLE);
+assign request_int.ready = (state == STATE_IDLE);
 
 always @(posedge clk_serial) begin
     if (reset) begin
@@ -111,8 +82,8 @@ always @(posedge clk_serial) begin
         request_data_bytes <= 0;
         request_data_contents <= 0;
         
-        response_fifo_wr_valid <= 0;
-        response_fifo_wr_data <= 0;
+        response_int.valid <= 0;
+        response_int.data <= 0;
         
         ss_out <= 1;
         bit_counter <= 0;
@@ -123,7 +94,7 @@ always @(posedge clk_serial) begin
         
     end
     else begin
-        response_fifo_wr_valid <= 0;
+        response_int.valid <= 0;
     
         if (ss_out == 0) begin
             if (ss_cycle_counter < num_ss_cycles)
@@ -136,19 +107,19 @@ always @(posedge clk_serial) begin
     
         case (state)
         STATE_IDLE: begin
-            if (request_fifo_rd_valid) begin
+            if (request_int.valid && request_int.ready) begin
                 
-                {request_isread, request_addr_bytes, request_data_bytes, request_addr_contents, request_data_contents} <= request_fifo_rd_data;
-                if (request_fifo_rd_data[33])   //  request_addr_bytes
+                {request_isread, request_addr_bytes, request_data_bytes, request_addr_contents, request_data_contents} <= request_int.data;
+                if (request_int.data[33])   //  request_addr_bytes
                     bit_counter <= 15;
                 else
                     bit_counter <= 7;
                     
                 ss_out <= 0;
                 ss_cycle_counter <= 0;
-                if (request_fifo_rd_data[33] && request_fifo_rd_data[32])   //  request_addr_bytes, request_data_bytes
+                if (request_int.data[33] && request_int.data[32])   //  request_addr_bytes, request_data_bytes
                     num_ss_cycles <= 32;
-                else if (request_fifo_rd_data[33] || request_fifo_rd_data[32])
+                else if (request_int.data[33] || request_int.data[32])
                     num_ss_cycles <= 24;
                 else
                     num_ss_cycles <= 16;
@@ -177,16 +148,16 @@ always @(posedge clk_serial) begin
                 state <= STATE_IDLE;
         end
         STATE_READ_DATA: if (!ss_in) begin
-            response_fifo_wr_data <= {response_fifo_wr_data, miso};
+            response_int.data <= {response_int.data, miso};
             if (bit_counter != 0)
                 bit_counter <= bit_counter - 1;
             else begin
-                response_fifo_wr_data[31:16] <= request_addr_contents;
+                response_int.data[31:16] <= request_addr_contents;
                 state <= STATE_RESPOND;
             end
         end
         STATE_RESPOND: begin
-        	response_fifo_wr_valid <= 1;
+        	response_int.valid <= 1;
             state <= STATE_IDLE;
         end
         endcase

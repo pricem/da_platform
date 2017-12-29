@@ -1,4 +1,5 @@
 #   init_project.tcl: Script to create Vivado project for DA Platform
+#   Supported Vivado version: 2017.2
 #   Run with:
 #       vivado -mode batch -source init_project.tcl
 
@@ -27,74 +28,29 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
- "[file normalize "../verilog/clk_divider.v"]"\
- "[file normalize "../verilog/delay.v"]"\
- "[file normalize "../verilog/deserializer.v"]"\
+ "[file normalize "../verilog/clk_divider.sv"]"\
+ "[file normalize "../verilog/delay.sv"]"\
+ "[file normalize "../verilog/deserializer.sv"]"\
  "[file normalize "../verilog/contrib/ezusb_io.v"]"\
- "[file normalize "../verilog/fifo_async.v"]"\
- "[file normalize "../verilog/fifo_sync.v"]"\
- "[file normalize "../verilog/serializer.v"]"\
- "[file normalize "../verilog/commands.v"]"\
- "[file normalize "../verilog/slot_controller.v"]"\
- "[file normalize "../verilog/spi_master.v"]"\
+ "[file normalize "../verilog/fifo_async.sv"]"\
+ "[file normalize "../verilog/fifo_sync.sv"]"\
+ "[file normalize "../verilog/serializer.sv"]"\
+ "[file normalize "../verilog/commands.vh"]"\
+ "[file normalize "../verilog/slot_controller.sv"]"\
+ "[file normalize "../verilog/spi_master.sv"]"\
  "[file normalize "../verilog/da_platform.sv"]"\
- "[file normalize "../verilog/contrib/delay.sv"]"\
  "[file normalize "../verilog/structures.sv"]"\
  "[file normalize "../verilog/fifo_arbiter.sv"]"\
- "[file normalize "../verilog/contrib/fifo_async2.sv"]"\
- "[file normalize "../verilog/contrib/fifo_sync.sv"]"\
  "[file normalize "../verilog/interfaces.sv"]"\
- "[file normalize "../verilog/contrib/mig_adapter.sv"]"\
+ "[file normalize "../verilog/mig_adapter.sv"]"\
  "[file normalize "../verilog/da_platform_wrapper.sv"]"\
  "[file normalize "ip/mig_a.prj"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for remote files
-set file "../verilog/da_platform.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/delay.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/structures.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/fifo_arbiter.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/fifo_async2.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/fifo_sync.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/interfaces.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/mig_adapter.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/da_platform_wrapper.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+set_property -name "file_type" -value "SystemVerilog" -objects [get_files -of_objects [get_filesets sources_1] [list "*.sv"]]
+set_property -name "file_type" -value "Verilog Header" -objects [get_files -of_objects [get_filesets sources_1] [list "*.vh"]]
 
 set file "ip/mig_a.prj"
 set file [file normalize $file]
@@ -165,123 +121,39 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 # Set 'sim_1' fileset object
 set obj [get_filesets sim_1]
 set files [list \
- "[file normalize "../verilog/clk_divider.v"]"\
- "[file normalize "../verilog/delay.v"]"\
- "[file normalize "../verilog/deserializer.v"]"\
+ "[file normalize "../verilog/clk_divider.sv"]"\
+ "[file normalize "../verilog/delay.sv"]"\
+ "[file normalize "../verilog/deserializer.sv"]"\
  "[file normalize "../verilog/contrib/ezusb_io.v"]"\
- "[file normalize "../verilog/fifo_async.v"]"\
- "[file normalize "../verilog/fifo_sync.v"]"\
+ "[file normalize "../verilog/fifo_async.sv"]"\
+ "[file normalize "../verilog/fifo_sync.sv"]"\
  "[file normalize "../verilog/contrib/mig_ddr3_model.v"]"\
- "[file normalize "../verilog/serializer.v"]"\
- "[file normalize "../verilog/slot_controller.v"]"\
- "[file normalize "../verilog/spi_master.v"]"\
- "[file normalize "../verilog/spi_slave.v"]"\
+ "[file normalize "../verilog/serializer.sv"]"\
+ "[file normalize "../verilog/commands.vh"]"\
+ "[file normalize "../verilog/slot_controller.sv"]"\
+ "[file normalize "../verilog/spi_master.sv"]"\
+ "[file normalize "../verilog/spi_slave.sv"]"\
  "[file normalize "../verilog/da_platform.sv"]"\
  "[file normalize "../verilog/da_platform_wrapper.sv"]"\
- "[file normalize "../verilog/contrib/delay.sv"]"\
  "[file normalize "../verilog/structures.sv"]"\
  "[file normalize "../verilog/fifo_arbiter.sv"]"\
- "[file normalize "../verilog/contrib/fifo_async2.sv"]"\
- "[file normalize "../verilog/contrib/fifo_sync.sv"]"\
  "[file normalize "../verilog/fx2_model.sv"]"\
  "[file normalize "../verilog/i2s_receiver.sv"]"\
  "[file normalize "../verilog/i2s_source.sv"]"\
  "[file normalize "../verilog/interfaces.sv"]"\
  "[file normalize "../verilog/isolator_model.sv"]"\
- "[file normalize "../verilog/contrib/mig_adapter.sv"]"\
+ "[file normalize "../verilog/mig_adapter.sv"]"\
  "[file normalize "../verilog/slot_model_adc2.sv"]"\
  "[file normalize "../verilog/slot_model_dac8.sv"]"\
  "[file normalize "../verilog/da_platform_tb.sv"]"\
  "[file normalize "../verilog/slot_model_dac2.sv"]"\
+ "[file normalize "../verilog/slot_model_adc8.sv"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
 # Set 'sim_1' fileset file properties for remote files
-set file "../verilog/da_platform.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/da_platform_wrapper.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/delay.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/structures.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/fifo_arbiter.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/fifo_async2.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/fifo_sync.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/fx2_model.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/i2s_receiver.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/i2s_source.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/interfaces.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/isolator_model.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/contrib/mig_adapter.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/slot_model_adc2.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/slot_model_dac8.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/da_platform_tb.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "../verilog/slot_model_dac2.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
+set_property -name "file_type" -value "SystemVerilog" -objects [get_files -of_objects [get_filesets sim_1] [list "*.sv"]]
+set_property -name "file_type" -value "Verilog Header" -objects [get_files -of_objects [get_filesets sim_1] [list "*.vh"]]
 
 # Set 'sim_1' fileset file properties for local files
 # None
@@ -302,18 +174,14 @@ if {[string equal [get_filesets -quiet serdes_tb] ""]} {
 # Set 'serdes_tb' fileset object
 set obj [get_filesets serdes_tb]
 set files [list \
- "[file normalize "../verilog/deserializer.v"]"\
- "[file normalize "../verilog/serializer.v"]"\
+ "[file normalize "../verilog/deserializer.sv"]"\
+ "[file normalize "../verilog/serializer.sv"]"\
  "[file normalize "../verilog/serdes_tb.sv"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
 # Set 'serdes_tb' fileset file properties for remote files
-set file "../verilog/serdes_tb.sv"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets serdes_tb] [list "*$file"]]
-set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
+set_property -name "file_type" -value "SystemVerilog" -objects [get_files -of_objects [get_filesets serdes_tb] [list "*.sv"]]
 
 # Set 'serdes_tb' fileset file properties for local files
 # None
@@ -352,3 +220,4 @@ set_property -name "steps.write_bitstream.args.verbose" -value "0" -objects $obj
 current_run -implementation [get_runs impl_1]
 
 puts "INFO: Project created: da_platform"
+

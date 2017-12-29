@@ -30,11 +30,10 @@ initial ifclk = 0;
 //  in reality, half-period should be 10.41666... ns
 always #10.4 ifclk <= !ifclk;
 
-ClockReset cr_local ();
-always_comb cr_local.clk = ifclk;
+logic reset;
 initial begin
-    cr_local.reset = 1;
-    @(posedge cr_local.clk) cr_local.reset <= 0;
+    reset = 1;
+    @(posedge ifclk) reset <= 0;
 end    
 
 FIFOInterface #(.num_bits(16)) in_local (ifclk);
@@ -43,14 +42,16 @@ FIFOInterface #(.num_bits(16)) out_local (ifclk);
 //  FIFOs 
 logic [9:0] in_count;
 logic [9:0] out_count;
-fifo_sync_sv #(.width(16), .depth(512)) in_fifo(
-    .cr(cr_local),
+fifo_sync #(.Nb(16), .M(9)) in_fifo(
+    .reset,
+    .clk(ifclk),
     .in(in),
     .out(in_local),
     .count(in_count)
 );
-fifo_sync_sv #(.width(16), .depth(512)) out_fifo(
-    .cr(cr_local),
+fifo_sync #(.Nb(16), .M(9)) out_fifo(
+    .reset,
+    .clk(ifclk),
     .in(out_local),
     .out(out),
     .count(out_count)
@@ -75,14 +76,14 @@ always_comb begin
     in_local.ready = (!SLRD && (FIFOADDR == INEP / 2 - 1)) && !data_pending;
 
     out_local.data = fd;
-    out_local.enable = (!SLWR && (FIFOADDR == OUTEP / 2 - 1));
+    out_local.valid = (!SLWR && (FIFOADDR == OUTEP / 2 - 1));
 
     //  Doesn't bother with PKTEND
 end
 
 //  Monitoring logic
 always @(posedge ifclk) begin
-    if (cr_local.reset) begin 
+    if (reset) begin 
         data_pending <= 0;
         data_pending_last <= 0;
         enable_last <= 0;
@@ -90,7 +91,7 @@ always @(posedge ifclk) begin
     end
     else begin
         data_pending_last <= data_pending;
-        enable_last <= in_local.enable && in_local.ready;
+        enable_last <= in_local.valid && in_local.ready;
         //  EMPTY_FLAG <= empty_next;
         if (!SLRD) begin
             data_pending <= 0;

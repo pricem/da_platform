@@ -43,32 +43,35 @@ module da_platform_wrapper #(
     input fx2_flagb,
 
     //  Interface to isolator board
-    IsolatorInterface.fpga iso,
+    (* keep = "true" *) IsolatorInterface.fpga iso,
     
     //  Other
     output [3:0] led_debug
 );
 
 //  Interfaces
-ClockReset cr_mem ();
-FIFOInterface #(.num_bits(65)) mem_cmd(cr_mem.clk);
-FIFOInterface #(.num_bits(mem_width)) mem_write(cr_mem.clk);
-FIFOInterface #(.num_bits(mem_width)) mem_read(cr_mem.clk);
+logic clk_mem;
+FIFOInterface #(.num_bits(65)) mem_cmd(clk_mem);
+FIFOInterface #(.num_bits(mem_width)) mem_write(clk_mem);
+FIFOInterface #(.num_bits(mem_width)) mem_read(clk_mem);
 
-ClockReset cr_host ();
-FIFOInterface #(.num_bits(host_width)) host_in(cr_host.clk);
-FIFOInterface #(.num_bits(host_width)) host_out(cr_host.clk);
+logic clk_host;
+FIFOInterface #(.num_bits(host_width)) host_in(clk_host);
+FIFOInterface #(.num_bits(host_width)) host_out(clk_host);
 
 wire reset_usb;
+wire [3:0] usb_status;
+
+wire ifclk;
+wire fxclk;
 
 wire uiclk;
 wire ui_clk_sync_rst;
 
 always_comb begin
-    cr_mem.clk = uiclk;
-    cr_mem.reset = ui_clk_sync_rst;
-    cr_host.clk = ifclk;
-    cr_host.reset = reset_usb;
+    clk_mem = uiclk;
+    //  cr_mem.reset = ui_clk_sync_rst;
+    clk_host = ifclk;
 end
 
 //  Core
@@ -78,11 +81,12 @@ da_platform #(
     .sclk_ratio(sclk_ratio),
     .num_slots(num_slots)
 ) main(
-    .cr_mem(cr_mem.client),
+    .reset(reset_usb),
+    .clk_host,
+    .clk_mem,
     .mem_cmd(mem_cmd.out),
     .mem_write(mem_write.out),
     .mem_read(mem_read.in),
-    .cr_host(cr_host.client),
     .host_in(host_in.in),
     .host_out(host_out.out),
     .iso(iso),
@@ -108,7 +112,7 @@ ezusb_io #(
     .EMPTY_FLAG(fx2_flaga),
     .FULL_FLAG(fx2_flagb),
     .DI(host_out.data),
-    .DI_valid(host_out.enable),
+    .DI_valid(host_out.valid),
     .DI_ready(host_out.ready),
     .DI_enable(1'b1),
     //  1/1/2017: Reduce timeout from 100 ms to minimum (1.3 ms) in order to reduce latency.
@@ -116,7 +120,7 @@ ezusb_io #(
     //  .pktend_timeout(16'd73),
     .pktend_timeout(16'h01),
     .DO(host_in.data),
-    .DO_valid(host_in.enable),
+    .DO_valid(host_in.valid),
     .DO_ready(host_in.ready),
     .status(usb_status)	
 );
@@ -128,7 +132,9 @@ wire app_en;
 wire app_wdf_wren;
 wire app_rdy;
 wire app_wdf_rdy;
+wire app_wdf_end;
 wire app_rd_data_valid;
+wire app_rd_data_end;
 wire [127:0] app_wdf_data;
 wire [15:0] app_wdf_mask;
 wire [127:0] app_rd_data;
@@ -156,6 +162,7 @@ BUFG clk400_buf (
     .O(clk400) 
 );
 
+wire pll_fb;
 PLLE2_BASE #(
 	.BANDWIDTH("LOW"),
   	.CLKFBOUT_MULT(25),       // f_VCO = 1200 MHz (valid: 800 .. 1600 MHz)
@@ -189,7 +196,8 @@ MIGAdapter #(
     .DDR3_BURST_LENGTH(8),
     .nCK_PER_CLK(4)
 ) mig_adapter(
-    .cr(cr_mem),
+    .clk(clk_mem),
+    .reset,
     .ext_mem_cmd(mem_cmd.in),
     .ext_mem_write(mem_write.in),
     .ext_mem_read(mem_read.out),

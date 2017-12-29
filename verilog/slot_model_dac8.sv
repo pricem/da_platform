@@ -45,50 +45,85 @@ spi_slave #(
     .miso(miso)
 );
 
-FIFOInterface samples_a(sample_clk);
-FIFOInterface samples_b(sample_clk);
-FIFOInterface samples_c(sample_clk);
-FIFOInterface samples_d(sample_clk);
+FIFOInterface #(.num_bits(48)) samples_a(sample_clk);
+FIFOInterface #(.num_bits(48)) samples_b(sample_clk);
+FIFOInterface #(.num_bits(48)) samples_c(sample_clk);
+FIFOInterface #(.num_bits(48)) samples_d(sample_clk);
 
 //  Audio receivers for 8-chan link
 i2s_receiver dac_model_a(
     .sample_clk(sample_clk),
     .samples(samples_a),
-    .bck(slotdata[4]),
-    .lrck(slotdata[5]),
-    .sdata(slotdata[3])
+    .bck(slotdata[0]),
+    .lrck(slotdata[1]),
+    .sdata(slotdata[2])
 );
 i2s_receiver dac_model_b(
     .sample_clk(sample_clk),
     .samples(samples_b),
-    .bck(slotdata[4]),
-    .lrck(slotdata[5]),
-    .sdata(slotdata[2])
+    .bck(slotdata[0]),
+    .lrck(slotdata[1]),
+    .sdata(slotdata[3])
 );
 i2s_receiver dac_model_c(
     .sample_clk(sample_clk),
     .samples(samples_c),
-    .bck(slotdata[4]),
-    .lrck(slotdata[5]),
-    .sdata(slotdata[1])
+    .bck(slotdata[0]),
+    .lrck(slotdata[1]),
+    .sdata(slotdata[4])
 );
 i2s_receiver dac_model_d(
     .sample_clk(sample_clk),
     .samples(samples_d),
-    .bck(slotdata[4]),
-    .lrck(slotdata[5]),
-    .sdata(slotdata[0])
+    .bck(slotdata[0]),
+    .lrck(slotdata[1]),
+    .sdata(slotdata[5])
 );
 
-//  TODO: Actually serialize sample FIFOs via round-robin
-//  Right now we just discard all samples
+//  Serialize sample FIFOs of individual I2S receivers via round-robin
+
+logic [1:0] rr_index;
+
 always_comb begin
-    samples.enable = 0;
+    samples.valid = 0;
     samples.data = 0;
-    samples_a.ready = 1;
-    samples_b.ready = 1;
-    samples_c.ready = 1;
-    samples_d.ready = 1;
+    samples_a.ready = 0;
+    samples_b.ready = 0;
+    samples_c.ready = 0;
+    samples_d.ready = 0;
+    
+    case (rr_index)
+    0: begin
+        samples.valid = samples_a.valid;
+        samples.data = samples_a.data;
+        samples_a.ready = samples.ready;
+    end
+    1: begin
+        samples.valid = samples_b.valid;
+        samples.data = samples_b.data;
+        samples_b.ready = samples.ready;
+    end
+    2: begin
+        samples.valid = samples_c.valid;
+        samples.data = samples_c.data;
+        samples_c.ready = samples.ready;
+    end
+    3: begin
+        samples.valid = samples_d.valid;
+        samples.data = samples_d.data;
+        samples_d.ready = samples.ready;
+    end
+    endcase
+end
+
+always_ff @(posedge sample_clk) begin
+    if (!reset_n) begin
+        rr_index <= 0;
+    end
+    else begin
+        if (samples.ready && samples.valid)
+            rr_index <= rr_index + 1;
+    end
 end
 
 endmodule

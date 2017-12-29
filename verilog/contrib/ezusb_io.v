@@ -1,20 +1,20 @@
-/*!
-   memfifo -- bi-directional high speed communication on ZTEX USB-FPGA Module 2.04 by connecting EZ-USB slave FIFO's to a FIFO built of the on-board DDR SDRAM
-   Copyright (C) 2009-2014 ZTEX GmbH.
+/*%
+   Common communication interface of default firmwares
+   Copyright (C) 2009-2017 ZTEX GmbH.
    http://www.ztex.de
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License version 3 as
-   published by the Free Software Foundation.
-
-   This program is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-   General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see http://www.gnu.org/licenses/.
-!*/
+   Copyright and related rights are licensed under the Solderpad Hardware
+   License, Version 0.51 (the "License"); you may not use this file except
+   in compliance with the License. You may obtain a copy of the License at
+   
+       http://solderpad.org/licenses/SHL-0.51.
+       
+   Unless required by applicable law or agreed to in writing, software, hardware
+   and materials distributed under this License is distributed on an "AS IS"
+   BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied. See the License for the specific language governing permissions
+   and limitations under the License.
+%*/
 /*
    Implements the EZ-USB Slave FIFO interface for both 
    directions. It also includes an scheduler (required if both
@@ -40,7 +40,12 @@ module ezusb_io #(
         input DI_valid,			// 1 indicates data valid; DI and DI_valid must be hold if DI_ready is 0
         output DI_ready, 		// 1 if new data are accepted
         input DI_enable,		// setting to 0 disables FPGA -> EZ-USB transfers
-        input [15:0] pktend_timeout,	// timeout in multiples of 65536 clocks before a short packet committed
+    	input pktend_arm,		// 0->1 transition enables the manual PKTEND mechanism:
+    	                                // PKTEND is asserted as soon output becomes idle
+    	                                // recommended procedure for accurate packet transfers:
+    	                                //   * DI_valid goes low after last data of package
+    	                                //   * monitor PKTEND and hold DI_valid until PKTEND is asserted (PKTEND = 0)
+        input [15:0] pktend_timeout,    // automatic PKTEN assertion after pktend_timeout*65536 clocks of no output data
     					// setting to 0 disables this feature
 	// signals for EZ-USB -> FPGA transfer
         output reg [15:0] DO,           // data read from EZ-USB
@@ -128,14 +133,15 @@ module ezusb_io #(
     reg [4:0] if_out_buf;
     reg [15:0] fd_buf;
     reg resend;
-    reg SLRD_buf, pktend_req, pktend_en;
+    reg SLRD_buf;
+    reg pktend_auto, pktend_arm_buf, pktend_arm_prev;
     reg [31:0] pktend_cnt;
 
     // FPGA <-> EZ-USB signals
     assign SLOE = if_out;
 //    assign FIFOADDR[0] = 1'b0;
 //    assign FIFOADDR[1] = !if_out;
-    assign FIFOADDR = if_out ? OUTEP/2-1 : INEP/2-1;
+    assign FIFOADDR = ( if_out ? (OUTEP/2-1) : (INEP/2-1) ) & 2'b11;
     assign fd = if_out ? fd_buf : {16{1'bz}};
     assign SLRD = SLRD_buf || !DO_ready;
 
@@ -144,8 +150,6 @@ module ezusb_io #(
     assign DI_ready = !reset_ifclk && FULL_FLAG && if_out & if_out_buf[4] && !resend;
     assign reset_out = reset || reset_ifclk;
     
-    
-    
     always @ (posedge ifclk)
     begin
 	reset_ifclk <= reset || !locked;
@@ -153,62 +157,51 @@ module ezusb_io #(
         if ( reset_ifclk )
         begin
 	    SLWR <= 1'b1;
-	    if_out <= DI_enable;  // direction of EZ-USB interface: 1 means FPGA writes / EZ_USB reads
+	    if_out <= DI_enable;  // direction of EZ-USB interface: 1 means FPGA -> EZ_USB 
 	    resend <= 1'b0;
 	    SLRD_buf <= 1'b1;
-	    //  Michael Price 8/9/2016: Experimenting with change in assignment to DO_valid
-        //  DO_valid <= 0;
 	end else if ( FULL_FLAG && if_out && if_out_buf[4] && ( resend || DI_valid) )  	// FPGA -> EZ-USB
 	begin
 	    SLWR <= 1'b0;
 	    SLRD_buf <= 1'b1;
 	    resend <= 1'b0;
-	    //  DO_valid <= 0;
 	    if ( !resend ) fd_buf <= DI;
 	end else if ( EMPTY_FLAG && !if_out && !if_out_buf[4] && DO_ready )  		// EZ-USB -> FPGA
 	begin
 	    SLWR <= 1'b1;
 	    DO <= fd;
 	    SLRD_buf <= 1'b0;
-	    //  Michael Price 8/9/2016
-	    //  DO_valid <= 1;
 	end else if (if_out == if_out_buf[4])
 	begin
 	    if ( !SLWR && !FULL_FLAG ) resend <= 1'b1;  // FLAGS are received two clocks after data. If FULL_FLAG was asserted last data was ignored and has to be re-sent.
 	    SLRD_buf <= 1'b1;
 	    SLWR <= 1'b1;
-	    //  DO_valid <= 0;
 	    if_out <= DI_enable && (!DO_ready || !EMPTY_FLAG);
 	end 
 	if_out_buf <= reset_ifclk ? {5{!DI_enable}} : { if_out_buf[3:0], if_out };
-	
-	//  Michael Price 8/9/2016: Experimenting with a modification to this because it looks like
-	//  it will assert DO_valid one cycle too late at the beginning of a transfer.
 	if ( DO_ready ) DO_valid <= !if_out && !if_out_buf[4] && EMPTY_FLAG && !SLRD_buf;  // assertion of SLRD_buf takes two clocks to take effect
 	
 	// PKTEND processing
-        if ( reset_ifclk || DI_valid )
+	pktend_arm_prev <= pktend_arm;
+        if ( reset_ifclk || !SLWR || resend || DI_valid || !FULL_FLAG )
         begin
-    	    pktend_req <= 1'b0;
-    	    pktend_en <= !reset_ifclk;
-    	    pktend_cnt <= 32'd0;
+    	    // auto mode is always enabled if data appears. It may send ZLP's.
+    	    pktend_auto <= !reset_ifclk && (pktend_auto || !SLWR);
+	    pktend_cnt <= 32'd0;
     	    PKTEND <= 1'b1;
+    	    pktend_arm_buf <= (!reset_ifclk) && ( pktend_arm_buf || ( pktend_arm && !pktend_arm_prev ) );
+    	// PKTEND must not be asserted unless a buffer is available (FULL=1)
+    	end else if ( if_out && if_out_buf[4] && ( pktend_arm_buf || ( pktend_auto && (pktend_timeout != 16'd0) && (pktend_timeout <= pktend_cnt[31:16]) ) ) )
+    	begin
+    	    PKTEND <= 1'b0;
+    	    pktend_auto <= 1'b0;
+    	    pktend_arm_buf <= 1'b0;
     	end else 
     	begin
-    	    pktend_req <= pktend_req || ( pktend_en && (pktend_timeout != 16'd0) && (pktend_timeout == pktend_cnt[31:16]) );
-    	    pktend_cnt <= pktend_cnt + 1;
-    	    if ( pktend_req && if_out && if_out_buf[4] )
-    	    begin
-    		PKTEND <= 1'b0;
-    		pktend_req <= 1'b0;
-    		pktend_en <= 1'b0;
-    	    end else 
-    	    begin
-    		PKTEND <= 1'b1;
-    		pktend_req <= pktend_req || ( pktend_en && (pktend_timeout != 16'd0) && (pktend_timeout == pktend_cnt[31:16]) );
-    	    end
+    	    PKTEND <= 1'b1;
+    	    pktend_cnt <= pktend_cnt + 32'd1;
+    	    pktend_arm_buf <= pktend_arm_buf || ( pktend_arm && !pktend_arm_prev );
     	end
-    	    
     end
 
 endmodule

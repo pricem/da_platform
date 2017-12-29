@@ -9,6 +9,7 @@
 
 module i2s_source(
     //  Testbench input
+    input logic reset,
     input logic sample_clk,
     FIFOInterface.in samples,
     //  I2S port
@@ -26,41 +27,22 @@ logic [23:0] sample_right;
 
 logic left_not_right;
 
-logic reset_mck;
-logic reset_sck;
-logic reset_bck;
-initial begin
-    reset_mck <= 1;
-    @(posedge i2s_master_clk) reset_mck <= 0;
-end
-initial begin
-    reset_sck <= 1;
-    @(posedge sample_clk) reset_sck <= 0;
-end
-initial begin
-    reset_bck <= 1;
-    @(negedge bck) reset_bck <= 0;
-end
-
 FIFOInterface #(.num_bits(48)) samples_local(bck);
 
 logic [2:0] count_in;
 logic [2:0] count_out;
-fifo_async_sv2 #(.width(48), .depth(4)) sample_fifo(
-    .clk_in(sample_clk),
-    .reset_in(reset_sck),
+fifo_async #(.Nb(48), .M(2)) sample_fifo(
+    .reset,
     .in(samples),
-    .count_in(count_in),
-    .clk_out(!bck),
-    .reset_out(reset_bck),
+    .in_count(count_in),
     .out(samples_local.out),
-    .count_out(count_out)
+    .out_count(count_out)
 );
 
 //  BCK/LRCK generator - 256 x Fs
 logic [7:0] mclk_count;
 always @(posedge i2s_master_clk) begin
-    if (reset_mck) begin
+    if (reset) begin
         mclk_count <= 0;
         bck <= 0;
         lrck <= 0;
@@ -90,7 +72,7 @@ always @(negedge bck) begin
     if (lrck && (cycle_counter == 30))
         samples_local.ready <= 1;
     
-    if (samples_local.ready && samples_local.enable) begin
+    if (samples_local.ready && samples_local.valid) begin
         {sample_left, sample_right} <= samples_local.data;
         $display("%t %m: loading I2S samples left = %h, right = %h", $time, samples_local.data[47:24], samples_local.data[23:0]);
     end
