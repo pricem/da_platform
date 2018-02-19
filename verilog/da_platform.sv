@@ -213,7 +213,7 @@ FIFOInterface #(.num_bits(32)) aud_slots_in_write[num_slots] (clk_core);
 FIFOInterface #(.num_bits(32)) aud_slots_in_read[num_slots] (clk_core);
 
 FIFOInterface #(.num_bits(32)) aud_slots_out_write[num_slots] (clk_core);
-//  FIFOInterface #(.num_bits(32)) aud_slots_out_read[num_slots] (clk_core);
+FIFOInterface #(.num_bits(32)) aud_slots_out_read[num_slots] (clk_core);
 
 (* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_in[num_slots] (clk_core);
 (* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_out[num_slots] (clk_core);
@@ -245,11 +245,9 @@ generate for (g = 0; g < num_slots; g++) always_comb begin
     aud_slots_out_write[g].ready = arb_in_ready[num_slots + g];
     arb_in_enable[num_slots + g] = aud_slots_out_write[g].valid;
     arb_in_data[num_slots + g] = aud_slots_out_write[g].data;
-    /*
     arb_out_ready[num_slots + g] = aud_slots_out_read[g].ready;
     aud_slots_out_read[g].valid = arb_out_enable[num_slots + g];
     aud_slots_out_read[g].data = arb_out_data[num_slots + g];
-    */
 end
 endgenerate
 
@@ -286,7 +284,7 @@ fifo_arbiter #(.num_ports(num_slots * 2), .mem_width(mem_width)) arbiter(
 FIFOInterface #(.num_bits(32)) aud_in_write (clk_core);
 FIFOInterface #(.num_bits(32)) aud_in_read (clk_core);
 FIFOInterface #(.num_bits(32)) aud_out_write (clk_core);
-//  FIFOInterface #(.num_bits(32)) aud_out_read (clk_core);
+FIFOInterface #(.num_bits(32)) aud_out_read (clk_core);
 
 FIFOInterface #(.num_bits(host_width)) ctl_in (clk_core);
 //  FIFOInterface #(.num_bits(host_width)) ctl_out (clk_core);
@@ -337,12 +335,12 @@ endgenerate
 
 always_comb begin
     aud_in_write.ready = 0;
-    //  aud_out_read.valid = 0;
-    //  aud_out_read.data = 0;
+    aud_out_read.valid = 0;
+    aud_out_read.data = 0;
     for (int i = 0; i < num_slots; i++) if (slot_index == i) begin
         aud_in_write.ready = arb_in_ready[i];
-        //  aud_out_read.valid = arb_out_enable[num_slots + i];
-        //  aud_out_read.data = arb_out_data[num_slots + i];
+        aud_out_read.valid = arb_out_enable[num_slots + i];
+        aud_out_read.data = arb_out_data[num_slots + i];
     end
     
     ctl_in.ready = 0;
@@ -363,12 +361,12 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         if (slot_index == g) begin
             aud_slots_in_write[g].valid = aud_in_write.valid;
             aud_slots_in_write[g].data = aud_in_write.data;
-            //  aud_slots_out_read[g].ready = aud_out_read.ready;
+            aud_slots_out_read[g].ready = aud_out_read.ready;
         end
         else begin
             aud_slots_in_write[g].valid = 0;
             aud_slots_in_write[g].data = 0;
-            //  aud_slots_out_read[g].ready = 0;
+            aud_slots_out_read[g].ready = 0;
         end
     end
     
@@ -420,7 +418,7 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         .ctl_rd(ctl_slots_in[g]),
         .ctl_wr(ctl_slots_out[g]),
         .aud_rd(aud_slots_in_read[g]),
-        .aud_wr(aud_slots_in_write[g]),
+        .aud_wr(aud_slots_out_write[g]),
         .spi_ss_out(slot_spi_ss_out), 
         .spi_ss_in(slot_spi_ss_in),
         .spi_sck(slot_spi_sck), 
