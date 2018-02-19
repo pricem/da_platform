@@ -151,6 +151,8 @@ set files [list \
 ]
 add_files -norecurse -fileset $obj $files
 
+add_files -fileset $obj [file normalize "./da_platform_tb_behav.wcfg"]
+
 # Set 'sim_1' fileset file properties for remote files
 set_property -name "file_type" -value "SystemVerilog" -objects [get_files -of_objects [get_filesets sim_1] [list "*.sv"]]
 set_property -name "file_type" -value "Verilog Header" -objects [get_files -of_objects [get_filesets sim_1] [list "*.vh"]]
