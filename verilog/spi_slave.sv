@@ -88,7 +88,7 @@ always @(posedge clk) begin
         miso_val <= 0;
         miso_en <= 0;
     end
-    if (ss && !ss_last) begin
+    else if (ss && !ss_last) begin
         $display("SPI slave %m received data %h at time %t", data, $time);
         if (!is_read) begin
             storage[target_addr] <= target_data;
