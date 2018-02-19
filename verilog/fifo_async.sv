@@ -24,7 +24,7 @@ module fifo_async #(
 
 logic rd_empty;
 logic wr_full;
-assign wr_ready = !wr_full;
+assign in.ready = !wr_full;
 
 //	Addresses used by memory
 logic [M:0] wr_addr_bin;
@@ -45,25 +45,25 @@ logic [M:0] rd_addr_syncwr;
 logic [Nb-1:0] data[N-1:0];
 
 //	Updates to binary and Gray code addresses based on inputs
-logic [M:0] wr_addr_bin_next = wr_addr_bin + (in.valid & ~wr_full);
-logic [M:0] wr_addr_gray_next = (wr_addr_bin_next >> 1) ^ wr_addr_bin_next;
+wire [M:0] wr_addr_bin_next = wr_addr_bin + (in.valid & ~wr_full);
+wire [M:0] wr_addr_gray_next = (wr_addr_bin_next >> 1) ^ wr_addr_bin_next;
 
-logic [M:0] rd_addr_bin_next = rd_addr_bin + (out.ready & ~rd_empty);
-logic [M:0] rd_addr_gray_next = (rd_addr_bin_next >> 1) ^ rd_addr_bin_next;
+wire [M:0] rd_addr_bin_next = rd_addr_bin + (out.ready & ~rd_empty);
+wire [M:0] rd_addr_gray_next = (rd_addr_bin_next >> 1) ^ rd_addr_bin_next;
 
 //	Full and empty signals based on synchronized Gray code counters
-logic rd_empty_next = (rd_addr_gray_next == wr_addr_syncrd);
-logic wr_full_next = (wr_addr_gray_next == {~rd_addr_syncwr[M:M-1], rd_addr_syncwr[M-2:0]});
+wire rd_empty_next = (rd_addr_gray_next == wr_addr_syncrd);
+wire wr_full_next = (wr_addr_gray_next == {~rd_addr_syncwr[M:M-1], rd_addr_syncwr[M-2:0]});
 
 //	Synchronous count outputs, which might be a little behind (Gray to binary conversion)
 logic [M:0] wr_addr_sync_bin;
 logic [M:0] rd_addr_sync_bin;
-logic [M:0] wr_count_next;
-logic [M:0] rd_count_next;
-always @(wr_addr_syncrd)
+wire [M:0] wr_count_next;
+wire [M:0] rd_count_next;
+always_comb
 	for (int i = 0; i < M + 1; i = i + 1)
 		wr_addr_sync_bin[i] = ^(wr_addr_syncrd >> i);
-always @(rd_addr_syncwr)
+always_comb
 	for (int i = 0; i < M + 1; i = i + 1)
 		rd_addr_sync_bin[i] = ^(rd_addr_syncwr >> i);
 assign rd_count_next = wr_addr_sync_bin - rd_addr_bin_next;

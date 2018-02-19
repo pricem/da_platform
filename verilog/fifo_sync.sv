@@ -27,8 +27,8 @@ logic [Nb-1:0] data[N-1:0];
 assign count = wr_addr_bin - rd_addr_bin;
 
 //	Full and empty signals
-logic rd_empty = (rd_addr_bin == wr_addr_bin);
-logic wr_full = (wr_addr_bin == {~rd_addr_bin[M], rd_addr_bin[M-1:0]});
+wire rd_empty = (rd_addr_bin == wr_addr_bin);
+wire wr_full = (wr_addr_bin == {~rd_addr_bin[M], rd_addr_bin[M-1:0]});
 
 always_comb in.ready = !wr_full;
 
