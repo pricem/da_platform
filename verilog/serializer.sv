@@ -1,7 +1,8 @@
 `timescale 1ns / 1ps
 
 module serializer #(
-    parameter logic launch_negedge = 1
+    parameter logic launch_negedge = 1,
+    parameter logic default_val = 1
 ) (
     input clk_ser, 
     output logic data_ser, 
@@ -21,7 +22,7 @@ generate if (launch_negedge == 0) begin: posedge_sensitive
         if (!clk_par)
             data_int <= data_par;
         else
-            data_int <= (data_int << 1);
+            data_int <= (data_int << 1) + default_val;
     always @(*) data_ser = data_int[7];
 
 end
@@ -37,7 +38,7 @@ else begin: negedge_sensitive
         if (!clk_par)
             data_int <= data_par;
         else
-            data_int <= (data_int << 1);
+            data_int <= (data_int << 1) + default_val;
         data_ser <= data_ser_next;
     end
 

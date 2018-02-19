@@ -2,7 +2,8 @@
 
 module delay #(
     parameter int num_bits = 1,
-    parameter int num_cycles = 1
+    parameter int num_cycles = 1,
+    parameter int initial_val = 0
 ) (
     input clk,
     input reset,
@@ -19,7 +20,7 @@ always_comb out = state[num_cycles - 1];
 always_ff @(posedge clk) begin
     if (reset) begin
         for (int i = 0; i < num_cycles; i++)
-            state[i] <= 0;
+            state[i] <= initial_val;
     end
     else begin
         state[0] <= in;

@@ -31,9 +31,9 @@ parameter STATE_SEND_DATA = 4'h2;
 parameter STATE_READ_DATA = 4'h3;
 parameter STATE_RESPOND = 4'h4;
 
-reg [3:0] bit_counter;
-reg [4:0] num_ss_cycles;
-reg [4:0] ss_cycle_counter;
+reg [5:0] bit_counter;
+reg [5:0] num_ss_cycles;
+reg [5:0] ss_cycle_counter;
 
 assign sck = !clk_serial & !ss_in;
 
@@ -97,7 +97,7 @@ always @(posedge clk_serial) begin
         response_int.valid <= 0;
     
         if (ss_out == 0) begin
-            if (ss_cycle_counter < num_ss_cycles)
+            if (ss_cycle_counter < num_ss_cycles - 1)
                 ss_cycle_counter <= ss_cycle_counter + 1;
             else begin
                 ss_cycle_counter <= 0;

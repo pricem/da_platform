@@ -65,6 +65,24 @@ fifo_sync #(.Nb(8), .M(3)) ctl_wr_fifo(
 
 assign ctl_wr_waiting = (ctl_wr_fifo_count > 0);
 
+//  Reset for SPI master - needs to wait for clock to clear itself
+logic reset_spi;
+logic [3:0] spi_clock_count;
+always_ff @(posedge reset or posedge sclk) begin
+    if (reset) begin
+        reset_spi <= 1;
+        spi_clock_count <= 0;
+    end
+    else begin
+        if (spi_clock_count >= 4)
+            reset_spi <= 0;
+        else begin
+            reset_spi <= 1;
+            spi_clock_count <= spi_clock_count + 1;
+        end
+    end
+end
+
 //  256xFS master clock and I2S output format are the default. Should be configurable though.
 //  TODO: Add configurable output justification, support RJ/LJ in addition to I2S.
 logic pdata_left_active;     //  "LEFT" = "even" numbered channels 0, 2, 4, 6
@@ -166,7 +184,7 @@ assign {spi_response_read_addr, spi_response_read_data} = spi_response.data;
 spi_master spi(
     .clk(clk_core), 
     .clk_serial(!sclk),
-    .reset(reset), 
+    .reset(reset_spi), 
     .request(spi_request.in),
     .response(spi_response.out),
     .sck(spi_sck), 

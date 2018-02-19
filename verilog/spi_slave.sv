@@ -2,7 +2,9 @@
 
 module spi_slave(clk, reset, sck, ss, mosi, miso);
 
-//  Simple simulation model - read/write registers, first bit received is used for read/write
+//  Simple simulation model - read/write registers
+//  - first bit received is used for read/write
+//  - next 7 bits (assuming 8-bit mode) used for address
 
 //  Mimics DSD1792A - other SPI slaves may have different behavior
 
@@ -27,13 +29,14 @@ reg miso_en;
 reg [max_data_bits-1 : 0] storage [num_registers - 1 : 0];
 
 wire ss_last;
-delay ss_delay(clk, reset, ss, ss_last);
+delay #(.initial_val(1)) ss_delay(clk, reset, ss, ss_last);
 
 reg is_read;
 reg [max_addr_bits - 1 : 0] read_addr;
 
-reg [3:0] bit_counter;
+reg [5:0] bit_counter;
 
+logic debug_display;
 int address_bits;
 int data_bits;
 
@@ -46,6 +49,7 @@ always_comb begin
 end
 
 initial begin
+    debug_display = 0;
     address_bits = 8;
     data_bits = 8;
 end
@@ -64,16 +68,16 @@ always @(posedge sck) begin
         if (bit_counter == 0)
             is_read <= mosi;
         else if (is_read && (bit_counter == address_bits - 1)) begin
-            read_addr <= {data, mosi};
+            read_addr <= ({data, mosi}) & ((1 << (address_bits - 1)) - 1);
         end
     end
 end
 
 always @(negedge sck) begin
-    if (!ss && is_read && (bit_counter >= 8) && (bit_counter <= 16)) begin
+    if (!ss && is_read && (bit_counter >= address_bits) && (bit_counter < address_bits + data_bits)) begin
         miso_en <= 1;
-        miso_val <= storage[read_addr][15 - bit_counter];
-        if (bit_counter == 8)
+        miso_val <= storage[read_addr][address_bits + data_bits - 1 - bit_counter];
+        if (debug_display && (bit_counter == address_bits))
             $display("Data of %h read from register %h", storage[read_addr], read_addr);
     end
     else
@@ -89,10 +93,12 @@ always @(posedge clk) begin
         miso_en <= 0;
     end
     else if (ss && !ss_last) begin
-        $display("SPI slave %m received data %h at time %t", data, $time);
+        if (debug_display)
+            $display("SPI slave %m received data %h at time %t", data, $time);
         if (!is_read) begin
             storage[target_addr] <= target_data;
-            $display("Data of %h stored in register %h", target_data, target_addr);
+            if (debug_display)
+                $display("Data of %h stored in register %h", target_data, target_addr);
         end
         
         bit_counter <= 0;

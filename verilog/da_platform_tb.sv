@@ -243,27 +243,20 @@ task transaction(input logic [7:0] destination, input logic [7:0] command, input
     receive_length = receive_counter;
 endtask
 
-//  This task is based around SPI format for DSD1792 - 8 bit addr and data
 task spi_read(input logic [7:0] destination, input logic addr_size, input logic data_size, input logic [15:0] addr, output logic [15:0] data);
-/*
-    checksum = 0x61 + addr + 0x80
-	cmd = numpy.array([slot, 0x20, 0x00, 0x00, 0x02, 0x61, addr + 0x80, checksum / 256, checksum % 256], dtype=numpy.uint8
-*/	
     logic [9:0] receive_length;
     send_cmd_data[0] = SPI_READ_REG;
     send_cmd_data[1] = {6'h00, addr_size, data_size};
     send_cmd_data[2] = addr[15:8];
     send_cmd_data[3] = addr[7:0];
-    transaction(destination, CMD_FIFO_WRITE, 4, 1000, receive_length);
+    transaction(destination, CMD_FIFO_WRITE, 4, 1500, receive_length);
     
-    $display("%t spi_read(addr %h): receive length = %d, data[4] = %h, data[5] = %h", $time, addr, receive_length, receive_data[4], receive_data[5]);
+    data = (receive_data[7][7:0] << 8) + receive_data[8][7:0];
+    $display("%t spi_read(addr %h): receive length = %d, data = %h", $time, addr, receive_length, data);
+    
 endtask
 
 task spi_write(input logic [7:0] destination, input logic addr_size, input logic data_size, input logic [15:0] addr, input logic [15:0] data);
-/*
-    checksum = 0x61 + addr + 0x80
-	cmd = numpy.array([slot, 0x20, 0x00, 0x00, 0x02, 0x61, addr + 0x80, checksum / 256, checksum % 256], dtype=numpy.uint8
-*/	
     send_cmd_data[0] = SPI_WRITE_REG;
     send_cmd_data[1] = {6'h00, addr_size, data_size};
     send_cmd_data[2] = addr[15:8];
@@ -272,7 +265,7 @@ task spi_write(input logic [7:0] destination, input logic addr_size, input logic
     send_cmd_data[5] = data[7:0];
     send_cmd(destination, CMD_FIFO_WRITE, 6);
     
-    $display("%t spi_write(addr %h)", $time, addr);
+    $display("%t spi_write(addr %h, data %h)", $time, addr, data);
 endtask
 
 
@@ -301,15 +294,29 @@ task test_spi(input int slot);
     logic [15:0] spi_receive_data;
 
     //  8 bit data/address
+    isolator.set_spi_mode(slot, 8, 8);
     spi_write(slot, 0, 0, 8'h47, 8'hA3);
-    spi_read(slot, 0, 0, 8'h47, spi_receive_data);
+    spi_read(slot, 0, 0, 8'hC7, spi_receive_data);
     assert(spi_receive_data[7:0] == 8'hA3) else fail_test($sformatf("8-bit SPI readback (8-bit addr) on slot %0d failed.", slot));
-    
+
     //  16 bit address, 8 bit data
+    isolator.set_spi_mode(slot, 16, 8);
     spi_write(slot, 1, 0, 16'h0829, 8'hF6);
-    spi_read(slot, 1, 0, 16'h0829, spi_receive_data);
+    spi_read(slot, 1, 0, 16'h8829, spi_receive_data);
     assert(spi_receive_data[7:0] == 8'hF6) else fail_test($sformatf("8-bit SPI readback (16-bit addr) on slot %0d failed.", slot));
-    
+
+    //  8 bit address, 16 bit data
+    isolator.set_spi_mode(slot, 8, 16);
+    spi_write(slot, 0, 1, 8'h1C, 16'h5DA9);
+    spi_read(slot, 0, 1, 8'h9C, spi_receive_data);
+    assert(spi_receive_data[15:0] == 16'h5DA9) else fail_test($sformatf("16-bit SPI readback (8-bit addr) on slot %0d failed.", slot));
+
+    //  16 bit address, 16 bit data
+    isolator.set_spi_mode(slot, 16, 16);
+    spi_write(slot, 1, 1, 16'h30AA, 16'h3D1A);
+    spi_read(slot, 1, 1, 16'hB0AA, spi_receive_data);
+    assert(spi_receive_data[15:0] == 16'h3D1A) else fail_test($sformatf("16-bit SPI readback (16-bit addr) on slot %0d failed.", slot));
+
 endtask
 
 task test_clock_select;
@@ -436,12 +443,14 @@ initial begin
     test_slot_reset;
     for (int i = 0; i < num_slots; i++)
         test_hwcon(i);
+    for (int i = 0; i < num_slots; i++)
+        test_spi(0);
 
     $display("Counted %0d test failures", num_test_errors);
     $finish;
     
     test_fifo_status;
-    test_spi(0);
+    
     test_dac(0);
     test_adc(0);
     test_loopback(0, 1);

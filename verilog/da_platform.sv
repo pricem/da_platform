@@ -432,6 +432,7 @@ generate for (g = 0; g < num_slots; g++) begin: slots
         .hwcon(slot_hwcon), 
         .hwflag(slot_hwflag),
         .spi_state(slot_spi_state),
+        .ctl_wr_waiting(ctl_slots_out_waiting[g]),
         .fifo_en(slot_fifo_en[g])
     );
 
