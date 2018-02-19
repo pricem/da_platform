@@ -115,6 +115,7 @@ ezusb_io #(
     .DI_valid(host_out.valid),
     .DI_ready(host_out.ready),
     .DI_enable(1'b1),
+    .pktend_arm(1'b0),   //  TODO 12/28/2017 - figure out how to drive this.
     //  1/1/2017: Reduce timeout from 100 ms to minimum (1.3 ms) in order to reduce latency.
     //  Consider modifying ezusb_io.v to reduce further.
     //  .pktend_timeout(16'd73),
