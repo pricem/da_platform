@@ -101,7 +101,7 @@ always @(posedge ifclk_delayed) begin
                 data_buf <= in_local.data;
             */
         end
-        else if (enable_last)
+        else if (in_local.valid && in_local.ready)  //  enable_last
             data_pending <= 1; 
         
         if (!SLWR && !out_local.ready) begin
