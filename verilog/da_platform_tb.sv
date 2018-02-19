@@ -12,8 +12,7 @@ module da_platform_tb #(
     mem_log_depth = 20
 ) ();
 
-localparam int SLOT_DAC = 0;
-localparam int SLOT_ADC = 1;
+localparam num_slots = 4;
 
 `include "commands.vh"
 `include "structures.sv"
@@ -211,8 +210,6 @@ task send_cmd_simple(input logic [7:0] destination, input logic [7:0] command, i
     host_in.write(command);
     for (int i = 0; i < data_length; i++)
         host_in.write(send_cmd_data[i]);
-    if (data_length == 0)
-        host_in.write(0);
 endtask
 
 task send_cmd(input logic [7:0] destination, input logic [7:0] command, input logic [23:0] data_length);
@@ -293,35 +290,50 @@ end
 
 /*  Some quick unit tests   */
 
+int num_test_errors;
+
+task fail_test(input string error_str);
+    num_test_errors++;
+    $error("%t: %s", $time, error_str);
+endtask
+
 task test_spi(input int slot);
     logic [15:0] spi_receive_data;
 
     //  8 bit data/address
     spi_write(slot, 0, 0, 8'h47, 8'hA3);
     spi_read(slot, 0, 0, 8'h47, spi_receive_data);
-    assert(spi_receive_data[7:0] == 8'hA3) else $error("8-bit SPI readback (8-bit addr) on slot %0d failed.", slot);
+    assert(spi_receive_data[7:0] == 8'hA3) else fail_test($sformatf("8-bit SPI readback (8-bit addr) on slot %0d failed.", slot));
     
     //  16 bit address, 8 bit data
     spi_write(slot, 1, 0, 16'h0829, 8'hF6);
     spi_read(slot, 1, 0, 16'h0829, spi_receive_data);
-    assert(spi_receive_data[7:0] == 8'hF6) else $error("8-bit SPI readback (16-bit addr) on slot %0d failed.", slot);
+    assert(spi_receive_data[7:0] == 8'hF6) else fail_test($sformatf("8-bit SPI readback (16-bit addr) on slot %0d failed.", slot));
     
 endtask
 
 task test_clock_select;
     send_cmd_data[0] = 0;
     send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
-    #10000 assert(iso.clksel == 1'b0) else $error("Clock select didn't work.");
+    #1000 assert(iso.clksel == 1'b0) else fail_test("Clock select didn't work.");
     
     send_cmd_data[0] = 1;
     send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
-    #10000 assert(iso.clksel == 1'b1) else $error("Clock select didn't work.");
+    #1000 assert(iso.clksel == 1'b1) else fail_test("Clock select didn't work.");
 endtask
 
-task test_acon(input int slot);
-    send_cmd_data[0] = SLOT_SET_ACON;
-    send_cmd_data[1] = 8'h64;
-    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+task test_hwcon(input int slot);
+    logic [7:0] hwcon_val;
+    
+    for (int i = 0; i < 3; i++) begin
+        hwcon_val = $random();
+    
+        send_cmd_data[0] = SLOT_SET_ACON;
+        send_cmd_data[1] = hwcon_val;
+        send_cmd(slot, CMD_FIFO_WRITE, 2);
+        
+        #30000 assert (isolator.get_hwcon_parallel(slot) === hwcon_val) else fail_test($sformatf("Setting HWCON for slot %0d didn't work", slot));
+    end
 endtask
 
 task test_dac(input int slot);
@@ -344,14 +356,14 @@ task test_loopback(input int slot_dac, input int slot_adc);
     //  Enable recording on slot 1 - ADC
     send_cmd_data[0] = SLOT_START_RECORDING;
     send_cmd_data[1] = 0;
-    send_cmd(SLOT_ADC, CMD_FIFO_WRITE, 2);
+    send_cmd(slot_adc, CMD_FIFO_WRITE, 2);
     
     //  Long audio loop: test that we can stall
     for (int i = 0; i < 256; i++) begin
         send_cmd_data[2 * i] = i / 256;
         send_cmd_data[2 * i + 1] = i % 256;
     end
-    send_cmd(SLOT_DAC, AUD_FIFO_WRITE, 512);
+    send_cmd(slot_dac, AUD_FIFO_WRITE, 512);
 
     //  Now unblock ADC and DAC simultaneously
     send_cmd_data[0] = 4'b0011;
@@ -361,12 +373,12 @@ task test_loopback(input int slot_dac, input int slot_adc);
         #750000     //  1/1/2017: Test audio FIFO read
         send_cmd_data[0] = 0;
         send_cmd_data[1] = 64;
-        send_cmd_simple(SLOT_ADC, AUD_FIFO_READ, 2);
+        send_cmd_simple(slot_adc, AUD_FIFO_READ, 2);
     end
 
     send_cmd_data[0] = SLOT_STOP_RECORDING;
     send_cmd_data[1] = 0;
-    send_cmd(SLOT_ADC, CMD_FIFO_WRITE, 2);
+    send_cmd(slot_adc, CMD_FIFO_WRITE, 2);
 
     //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
     #50000 send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
@@ -378,11 +390,32 @@ task test_fifo_status;
 endtask
 
 task test_slot_reset;
+    int time_counter;
+    logic has_reset;
 
     //  a) Pulse reset
-    send_cmd(8'hFF, RESET_SLOTS, 0);
-    
+    has_reset = 0;
+    send_cmd_simple(8'hFF, RESET_SLOTS, 0);
+    fork
+        begin
+            @(negedge iso.reset_n);
+            time_counter = $time;
+            @(posedge iso.reset_n);
+            $display("%t: Reset pulse of %0d ns detected", $time, $time - time_counter);
+            has_reset = 1;
+        end
+        begin
+            #10000 if (!has_reset) fail_test("Reset pulse didn't happen");
+        end
+    join
+
     //  b) Enter reset and don't leave until we tell it to
+    //     (Note: the da_platform logic enforces a minimum reset pulse width
+    //     of 200 cycles, so we have to wait for that.)
+    send_cmd_simple(8'hFF, ENTER_RESET, 0);
+    #1000 assert(!iso.reset_n) else fail_test("Slots didn't enter reset when we asked");
+    send_cmd_simple(8'hFF, LEAVE_RESET, 0);
+    #10000 assert(iso.reset_n) else fail_test("Slots didn't leave reset when we asked");
     
 endtask
 
@@ -397,13 +430,16 @@ initial begin
     //  Wait 10 us for config information (dir/chan) to be serialized by isolator and received
     //  and for SS chip selects to be all deasserted (clock startup; ser/des) 
     #10000 ;
-    
+
     //  Run sequence of unit tests
     test_clock_select;
+    test_slot_reset;
+    for (int i = 0; i < num_slots; i++)
+        test_hwcon(i);
+
+    $display("Counted %0d test failures", num_test_errors);
     $finish;
     
-    test_slot_reset;
-    test_acon(0);
     test_fifo_status;
     test_spi(0);
     test_dac(0);
