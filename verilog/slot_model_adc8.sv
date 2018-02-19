@@ -32,8 +32,8 @@ assign hwflag = 0;
 
 //  SPI interface
 spi_slave #(
-   .address_bits(8), 
-   .data_bits(8)
+   .max_addr_bits(8), 
+   .max_data_bits(8)
 ) ctl_model(
     .clk(mclk), 
     .reset(!reset_n), 

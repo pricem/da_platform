@@ -121,5 +121,10 @@ slot_model_adc8 slot1(
 //  Slot 3: empty
 
 
+task set_spi_mode(input int slot, input int address_bits, input int data_bits);
+
+endtask
+
+
 endmodule
 

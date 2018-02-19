@@ -6,9 +6,10 @@ module spi_slave(clk, reset, sck, ss, mosi, miso);
 
 //  Mimics DSD1792A - other SPI slaves may have different behavior
 
-parameter address_bits = 8;
-parameter data_bits = 8;
-parameter num_registers = (1 << address_bits);
+parameter int max_addr_bits = 16;
+parameter int max_data_bits = 16;
+
+parameter num_registers = (1 << max_addr_bits);
 
 input clk;
 input reset;
@@ -23,18 +24,36 @@ reg [31:0] data;
 reg miso_val;
 reg miso_en;
 
-reg [data_bits-1:0] storage [num_registers-1:0];
+reg [max_data_bits-1 : 0] storage [num_registers - 1 : 0];
 
 wire ss_last;
 delay ss_delay(clk, reset, ss, ss_last);
 
-wire [address_bits-1:0] target_addr = data[address_bits+data_bits-1:data_bits];
-wire [data_bits-1:0] target_data = data[data_bits-1:0];
-
 reg is_read;
-reg [6:0] read_addr;
+reg [max_addr_bits - 1 : 0] read_addr;
 
 reg [3:0] bit_counter;
+
+int address_bits;
+int data_bits;
+
+logic [max_addr_bits-1:0] target_addr;
+logic [max_data_bits-1:0] target_data;
+
+always_comb begin
+    target_addr = (data >> data_bits) & ((1 << address_bits) - 1);
+    target_data = data & ((1 << data_bits) - 1);
+end
+
+initial begin
+    address_bits = 8;
+    data_bits = 8;
+end
+
+task set_mode(input int address_bits_new, input int data_bits_new);
+    address_bits = address_bits_new;
+    data_bits = data_bits_new;
+endtask
 
 assign miso = miso_en ?  miso_val : 1'bz;
 
@@ -44,8 +63,8 @@ always @(posedge sck) begin
         bit_counter <= bit_counter + 1;
         if (bit_counter == 0)
             is_read <= mosi;
-        else if (is_read && (bit_counter == 7)) begin
-            read_addr <= {data[5:0], mosi};
+        else if (is_read && (bit_counter == address_bits - 1)) begin
+            read_addr <= {data, mosi};
         end
     end
 end
