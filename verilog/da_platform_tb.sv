@@ -112,6 +112,7 @@ da_platform_wrapper dut(
 );
 
 fx2_model fx2(
+    .reset,
     .ifclk(fx2_ifclk),
     .fd(fx2_fd),
     .SLWR(fx2_slwr), 
