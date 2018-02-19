@@ -445,61 +445,6 @@ initial begin
     test_dac(0);
     test_adc(0);
     test_loopback(0, 1);
-    
-    /*
-    //  Test clock select
-    //  send_cmd_data[0] = 8'h0D;
-    //  send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
-    
-    //  #50000 ;
-    
-    //  Try some SPI setup stuff.  First, 16 bit transactions (8-bit addr/data).
-    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
-    //  spi_write(8'h00, 0, 0, 8'h47, 8'hA3);
-    //  spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
-    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
-    
-    //  Stop early
-    //  #50000 $finish;
-    
-    //  Now, 24 bit transactions, 16 bit addr + 8 bit data.
-
-    */
-
-    
-    /*
-    //  Set ACON
-    send_cmd_data[0] = SLOT_SET_ACON;
-    send_cmd_data[1] = 8'h64;
-    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
-    #1000 ;
-    send_cmd_data[0] = SLOT_SET_ACON;
-    send_cmd_data[1] = 8'h51;
-    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
-    
-    //  Reset slots
-    send_cmd(8'hFF, RESET_SLOTS, 0);
-    */
-    
-    
-    
-    /*
-    //  Short audio test
-    for (int i = 0; i < 10; i++) send_cmd_data[i] = (2 * i) + ((2 * i + 1) << 8);
-    send_cmd(8'h01, AUD_FIFO_WRITE, 10);
-    
-    //  Disable recording after 100 us / approx 4 samples (wait for timeout, we should get the data back)
-    #100000 ;
-    send_cmd_data[0] = SLOT_STOP_RECORDING;
-    send_cmd_data[1] = 0;
-    transaction(8'h00, CMD_FIFO_WRITE, 2, 2000, test_receive_length);    //  TBD: How many words to receive?  Depends on timing.
-    
-    
-    
-    */
-    
-    //  Temporary
-    //  #1000 $finish;
 end
 
 //  Clocks
