@@ -8,6 +8,7 @@
 
 
 module i2s_source(
+    input logic enable,
     //  Testbench input
     input logic reset,
     input logic sample_clk,
@@ -28,6 +29,11 @@ logic [23:0] sample_right;
 logic left_not_right;
 
 FIFOInterface #(.num_bits(48)) samples_local(bck);
+
+logic debug_display;
+initial begin
+    debug_display = 0;
+end
 
 logic [2:0] count_in;
 logic [2:0] count_out;
@@ -58,30 +64,32 @@ always @(negedge bck) begin
     lrck_last <= lrck;
     sdata <= 0;
     samples_local.ready <= 0;
-    if (lrck && !lrck_last) begin
-        cycle_counter <= 0;
-        left_not_right <= 0;
+    if (enable) begin
+        if (lrck && !lrck_last) begin
+            cycle_counter <= 0;
+            left_not_right <= 0;
+        end
+        else if (!lrck && lrck_last) begin
+            cycle_counter <= 0;
+            left_not_right <= 1;
+        end
+        else
+            cycle_counter <= cycle_counter + 1;
+
+        if (lrck && (cycle_counter == 30))
+            samples_local.ready <= 1;
+        
+        if (samples_local.ready && samples_local.valid) begin
+            {sample_left, sample_right} <= samples_local.data;
+            if (debug_display)
+                $display("%t %m: loading I2S samples left = %h, right = %h", $time, samples_local.data[47:24], samples_local.data[23:0]);
+        end
+
+        if (left_not_right && (cycle_counter < 24))
+            sdata <= sample_left[24 - cycle_counter - 1];
+        if (!left_not_right && (cycle_counter < 24))
+            sdata <= sample_right[24 - cycle_counter - 1];
     end
-    else if (!lrck && lrck_last) begin
-        cycle_counter <= 0;
-        left_not_right <= 1;
-    end
-    else
-        cycle_counter <= cycle_counter + 1;
-    
-    if (lrck && (cycle_counter == 30))
-        samples_local.ready <= 1;
-    
-    if (samples_local.ready && samples_local.valid) begin
-        {sample_left, sample_right} <= samples_local.data;
-        $display("%t %m: loading I2S samples left = %h, right = %h", $time, samples_local.data[47:24], samples_local.data[23:0]);
-    end
-    
-    if (left_not_right && (cycle_counter < 24))
-        sdata <= sample_left[24 - cycle_counter - 1];
-    if (!left_not_right && (cycle_counter < 24))
-        sdata <= sample_right[24 - cycle_counter - 1];
-    
 end
 
 

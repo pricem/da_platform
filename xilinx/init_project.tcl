@@ -143,11 +143,8 @@ set files [list \
  "[file normalize "../verilog/interfaces.sv"]"\
  "[file normalize "../verilog/isolator_model.sv"]"\
  "[file normalize "../verilog/mig_adapter.sv"]"\
- "[file normalize "../verilog/slot_model_adc2.sv"]"\
- "[file normalize "../verilog/slot_model_dac8.sv"]"\
+ "[file normalize "../verilog/slot_model.sv"]"\
  "[file normalize "../verilog/da_platform_tb.sv"]"\
- "[file normalize "../verilog/slot_model_dac2.sv"]"\
- "[file normalize "../verilog/slot_model_adc8.sv"]"\
 ]
 add_files -norecurse -fileset $obj $files
 

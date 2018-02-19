@@ -1,13 +1,14 @@
 /*
-    Testbench module only
+    I2S receiver model - simulation only.
+    Detects audio samples present on I2S bus and sends them out via FIFO. 
     Prints notifications when audio samples are received in I2S format. 
-    TODO: Add a FIFO output of the samples for testability.
 */
 
 `timescale 1ns / 1ps
 
 
 module i2s_receiver(
+    input logic enable,
     //  Testbench output
     input logic sample_clk,
     FIFOInterface.out samples,
@@ -48,32 +49,42 @@ logic [23:0] sample_right;
 
 logic left_not_right;
 
+logic debug_display;
+initial begin
+    debug_display = 0;
+end
+
 always @(posedge bck) begin
     lrck_last <= lrck;
     
     samples_local.valid <= 0;
-    
-    if (lrck && !lrck_last) begin
-        cycle_counter <= 0;
-        sample_right <= 0;
-        left_not_right <= 0;
+
+    if (enable) begin
+
+        if (lrck && !lrck_last) begin
+            cycle_counter <= 0;
+            sample_right <= 0;
+            left_not_right <= 0;
+        end
+        else if (!lrck && lrck_last) begin
+            cycle_counter <= 0;
+            sample_left <= 0;
+            left_not_right <= 1;
+            if (debug_display)
+                $display("%t %m: received I2S samples left = %h, right = %h", $time, sample_left, sample_right);
+            samples_local.valid <= 1;
+            samples_local.data <= {sample_left, sample_right};
+        end
+        else
+            cycle_counter <= cycle_counter + 1;
+
+        if (left_not_right && (cycle_counter < 24))
+            sample_left <= {sample_left, sdata};
+        if (!left_not_right && (cycle_counter < 24))
+            sample_right <= {sample_right, sdata};  
+
     end
-    else if (!lrck && lrck_last) begin
-        cycle_counter <= 0;
-        sample_left <= 0;
-        left_not_right <= 1;
-        $display("%t %m: received I2S samples left = %h, right = %h", $time, sample_left, sample_right);
-        samples_local.valid <= 1;
-        samples_local.data <= {sample_left, sample_right};
-    end
-    else
-        cycle_counter <= cycle_counter + 1;
-        
-    if (left_not_right && (cycle_counter < 24))
-        sample_left <= {sample_left, sdata};
-    if (!left_not_right && (cycle_counter < 24))
-        sample_right <= {sample_right, sdata};  
-    
+
 end
 
 
