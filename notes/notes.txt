@@ -4803,6 +4803,1503 @@ Remaining work:
     Clean up software dirs
     Write some basic documentation
 
+10/13/2017
+----------
+PCB assembly notes:
+    Digikey messed up, sent me 2 74LVC574 when I wanted 4.
+    Need 3 for isolator, 1 for DAC.  Grr.
+    Going to leave out HWCON (U116) and put in for SPI CS (U113) and DIRCHAN (U272).
+    *NM* They were on top of each other in the tube.  *Thin* shrink SOP indeed.
+-> Got most chips (sans isolators) on isolator.
+
+
+
+10/16/2017
+----------
+Finished isolator, PSU and ADC2v2 assembly.
+
+Initial ADC2v2 bringup:
+    Supplies nominal
+    Regulators on ADC2 appear to be working
+    Clock output is 0
+        Did I kill the AD9515?  Or just solder it wrong?
+        It's powered... touch up the soldering a bit.
+    After some poking around, I could get output from the ADC2.
+    -114.65 -114.93.  About 2-2.5 dB worse than the datasheet...
+Maybe some bad conections or something?  Results fluctuate.
+Close to -115 dB.  Good.
+
+Now going to try it with DAC2v1 in another slot.
+    Plugged in and running.  ADC inputs still shorted.  Noise floor is same -115 dB.
+
+Not bad.  That's it for the day.
+
+Recap: I was expecting
+    -   ADA4932-2 diff amp config. gives output diff 10.8 nV/rtHz
+    -   ADA4004-4 voltage noise is 1.8 nV/rtHz (SE - diff is 2.5) - add -1 dB gain of diff amp, get 2.23
+    -   AK5572 SNR of 117 dB = 2.82 uV ref 2 V = 19.0 nV/rtHz
+Sum of those (uncorrelated) = 22.0 nV/rtHz = -115.7 dBFS
+    What I measured was -114.9 which is 24.2 nV/rtHz.  
+    Not far off.  (Well, off by 10 nV/rtHz.  Or 0.8 dB.)
+
+
+10/17/2017
+----------
+DAC2v2 assembly.  Paranoid about the DAC chip which is a pain in the ass to solder.
+Did an early power u with DAC and its power supplies only.
+    Supplies are OK.
+    DAC outputs are at 0.08 V.  I want VDD/2.
+    Is the chip powered down because it has no clock?  Sigh, go add the clocking stuff.
+    OK, clocks added.
+    DC levels at outputs are now 2.62 V.  Yay?
+    Can't get AC out of them though.  Should look into this more.
+    D7VU is sagging a bit (6.28 V) due to 3 modules installed.
+    Moved to slot 2 and took out DAC2v1.  AC ho.
+
+OK, now solder everything else.
+
+10/18/2017
+----------
+DAC2v2 assembly completed.  Initial results look promising.
+But one channel is stuck at -20 dB attenuation.
+    When powered off, R46/41 are shorted to each other
+    -> Check soldering
+    Fixed.
+    
+Attenuation control is broken in current config.  because HWCON is broken for slots 2/3
+    Solution: swap DAC+ADC.
+    That did it.
+    
+OK, now want to test single-ended.  What do I do?
+    Seems to maybe work, but with buzzing?  SNDR 70-75 dB.
+    Well, why not try it in the stereo... seems OK.  I have isolation transformers, bet that helps.
+
+Tomorrow: listening and chassis work.  (When to do DAC/ADC8?)
+
+Note: 10k AC coupling resistor is causing significant bass droop.  Replace ASAP.
+
+
+10/19/2017
+----------
+Some listening.
+    Initial impressions (overall): Still has slightly dark/muddled treble balance like I noticed with the DAC2v1 in the iso/Jung chassis.
+        Maybe that's the speakers/recording.  Don't feel this way about all recordings.
+    Bass is (slightly?) light due to resistor mishap, but has enough energy ("jump", as in "makes you want to jump out of your seat")
+    Overall sound is smooth as you could ask for.
+    Not a lot of clutter in the soundstage.  Slightly recessed?  Nothing jumping out of the speakers, even relatively loud.
+    John Williams: Great tone color on the horns.  Bass seemed oddly compressed?
+    Better than Ezra: "Hard" tone is distinctive, but doesn't bother me.  Very clear/neutral.
+    Pink Floyd: Bass transparency may have improved, but it's hard to tell since the frequency response is different.
+        This one ("Mother") has the dark/muddled treble.  Along with Wynonna Judd's "Father Sun".
+    Phillip Phillips: Noticed some texture in the voice that I hadn't before.
+    Train: Wow, I had it much louder than I usually do.  (Avg >90 dB in chorus).  Sounds good is all I can say.
+    Stanley Clarke: Went overboard a bit on the bass (90-95 dB).  But the rest isn't too loud to bother me.  Very clean.
+    
+So maybe it's just that I hadn't listened in a while and got excited.
+    Differences between DAC2 versions probably pretty small.
+    But things sounded good.
+
+10/21/2017
+----------
+Chassis work.
+    Drilled Slimline chassis bottom and tapped.
+        Poor alignment on some holes for isolator.  Oh well.
+        Recommended procedure: carefully mark/drill/tap holes for the 4 corners, then screw a bare board to the plate and centerpunch the remaining hole locations through the board.  This reduces the chance of marknig errors.
+    Skipping heat spreader for now.  Get another Al bar that's the right size.
+    Need to transfer transformers from wooden prototype;
+    
+Main question is how to do the back panel.
+    Eventually this chassis will probably have 2x DAC2, 1x DAC8 and 1x ADC8.
+    But the panel is easy to remove, so I'll go with incremental drilling for the modules that I'm using at a given time.
+    Modules/features will be evaluated on the test setup before being installed in this chassis.
+    Initial: 1x DAC2.
+    How to drill large holes for XLRs?
+        
+    How to cut non-circular cutout for AC inlet?
+        Dremel?
+
+10/22/2017
+----------
+Transformer swap
+Part 1. Moving from bench supply to protochassis.
+    Done.  But blew a resistor in the process.
+    Old F8-28 transformer hums.
+    
+Part 2. Moving from protochassis to metal chassis.
+    Transformers are there.  But no sense in wiring them up until I have the back panel components mounted.
+    
+Will also need to do bringup/debug:
+    - New PSU board (and transformer wiring)
+    - New isolator board
+    - Assemble another clock source and/or carrier?  For now, transferring between setups.
+
+And design of DAC/ADC8 - timeline is important.
+Order:
+    Design rear panel cutouts/holes in spreadsheet.
+    While waiting for drill bit and Dremel cutters, design DAC8 and ADC8.  (Schematic then layout)
+    
+DAC8 design:
+    Going to use 1k attenuator at main buffer output with another opamp follower for output drive.
+    OPA1664 op amp
+    For attenuator, what about running the filter at a CM of 2.5 V so a low voltage single-supply switch can be used?
+        e.g. MAX14662 which costs $2.64 and has 8 SPST switches
+        Say it claims to handle "beyond the rails" switching... look at Ron linearity.
+        Distortion is a little over -100 dB, so why not try it.  Especially if I'm using it with small swing.
+        Plus distortion should include even harmonics if used single-ended.
+        2 switches (-10, -20 dB) per channel - need 2 chips.
+    AK4458 DAC: min load is 3.8 kOhm.  Recommended circuit uses 3k resistors min.  Noise is 16 nV/rtHz from filter alone.
+        Seems not great.  Noise from DAC itself is -112 dB ref 2 V = 5 uV = 35 nV/rtHz.  Maybe filter is already included?
+        Output circuit simulated in akm_dac8_output.asc.  Response looks good.  Don't muck with the values.
+    Give the output buffers some decoupling but running on global +/-15V supply is fine.  They have PSRR.
+    DAC needs local regs for all supplies.  Use same circuitry as DAC2.
+        1x 3.3 V (digital) with ADM7160 from A5V, 2x 5V (analog) with ADP7118 from A7VU
+    Try for a compact layout.  Components on both sides.
+    Clock receiver: LVDS with a good regulator - ADM7160 is good/cheap, just hook up to A5V or better yet, put an NCP699 in front (cheap)
+
+10/23/2017
+----------
+DAC8
+    ADP7118 in/out caps: 587-1431-1-ND (0805 2.2u 16v)
+    
+10/29/2017
+----------
+Wasn't taking notes for a few days, but finished up DAC8 layout.
+    Upped attenuator series R to 2k since that's what OPA1664 is happy with as a load
+    Some crosstalk concerns, especially around attenuator; build it and see.
+    
+Starting ADC8 schematic/layout.
+
+Also did some listening to DAC2.
+    Beautiful relaxed tone, clean.
+    Maybe lacking some dynamic impact at low volumes.  Can't tell if it's reduced drive, harmonics, or what.
+
+Ordered ribbon cables from Ebay.
+    Connector is S9023-ND 
+
+Cap for ref decoupling (100u 6.3 V) PCE3853CT-ND 
+
+10/31/2017
+----------
+PCB layout's been happening.  Finished up DAC8, ADC8 and RCA adapter.
+Still need to revise clock gen. if I'm going to squeeze that in.
+    Made the mods.  Looks OK.
+    
+Now time to review the main PCBs.
+DAC8:
+    -   Schematic
+        OK
+    -   Power dist. and grounding
+        OK.  Added some vias near DAC.
+    -   Digital signal routing incl. clock
+        OK
+    -   Analog signal routing
+        Lines coming out of DAC have a decent amount of cap. and no series resistance until summing/filter circuit
+        Length: up to 3.5 in. (8.89 cm)
+        Est capacitance (SE) = 8.2 pF.  An op amp can probably drive that...
+            Example for fast op amp is ADA4899-1.  Some overshoot with 15 pF, but doesn't oscillate.  I bet it's fine.
+        Crosstalk concern around attenuator - coupling capacitances
+            Already examined; build it and see.
+            
+    -   Ratsnest OK
+    -   DRC OK
+    -> Go for production.
+
+ADC8:
+    -   Schematic OK
+    -   Power dist. and grounding OK
+    -   Digital signal routing incl. clock
+        MCLK routing is hacky.  But couplign has been minimized.  Moved a via for less coupling to VREFL/H.
+    -   Analog signal routing
+        Maybe some crosstalk in the input routing, if the source impedance is high?
+            Build it and see.
+        Amp routing is about as clean as can be
+        Routes to ADC inputs are long.  And maybe some crosstalk.
+            But they have big caps as close as possible to the load.
+            Coupling to supplies in nearby planes - assume those are AC grounds
+            
+    -   Ratsnest OK
+    -   DRC OK
+    -> Go for production.
+
+Ordered all 4 sets of boards, $109.
+Parts will probably be much more... but that's a task for tomorrow.
+
+11/1/2017
+---------
+Parts inventory and ordeirng.
+    Arrow for regulators - $15
+    Digikey for everything else - $143
+
+
+11/4/2017
+---------
+Listening note:
+    Spent the last few days pulling out recordings that were sometimes hard to listen to.
+    Henley Douglas RnB: remember thinking this sounding compressed/edgy (after an awesome live performance).
+        Now I can notice the problems but I'm not paying attention to them.  
+        Easier to appreciate the (admittedly limited) dynamics and the groove the band gets into.
+    Weezer, Pinkerton: This is definitely a grungy sounding recording.
+        Remember finding it grating (in its own unique way) when I first got it, though it was good on a friend's system with generous subwoofer help.
+        But to be honest, on this system it sounds pretty awesome.  "Garage band" tone, but clear and uncompressed.
+    Definitely expands the set of recordings that I want to listen to regularly.
+    Overall surprised at how euphonic the SE output of the AK4490 sounds.
+        -> Have to confirm after fixing bass response and experimenting with different digital filter settings.
+
+11/5/2017
+---------
+Looking at rear panel cutting options
+    1. Pololu (lasercut) - $25 min.  Should submit a design for quote.  ABS or acrylic - looks good, but no shielding.
+        Can do stainless steel, but with 1/16" thickness.  Better shielding, not as good, and also not black (unless I paint it).
+    2. Hifi2000 (CNC) - EUR 8 for blank panel, EUR 45 for CNC service with >20 holes. Shipping unknown.
+    3. Front Panel Express (US branch of Schaffer AG) - seems to have end to end service including CAD etc.
+        Check the cost... $47 for plain panel with just corner holes and AC inlet.  (Before tax/shipping... location is Seattle)
+        Worth considering because they can do engraving/screen printing also.
+        Lead time is probably long.
+    3-D printing in Al is prohibitively expensive
+    Ask Ed for advice?
+
+First bringup in new chassis (warning: untested isolator board)
+Part 1. PSU/transformer wiring
+    Nothign blew up.  No load LV supplies are 8.4 V, HV is 23.3.  AC 6.11, 16.9.
+    Did not check neg. supply.
+    Need to discharge through a resistor before hooking up isolator.
+    ... nah, never mind.  Nothing blew up.
+Part 2. Isolator - regulation
+    All OK.
+Part 3. Isolator - functionality
+    Install carrier and clock source.
+    Clock source - OK
+Part 4. System with DAC - functionality
+    All supplies OK.  Clock OK.
+    DC offsets range 0 to -20 mV... OK, investigate later
+    Output doesn't seem there.
+    HWCON DC = 1.23 V despite setting to 0; check ser/des
+        3 of the 8 bits are high (not sure which)
+        This might be unintentionally engaging the mute
+    BCK, LRCK, SDATA0 look OK at DC at least
+    
+Back panel cutouts note: Completely forgot about Ethernet.
+    Next time order 1528-1572-ND
+    (Do the cutout whenever you do the cutouts for the other modules)
+    
+For now, run without top panel... so the Ethernet cable can get out.
+    Or go wireless?
+
+11/11/2017
+----------
+DAC8/ADC8 assembly done (1 board each)
+
+Now debugging new chassis/isolator board again.
+    HWCON seems to be screwed up.  
+    Module/DC:
+        (Cmd=0xFF) 0=1.23 1=2.47 2=0.0 3=0.0
+        (Cmd=0x00) 0=1.23 1=0.0 2=0.0 3=0.0
+    Check serializer/deser connections.  And SPI chip select while you're at it./
+    
+
+
+11/16/2017
+----------
+Chassis/isolator:
+    DAC2 is working after re-checking SPI and HWCON connections and fiddling with software.
+    THD is -90 something single ended.
+
+DAC8:
+    A5V is shorted to GND.  Doh.  Good that I checked.
+    So, what's connected to A5V?
+        Attenuators and their decoupling (back)
+        One of the DAC regulators (the digital one)
+        One big 220u decoupling cap (C9)
+    Well, let's remove them...
+        Not C9.
+        U11/C78... wow, it was one of them.  Try resoldering.
+        -> Fixed.  OK, try now.
+    Supplies: All nominal
+    Clock: Ok
+    Outputs: At least some of them show AC... maybe even the right amount of AC.
+        Which ones work?  Out ampl left to right is 0.9, 0.9, 0, 0, 0, 0, 1.0, 1.0.
+        Ah.  But I wasn't driving the other 4.
+        Now I get 0.9, 0.9, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0.
+        Ampl. of missing channel R3 is good going into opamp, so it's not the DAC.  Probably a bad connection.
+        And what's with the 0.9 V ones?
+        Anyway, this is encouraging.
+        
+    Going to need a place to hook them up, though.
+        Move to test chassis?
+        Or drill more in main chassis 
+        OR: Get ADC8 going and hook up with ribbon cable directly?
+        
+ADC8:
+    No supplies shorted.
+    Sticking it in slot 1 next to DAC8.
+    Voltages nominal. Clock OK.
+    With Python script I can gather data from all 8 channels.  Yay.
+    No idea if it's valid.  Noise floor is between -83 to -93.  (Alternating?)
+    [-93.52469968 -84.00097216 -93.46761827 -83.96389035 -93.4793445 -83.93253704 -93.40382672 -83.9633308 ]
+
+Will have to do a loopback test... looks promising though.
+
+OK, what's the plan.
+First, things I need: (before ordering parts for duplicate boards)
+    Way to hook up DAC8 to ADC8 for loopback.  (Jumper cables?  Ribbons are somewhere in the mail, ordered 10/30.)
+    Chassis cutouts in main chassis for:
+        DAC8
+        ADC8
+        2nd DAC2
+        S/PDIF in
+        Ethernet
+    Listening test of DAC8
+    Some loopback measurements of DAC8/ADC8/DAC2/ADC2
+
+11/17/2017
+----------
+    
+Tonight: Loopback tests (+errands)
+Tomorrow: Chassis cutouts
+
+Fiddling with loopback:
+    Looped back first channel of DAC to channel 1R of ADC.
+    On ADC, 4 channels are getting a (messy) signal and 4 are not.
+    Check "mono" settings?
+    Look to be correct... (jumpers and SPI)
+    Waveform:
+    1) Bursts of something then (3/4 of the time) nothing
+        Indicates possible buffer underrun or format mismatch
+    2) 4 channels are indeed nonzero
+        But they have a rel. phase shift... not numerically the same
+        How am I getting that...
+        Try hooking up the left channel too.
+        Now I get all 8 channels.  Hmm.
+
+Things to fix. One at a time.
+1) Getting a continuous waveform with no breaks
+    SW performance limited?
+    My runtime is about 4x the audio time.  (Chunks of 1k samples)
+    Underlying RTL cannot read and write at the same time.  So we need to rely on interface buffering for full duplex.
+    Or change the RTL?
+    There are a lot more software things to try before doing that.
+
+11/18/2017
+----------
+Still working on getting the audio to be real-time.
+    How can I understand what's going on?
+    Probably need the ILA.  So let's do it-  just the top level state and interface.
+    We are hanging after the audio read command is received and 4 words (the header) were sent out.
+    Ah. Looks like 8-ch ADC functionality was never implemented.
+    I was getting the first 2 channels?  At 1/4 the rate?
+    May not need to do this USB stuff.  
+Back to the (RTL) drawing board.
+    Simulate this 8-ch loopback thing.
+
+11/19/2017
+----------
+OK, added 8 ch ADC support in RTL design.  Trying (first without ILA, then with ILA).
+    At first, can pretend there is no change necessary to the software.
+    But it will be interesting to see how fast the current blocking I/O scheme is, assuming it works.
+    
+Some difficulty with the clock routing constraints for BCK... (should be routed to clock capable pins in future?)
+ILA debug notes
+    It looks like slot_controller isn't writing to the audio TX FIFO.
+    It is getting LRCK and counting cycles though.
+    Recording not properly enabled?
+    adc_fifo_write_count = 2... doesn't know it's 8ch?  (shouldn't matter here)
+        Well, after a reset it is 8.  So dirchan is probably OK.
+        Got a few cycles of BCK (startup?) and it went from 8 to 2.
+        May have something to do with the serdes of dirchan at startup.
+        The real issue is that recording doesn't seem to be enabled.
+        Confirmed: recording_enabled registers not going high when command is issued to start recording.
+        slot_controller: byte_counter not being reset to 0 after prev command?
+    -> Actually, there are many local changes to the code in cdp dir
+        which were not copied over when I moved to da_platform dir.
+        So, have to update my code.
+    This explains most of the problems since I started ILA debugging and had to stop using the old
+        design loaded in flash on the FPGA..
+        (was hanging on the set-ADC-format command)
+    OK, merged all those changes.  Rebuild bitstream.
+    Now what?
+        Hanging at audio write.
+        -> This seems to have fixed itself?
+
+Yay, continuous waveforms.
+    With occasional glitches (probably flaky connections)
+    One channel is bad from a distortion point of view.
+    Test is supposed to be -3 dBFS with 1 kHz signal.  This seems OK.
+    Good channel - blue
+        Ampl = -4 dB 
+        HD (2, 3, 4, 5) = -99, -101, -125, -130
+    Bad channel
+        Ampl = -5 dB (1 dB low) and noise floor is higher
+        HD (2, 3, 4, 5) = -50, -60, -90, -77
+    Also, crosstalk to the other 6 channels is -72 to -82 dB
+        See if this improves when they're driven.
+        100k is a large load to couple to.
+
+Questions to answer:
+1) Bad channel: is it DAC or ADC?
+    Moved one of the wires on the DAC... still bad.
+    Moved the other... still bad.
+    So it's the ADC I guess?  Try using different channels (currently 1/2)
+    OK, with ch 3/4 the artifacts are gone.
+    Distortion is about the same as ch 2 -98 HD2, -102 HD3
+
+    
+2) How's crosstalk between driven channels?  (Test with different freqs)
+    Looks like -82 for the good channel...
+    Test with 0 dB drive.  HD2 is around -94, HD3 around -95, higher harmonics are peeking above the noise floor.
+    Crosstalk is bad: as much as -73 dB
+    How about with a higher frequency?
+        At 5 kHz: HD significantly worse; HD2 = -78, HD3 = -83
+        Crosstalk at -59 (14 dB worse, about what you'd expect from capacitive coupling)
+    Lower level: -10 dB drive results in HD2 around -85, HD3 = -103
+
+3) How about summing?  Or at least driving all ADC inputs with the same signal.
+    a) Stereo - seems to work
+        Noise floor of the 4 channels with inputs grounded varies between -108 and -111 and looks uncorrelated
+            More like -111 consistently now, maybe there was a bad connection
+        Crosstalk is -111 at 5 kHz.  This suggests the DAC is the one screwing up the crosstalk.
+        There are a bunch of smaller tones showing up at evenly spaced freqs below the fundamental and each harmonic... aliasing?
+            Exact frequencies depend on stimulus freq.
+        Try swapping L/R...
+            Works fine. Don't see a bad channel now.
+        Fs/4 test looks good as you'd expect.
+    b) Mono - seems to work, elevated noise floor? and distortion
+        And what looks like correlated noise.  Maybe the DAC's having trouble driving the load.
+        At -20 dB drive, harmonics are down but the noise is still high.  I sense oscillation.
+        How about driving only 6 channels instead of 8?  Nope.  Still high noise.
+        4 channels?  Still, worse noise than it should be (but not as bad... not oscillating all the time?)
+        Input cap of OPA1664 is only 2 pF so it isn't that.  (Not with 50 ohm series res. on DAC which should be there)
+        Whatever I do, putting the 1R jumpers back to 2/8 channels makes the problem go away.  Weird.
+        Not entirely sure if this is a DAC or an ADC issue.
+
+4) Let's see if attenuation settings on the DAC affect this at all.
+    (Measurements so far done at 0 dB)  Still using full scale drive
+    a) -10 dB    
+        Appears to work just fine.  Harmonics definitely lower (so maybe those are from the ADC?)
+            HD2 invisible, HD3 around -100
+        Crosstalk looks about the same in a relative sense.  Try with 2 channels driven...
+        Rel crosstalk is about -84 dB.
+        At 5 kHz, crosstalk is still shit.  HD2 pops up at -97, HD3 at -95.
+    b) -20 dB - also works fine, not much different from -10 dB
+    
+Summary of results so far:
+-   Possible bad channel (flaky connection) - ch 1 or 2 on ADC, but it seemed to go away after warmup
+-   DAC attenuator works fine.  Attenuation value is accurate, and doesn't introduce significant distortion.
+-   DAC distortion is good, but crosstalk is terrible (as bad as -54 dB at ~20 kHz).  Probably needs layout revision.
+-   1 ch summing on ADC doesn't work, but 2 ch is fine.
+-   ADC noise floor is around -113 (ADC) or -112 rel 2 V RMS (1 ch).  This is 5 uV or 36 nV/rtHz.  (Datasheet: -117)
+-   Loopback noise floor is around -110 rel 2 V.  This indicates the DAC noise is pretty low.   (Datasheet: -112)
+
+Plans / todo:
+    Check loopback (mono/stereo) between ADC8 and DAC2.  That will tell us if the 1ch summing issue is the DAC8 or ADC8.
+    Drill chassis holes for ADC8 and DAC8 in main chassis (but won't be able to listen/characterize until I get ribbon cables)
+    
+After receiving ribbon cables:
+    Perform a more thorough 8 ch loopback test to determine:
+        if there are any bad channels
+        THD/N plots vs. freq for each channel at 0, -10, -20 dB (and with attenuator)
+        crosstalk matrix at 1k, 5k, 20k - see if it can be correlated to PCB layout
+    Do some listening:
+        a) DAC8 used as stereo SE source for active crossover
+        b) DAC8 used as multichannel source with digital filters
+        c) ADC8 uses as input, DAC8 used as multichannel source
+
+More notes...
+    - Moved DAC8/ADC8 to modules 2 and 3; still works.
+    - Added DAC2 to module 0; loopback works fine, HD3 is -100 or so
+        Noise is -91 (bunch of 60 Hz stuff..) but it went to -106 when I held the two wires together.  Ah, differential signaling.
+    - Ordered some insulated RCAs for when I put in the second DAC2.
+
+Decisions...
+    Whether to revise DAC2 before building second one?
+    (Second board required for main chassis completion)
+    Problems include:
+        High noise of -105 dBFS -> not really a problem, it's just an LF corner (maybe in the DAC itself)
+        60 Hz stuff getting into SE output (maybe it's just EMI?) -> not really a problem, since if you care, use differential
+        Bad frequency response -> needs investigation -> not going to care, just going to try different filter caps and see
+    Uncertainties include:
+        Haven't listened with 100k LF filter resistors
+        Haven't listened in balanced mode
+        Haven't listened with attenuator
+        
+    Whether to revise DAC8 before building second one?
+    (Second board required for 16 ch demo)
+    Problems include:
+        Hilarious crosstalk of up to -54 dB
+    Uncertainties include:
+        Haven't characterized all channels -> full characterization will wait for ribbon cable, but all are functional
+        Haven't listened (with or without attenuator)
+
+    Whether to revise ADC8 before building second one?
+    (Second board required for 16 ch demo)
+    Problems include:
+        Somewhat high distortion -> Wow, really high at high freqs.  What did I do wrong?
+    Uncertainties include:
+        Haven't characterized all channels
+
+    Notes:
+      - PCBs are not that expensive compared to building boards.  
+        So if I don't want to do 16 ch demo in the near future, may as well revise.
+      - If the main chassis completion is the main short term goal, the critical path is:
+        Figure out what exactly is lacking in DAC2 performance.
+        IF NECESSARY: Revise DAC2 and order boards.
+        Order parts; assemble 2nd DAC2 board
+        Drill out chassis; assemble, configure software
+
+Looking at DAC2 performance some more
+    1) Loopback with ADC2
+    The noise appears worst at LF.
+    Limiting noise measurement BW to 20--20k improved noise floor to -110.7
+    Limiting to 100--20k improved it to -112.2 (Datasheet: ADC=-117, DAC=-117, target=-113.5 ish given -1 dB ADC input gain)
+    What would I have expected?
+        Datasheet: with -1 dB gain, rel 2 V noise of 4.24 uV = 30.3 nV/rtHz
+        ADC: About 12 nV/rtHz - mostly the diff amp
+        DAC: Almost nothing - ADA4899-1 and a bunch of small resistors
+        30.3 + 12 = 32.6 nV/rtHz = 4.56 uV = -112.8 dBFS
+    I think this is close enough.  The main question is where is the LF corner coming from?
+    Note: noise floor went up by 3 dB with the bandwidth around 13 Hz.  So the noise is ~40 nV/rtHz at that frequency.
+    Noise density at 10 Hz:
+        ADA4899-1: 10 nV (SE)
+        ADA4004-4: 2 nV (SE)
+        ADA4932-2: 24 nV (diff)
+    To see if ADA4932-2 is responsible, look at the noise of a shorted channel:
+        BW = 100 Hz: -115.2.  BW = 10 Hz: -114.7 (not significant change)
+        -> This is on the DAC side.
+        What about a noise penalty due to the filter (1 uF / 100k ohm) at input?
+        But the DAC is driving it, so it should be a low impedance.
+        Maybe this noise corner is in the DAC.
+        
+    Also: looking at gain droop
+        Adjusted 1 kHz to -10 dB.
+        10 kHz = -0.437
+        20 kHz = -2.028
+        100 Hz = -0.785
+        40 Hz = -1.036
+        20 Hz = -0.385
+        10 Hz = -0.163
+    Whaat?  Something seems wrong.  Try a sweep someday.  (Those were consistent from run to run.)
+    
+    a) HF rolloff - try using sharp rolloff filter in AK4490
+        SD = 0 for traditional filter, 1 for short delay filter
+        SLOW = 0 for traditional filter, 1 for slow rolloff filter
+        Default = short delay, sharp rolloff
+        ADC: default is traditional sharp rolloff, no rolloff by 20k
+        DAC: default still shouldn't have any rolloff by 20k
+       Now response is -1.8 dB at 20k regardless of which filter I use
+       With 100 ohm series on the output, how much cap would it take to get -1.8 dB?
+        Impedance of 400 ohm at 20k = about 20 nF.  Don't have that much.
+        
+        Try with ADC8
+        10k = -0.437, 20k = -1.809, 40 =  -1.034
+        -> same as ADC2. I know ADC2, ADC8 are the same chip, but IMO this points to DAC2 as the problem.
+        
+        Try other channel: -1.036 @40, -1.81@20k - same
+            i.e. unlikely a bad connection
+        
+    b) Effect of attenuator
+        Tried -20 dB.  This messes up the noise floor, but maybe will still give useful frequency response.
+        20k = -1.864
+        40 Hz = -1.046
+        --> doesn't seem to make any difference.  What's happening is not in the attenuator.
+    
+    c) Distortion
+        1 kHz: 0 dB gives a bunch of higher harmonics.   (Clipping something?  Check with ADC8.)
+            -1 dB gets rid of clipping harmonics but 5th is at -130.
+            5 kHz: not much worse
+            20 Hz: not much better
+        But with ADC8, clipping harmonics at max drive go away.
+            0 dB, 1 kHz: about -100 dB HD3 (others much smaller)
+        -> DAC isn't clipping.
+        Added 20 dB attenuation so ADC isn't the source of nonlinearity.
+            (Why can't I get a clean spectrum?  Bad HWCON?)
+            Now harmonics are much lower.
+        Added 10 dB so I could see better:
+            HD2 = -117, HD3 = -104 at 0 dB
+            No significant change at -1 dB
+            HD2 = -116, HD3 = -110 at -3 dB
+            No visible harmonics at -10 dB
+        I have a feeling that either the ADA4004-1 or ADA4932-2 is letting me down.
+            ADA4004-1: not the best linearity
+            ADA4932-2: limited output swing (it can go within 1.2 of the rails: 2.5 to 3.8), which is not quite 1 V RMS.  It's -0.73.
+                Of course, this is why there is -1 dB of gain.  But the guaranteed spec is: within 1.4 V of the rails (-2.1 dB)
+                CM range is V- + 0.2 to V+ - 1.8
+                So, powering from asymmetric rails would help.
+                Pos rail is ADP7142, neg is ADP7182 (both 5 V)
+                Cut/jump hack with resistors (sense terminal) could boost ADP7142 output
+                And ADP7182 is available in 2.5, 3.0, adjustable
+                
+        Far as DAC2 is concerned, I think -104 dB is good enough.  Even though the datasheet says -112.
+        
+Before building another DAC2:
+    Do freq resp, THD/N sweeps of both channels in ADC2 loopback.  (And can try ADC8 loopback also, if there are unanswered questions.)
+    Do some listening with the new LF filter resistors.
+        Option 1: Put main chassis in stereo system, listen while prepping the software for sweeps.
+    --> Option 2: Do sweeps first on the bench 
+
+Started working on a stepped sine test. (within loopback_8ch.py)
+    Automatic alignment of input and output waveforms is a challenge.
+    Once that's done, I can slice it up and FFT it out.
+    At the moment there's no gap between frequencies.
+    Continue this tomorrow.  Followed by some debug to figure out what causes the FR shape you see.
+
+[Simpler stepped sine FR/THD/N test]
+
+11/20/2017
+----------
+Back to one tone at a time. Notes on that:
+    Programming is easy.
+    Lots of waveform glitches - bad connection?
+    Don't think so, tried another set of jumper wires.
+    Timing / interference?
+    Try shutting off SCLK.  Doesn't help
+    Try shutting off clocks to unused modules.  Doesn't help.
+    Check FPGA timing report and constraints.
+        All failing paths are on ifclk - USB interface
+        All I2S signals are set to 4 mA drive.  (Note: we have isolators here, so load is not huge.)
+        Going one further by setting slew to slow.  (Only affects carrier side: no series resistors at iso outputs, though each board has some.)
+        Interesting.  This eliminates dropouts but frequency is wrong, indicating SPI programming failed.
+        Restoring SPI signals to 8/fast.
+        Now, no SPI issues, but audio dropouts.
+        OK, try all 4 mA and slow.  (All isolator outputs)
+        Now I get LIBUSB_ERROR_OVERFLOW?
+        -> False alarm, had programmed with wrong design.
+        OK, SPI is OK but still have audio dropouts.  Doh.
+        With just DAC2 /ADC2 I get lots of nastiness.  Revert, revert.
+        Using strong drive for "DC" signals like reset.  I2S still 4 mA.
+        Maybe I messed something up on my ADC2 board.  ADC8 seems fine.  (With DAC2 in slot 0, ADC8 in slot 1)
+        Pretty sure I broke SPI though, experimenting with drive settings.
+        
+    Check using DAC8 as source.
+        Doesn't help.  (Works but with dropouts)
+    Try different chunk sizes (and USB async?)
+        Doesn't help.
+    Try removing unused modules.
+        Doesn't help.
+    
+    These issues suggest we may need resistors on the carrier (or FPGA board?)
+        to keep the rise times reasonable.  Any problems on isolator side can be managed with resistors.
+        (Note: SPI signals, HWCON etc. don't have resistors.)
+        
+Now I have good sine stepping code but too many audio dropouts to get good numbers. :-(
+    Try 8 mA drive for slotdata?    Nope.
+    Are the glitches in the DAC output, or the ADC output?
+        TBD.  Need to use computer for DAC capture in that case.
+    I've heard a funny sound when turning the AC power off.  Is a regulator oscillating?  (look into that another time)
+    
+    General hypothesis is that something has gotten screwed up in the hardware since the last time I tested.
+
+11/21/2017
+----------
+Brainstorming ideas:
+    Look at the clock.  Actually, look at all signals with the scope.
+        Including the clock input to the FPGA.
+        And try re-seating the oscillator and the clock board.
+        Note that the large ripple on D7VU might have caused problems for the ADM7154.  Could make a new clock board if this was the case.
+        Or for a quick test, substitute with the other clock board.
+    Suspect the DAC, when seeing audio dropouts.  
+        The transients at the start/stop of the dropout wouldn't occur if we just dropped some of the samples coming out of the ADC.
+        But when we get all zeros, or the sampling frequency is wrong, that could be the ADC.
+        (Clock or supply dropout during SPI programming would explain bad sampling frequency.)
+    Keep a fixed HW configuration, don't go moving modules around.
+        And don't randomly experiment with the IO constraints in Vivado.  That didn't help.
+    
+    
+Notes:
+    Maybe dropouts have something to do with warmup?
+    ADCLK chip is actually quite hot - 53 C; ADM7154 is 54 C (nothing else in the chassis appears to be that hot)
+    Let's turn the fan on.
+        Lowers the temp a few deg. (to 47), no difference in behavior.
+    Reseat osc. and clock PCB.
+        No help.
+    Well, next time you can try 2 things
+    1.  Other clock board (needs a resistor jumper put back)
+    2.  Probing around with scope
+    3.  Using old bitstream (the one in flash)
+    
+    
+
+And on THD/ampl meas.
+    There's definitely an inconsistency between RMS ampl. and carrier amp.
+    At 1k, RMS = -11.13, carrier -12.44
+    At 1001.294, RMS = -11.12, carrier = -11.13
+    Added frequency "snapping" to FFT bins for sine loopback test.
+    Now there's no droop at 40 Hz.
+    At 20k, get RMS of -11.8; 10k, -11.34
+    Was expecting 0.1 dB drop by 20k, but got 0.7.
+    At least the LF rolloff is what I expected. (No detectable drop by 15 Hz, about 0.1 dB at 10 Hz)
+    At HF, do I have to do anything different in the stimulus?  (besides just sampling the sinewave)
+        I would assume no, since the DAC should have a sinc reconstruction filter
+    So is -0.65 dB rolloff at 20k a big issue?  (-11.13 to -11.78); -0.21 dB at 10k
+        For the sound, probably not.
+        For my understanding, probably yes.
+        After the dropouts are fixed, try DAC8 and see if it's the same.
+    Filter options:
+        With traditional, short delay filter, 20k ampl is -11.79
+        Slow rolloff filter: -16.42 (vs -11.12 at 1k, -11.39 at 10k) -> 0.27 dB at 10k, -5.30 dB at 20k
+         (that is about what the datasheet says)
+    
+    Also, note that THD/SNDR measurements are broken at lower freqs.  Even 200 Hz SNDR is bad.  THD OK by 40 Hz.
+        Can try not using a window, right?  Integer number of periods?  (Unless affected by dropout...)
+        Still gives a "bump" at LF.  (Peak sure looks sharp...)
+    
+11/23/2017
+----------
+Thoughts on HF rolloff:
+    DAC output filter is simulated to be -0.1 dB at 20k.
+        But if I switched the 3.3n and 4.7n caps it would be -0.35.
+        Multimeter meas.  
+            [4.7n] C52=6.12n C68=6.65n C27=6.10n C60=6.62n
+            [3.3n] C26=8.71n C52=11.21n C51=8.71n C67=11.22n
+        Heat damage?  Or messy measurement?
+            Sim with those values 6.1, 8.7 -> 1.1 dB loss
+            6.7, 11.2 -> 1.8 dB loss
+        Any other NP0s I can measure?
+            C25 - 1n -> 4.63n
+        One of the 15n caps at ADC input was 120 or so.  Not a clean measurement.
+        Also says the ADC buffer input is 2n. That makes no sense.
+    -> If the caps were messed up, that would do it.
+    But it's unlikely to be matched perfectly.  So check all channel combinations.
+    
+    Simulate ADC input circuit.  -0.005 dB... not that.
+
+Tomorrow: Think about and probe around for audio dropout problem (try 3 ideas above)
+
+11/24/2017
+----------
+Looking into audio dropouts. 3 ideas to investigate
+
+1.  Other clock board (needs a resistor jumper put back)
+
+2.  Probing around with scope
+    Clock reaching the module appears rock solid
+    What about giving a repeatable I2S pattern?
+    Going to use Fs/4 since DC doesn't give any signal (just noise; dropouts don't make a difference?)
+        But if the dropouts were on the DAC side wouldn't we see transients from that?
+    Oh also: use computer to check for dropouts on DAC 
+    How long are the dropouts?  (First invalid sample to first valid sample)
+        2299 to 2360 = 61
+        Just a few (3?)
+        1260 to 1285
+        2304 to 2317
+    There might be a regular pattern.  Without dropping any samples from ADC at beginning (so we lead with 0s),
+        a) Got dropouts at: 1172-1246, 2268-2349
+        b) Start at 142.  Dropouts at 1165, 2257, 5348 (~1k period)
+    Seems related to chunk size.  The 1k period was with a chunk size of 1k.  With chunk 256, dropouts closer together.
+    Try 2k, 4k...
+        2k: 163, 2250, 8473; 182, 2250, 4336, 6423, 12592
+        4k: 598, 8782
+    OK, definitely related to chunk size.  Software issue?  Now can try async...
+        Or RTL, something gets stuck when dealing with I/O.
+        Audio out FIFO depth (at top level) is 128 samples.
+        Async runs, but dropouts are still there, and very regular.
+        Async with really small chunk?
+        When using chunk 256, get an overflow error? Fixed, software bug.
+        When using chunk 64, there's a dropout after basically every chunk.
+        So let's try overlapping chunks... hmm.  Buffer underrun I guess.
+        Write a 1k chunk at beginning before reading...  that solves the problem with Fs/4.
+    Now, move to a different Fs. like 100 Hz.
+        Regular glitches, every chunk, like the buffer is being overwritten.
+        That was another stupid software bug.
+        Now?
+
+3.  Using old bitstream (the one in flash)
+    Dropouts and other similar issues from the beginning.
+    -> What this means is: not a FPGA regression, and adjustments to constraints/drive are unlikely to help.
+    To eliminate this variable, start using new bitstream and hash it.
+    Current bitstream is: 494b1a5a198dd82e35690b80b87dd1eb
+    After changing bitstream, can't do anything (hang on reset_slots)--what's happening?
+        Have to ILA and find out, I guess.
+        No debug cores show up.  -> Clock  (ifclk) probably not getting in.
+        Weird.  Probed with scope, there is a clock there.  Now ILA appears too.  And audio works.  (Still dropouts though.)
+
+4.  What about an RTL bug?  (FIFO/CDC/etc.)
+    Haven't done an I2S loopback test since before switching to Vivado 2017.2 (or a lot of other changes)
+    
+I think the dropout issue may be resolved.
+    Remember to never allow buffer underrun.
+    
+Now, a couple more minor things:
+1) Correct THD/SNDR/ampl calculation
+    a) SNDR.  Why bad at LF?
+        We're masking out a wide portion of the FFT and it's going below ind 0
+        -> Fixed
+        Now, when I do a sweep, some freqs have bad SNDR.  Why?
+        When "display" is on, and text is printed to the terminal, this doesn't happen.
+        -> Zero samples at beginning.  Longer startup delay?
+    Also added some re-testing for when there are glitches once in a while
+
+OK, I think I can go back to dealing with the HF rolloff.
+    First, try the other channel combos. (and save plots)
+    The 2 DAC channels are identical when driving ADC ch 1
+    Now switch to the other ADC channel.  No difference there either - 0.65 to 0.7 dB of rolloff.
+    Looking at reviews, a lot of DACs roll off by 1 dB or more before 20 kHz.
+        Not all - Benchmark DAC3 doesn't appear to, though it's hard to tell for sure.  
+        (And as I've seen slow rolloff filters with 3 dB or more are common.)
+        Bryston BDA-3 has 0.25 dB of rolloff at 20k regardless of sample rate.
+            (More at 44.1k due to digital filtering I guess.)
+            
+    Why not just try at 88.2k and see what happens? (i.e. separate analog vs digital filter)
+    Actually 96k is easier.
+        So, at 44.1k: 0.2 down at 10k, 0.7 down at 20k
+        At 96k: -0.05 at 10k, -0.17 at 20k, -0.86 at 40k
+        -> Much of the rolloff is coming from digital filters.
+        So the datasheets are wrong?  Or at least don't properly account for what happens at 20k.
+    Let's do a full range test at 96k BW.  20 to 46k Hz.
+        In this one it appears 20k is about 0.3 dB down from the max. 
+        Max = -1.14, 10k = -1.26 (bottom of ripple) 20k = -1.37 30k = -1.68 40k = -2.07
+        Convert to relative: 10k = -0.12, 20k = -0.23, 30k = -0.44, 40k = -0.83
+        Ripple is about +/- 0.02 dB.
+    LTSpice sim: -0.02 at 10k, -0.09 at 20k, -0.20 at 30k, -0.36 at 40k
+        So, it looks like the frequency scale shifted a bit relative to what I expected.
+        Just try with different caps next time.
+        To move the -0.1 dB point to 33k: use 3.3n and 2.2n caps, or 3.9n and 2.7n.
+        Now -3 dB is 160 kHz.
+        Just experiment as needed.
+    I guess the obvious question is why don't I try now?
+        See what NP0 caps are on hand. 2x 3.9n, 2x 1n, and then (1206) 1.5n and 3.3n
+        I don't think 1206s will fit sadly.
+        -> Just wait until the 2nd board comes to experiment with cap sizes.
+        
+        
+Did get one hang when running at 96 kHz.  Well, that's a separate issue (timing?)
+    96k has more/worse slip ups that have low SNDR - should probably be able to find an example by spot checking
+    
+Also, want to do sweeps with SE output.
+    Distortion:
+        At -0.1 dBFS, -99 HD2 and -106 HD3.
+        At -3 dBFS, -102 HD2 and -114 HD3.
+        At -10 dBFS, -107 HD2 and -123 HD3.
+    Sweeps saved in plots dir - see README
+    Same FR, no major problems jumping out (assuming differential sense / isolated connection)
+    SNDR is around -91.  (10 dB worse than diff output)
+
+    With attenuator (10 dB):
+        At -0.1 dB, -89 HD2 and -107 HD3.  (HD2 due to loading of amp?)
+        At -10, -99 HD3 and -115 HD3.
+        Should try listening with it.  But it doesn't appear to increase HD3 and definitely doesn't reduce HD2.
+    
+    Crosstalk:
+        Can't see any crosstalk from the DAC outputs.  ADC crosstalk does exist, -100 dB or so.    
+
+Other note to remember: Occasional startup/SPI problem still happen, leaving us with wrong sample freq. or no output.
+    Maybe this is ADC only?
+
+I think I'm comfortable with:
+    Ordering parts for a 2nd DAC2.
+    Punching out chassis holes.
+Why not do a little bit of DAC8/ADC8 characterization?
+    At least check all the DAC8 channels.
+    First 2 DAC8 channels look bad. (0, 1)
+    No signal on channel 5
+    Well, 5 out of 8... (Distortion at full scale is about -100 dB HD3, -110 HD2 with atten at -10 to prevent ADC from contributing.)
+    a) Missing signal on ch5. (OUTR3)
+        Output buffer on bottom, right side of board.
+        There is signal reaching the input of that buffer.  So the buffer is probably the problem.  Check soldering.
+        -> Attempted fix (soldered a pin that was lacking)
+    b) Bad distortion on ch0/1 (OUTL1/R1)
+        Amp is U12 - may have been a bad supply connection
+    OK, try again.
+    Now we appear to have signal from ch 5 (looks clean).
+    What does the ch0 signal look like?  Waveform...
+        Doesn't look too dirty; the HD is -50 dB... but definitely modulated.
+    What do ch0+1 have in common?
+        1) Buffer op amp (but not really... the same op amps are used for ch 2-3)
+        2) DAC reference/supply ... pins 20/21 are the ref.
+            Might be some bad soldering... try touch up.
+        -> Yep.  Fixed.
+    OK, now all the channels are good.  Want to try stepping?
+    Try -3 dB.  Same as ADC2 tests.
+        Appears to have rising distortion, especially HD2, at higher freqs.
+        Freq response is good. -0.1 dB at 20k, like it's supposed to be.  Maybe slight peaking before that though?  (0.04 dB)
+    Try a different channel.
+        Same.  Saved results (20171124_181047)
+        Oh.  But most of the distortion is coming from the ADC.  (Or the output buffer?)
+        Time to use the attenuator. (10 dB)
+            This makes dist about -104 HD3, -100 at 6k
+            HD2 does rise gradually from the noise to -105 at 1k, -96 at 5k, -90 at 10k
+        Also, I heard some mechanical sounds from the board (not sure why?)
+        5k spectrum shows nothing too unpleasant.
+        Interestingly HD2 goes down when I change the attenuator from -10 to -20, so ADC is contributing -100 dB even at -10 dBFS in.
+        And at 0...HD2 -78 HD3 -82; and DAC crosstalk is worse than when the attenuator is disabled. (-83)
+    So why is distortion so bad?
+        OPA1664 op amps are the same as the DAC.
+        THS4524 is supposed to not be a bottleneck.  Doesn't have limited swing either.  Bad layout?
+        Bad capacitors (not NP0) somewhere?
+        Common mode problems getting converted to differential at the DAC?
+        DC load current being drawn from op amps (due to CM shift of diff amp)
+        Lack of VREF decoupling? It's being driven by a reg... oh wait, and 100 uF caps.
+        I'm stumped.
+        Power supply current modulating VCM?  A5V is used to power THS4524.  But on scope, A5V doesn't move during operation.
+
+Put DAC2 back in system.  Listening notes:
+    Took some time for the system (ears?) to warm up, hasn't been used in a while.
+    May have some of the dynamics back.  Train concert, which I know was compressed, had good drive.
+    Still relaxed.  Highs still slightly soft. I can't tell if it's congestion or just a more revealing texture.
+    Bass is about what I expect.  (But need more time for break-in.)
+    Guitars from Redbird have ... vitality.  Sounds pretty natural.  This may not be distinctive characteristics of the DAC.
+
+Tomorrow: all holes on main chassis.  Install all connectors (except Ethernet, dammit).
+
+
+
+
+
+Anything else to do before chassis punching?
+    Nothing.  Just going to listen to DAC2 now that the filter resistors are fixed.
+    (Can try listening with attenuator, too.)
+
+
+11/25/2017
+----------
+Got the chassis ready for other modules.  It was a long ride.
+
+Couldn't get AK4490 phase invert bits to work (of course, there are many places I could invert a channel...)
+    So I rotated the connector.
+
+Got things working late, didn't do any listening.
+
+Tomorrow:
+    Buy DAC2 parts + Ethernet cable (there is now a rear panel cutout for it...)
+    Listen (and try attenuator?)
+
+
+11/26/2017
+----------
+Ordering parts for 2nd DAC2 build:
+    Arrow  - ADI/LT stuff: $42
+    Digikey - All else: $40+tax/shipping
+
+Listening: 
+    Sounds good.
+    12 Songs is really cute.  Not fatiguing even with the plaintive, close miked violin (and clarinet?)
+
+But there is a functional problem.
+    play_stream.py hangs, takes mpd with it.
+
+To think about before trying active mode:
+    How to control volume?
+    Proper solution would be a proper driver.
+    But Python script could poll for changes to a file, for relative changes, and communicate back
+        Need to make sure it's impossible to accidentally set the volume to 0 dB.
+    I think it's important that volume control changes be acknowledged.
+        Maybe?  Client at least needs to know what the volume setting is.
+
+11/30/2017
+----------
+Assembled 2nd DAC2 over the last two nights.
+    Dammit, should have ordered those 50k resistors.
+    Hacked with 1206 100k resistors for LT3042 Rset...
+
+Replaced 5 V power inlet.
+Installed Ethernet connector (from behind; cutout wasn't quite large enough.  Try again?)
+
+Initial bringup: nothing blew up, voltages OK.  But:
+-   Too much noise.
+    Arta: Noise is -64 with no signal.
+-   Too much gain.
+    With an input signal of -60 dBFS, Arta shows -43 dBFS.  
+    Arta issue?  Multimeter shows me 0.1 V at -20 dBFS...
+
+Never mind, now Arta is happy.
+But: Attenuator issues.
+    Attenuator at -10: Correct amplitude but lots of spurs.  (Common mode?)
+    Spurs don't look like harmonics.
+    Persists at -20 atten
+    Persists with -10 dBFS signal
+    Does the other DAC2 board do this?  No.  But also its attenuator isn't working?
+        Think that's an isolator problem.  Odd.
+
+That's enough for tonight.
+
+12/2/2017
+---------
+Attenuator issues with new DAC card in slot 1
+    Hard to see on spectrum what it is.
+    Time domain shows: random spikes (near peaks of sine wave?)
+    Stopping SCLK fixes it?
+    No, just makes the problem different:
+        Mixing with 60 Hz, and higher harmonics.
+    Seems to become more apparent as signal amplitude is reduced.  Weird.
+    Problem is visible as "walking spikes" on sinewave in time domain.
+    SCLK back on - seems to not make a difference?
+        ARTA shows clean sine wave at 0 dBFS, but spikes on sound card scope?
+        Suspicious.  Let's look at a loopback test, and differential.
+        XLR cables come out.
+    In differential loopback, I don't see any problem.
+    So either it was a common mode issue, or a soundcard issue.
+    All looks good, for now, with slot 1.
+    
+Slot 0?
+    Looks fine.  Attenuator works.
+
+Alright, let's put a lid on it.  And start using it for digital filters.
+
+Setup with XLS1500 and test speaker.  Notes:
+    Slot 0 left output is dead - maybe bad connection?
+    Right output is fine.  And slot 1 is fine.
+    Noise level: hold that thought...
+    OK, -80 dB tone.  Not sure the Crown likes those.
+    Not going to be easy to gauge until I run filters and open up the gain.
+    
+Ah, encountered problem with play_stream hanging.
+    Is it recoverable?
+    Maybe, I just ran setup_clock.py, it errored out, ran it again OK and can play stream.
+    Will keep trying to find out what causes this and how to get around it.
+
+Anyway, wired up the speaker for active crossover mode.
+How to play music through FIR filters?  I've done this before...
+    Have a play_stream_4ch.py, will need to modify for split-slot setup
+    Now trying to resurrect the speakers lib...
+    Crash on startup - seg fault loading dynamic library
+    -> Probably fixed, had 
+    
+Now I just need to setup the ALSA/PA audio devices correctly.
+    Dammit, this is annoying.
+    What I need is an ALSA input device which receives the sample from an ALSA output device that MPD is playing to.
+    The runspeakers script will use that input device and, for output device, play_stream_4ch.py
+    Ok, I'm trying to use the hardware loopback device...
+        Everything seems like it's working, but there's no output.
+        I do know play_stream_4ch.py works.  I can make tones with it.
+    
+12/3/2017
+---------
+Debugging the ALSA/runspeakers flow.
+
+1.  Getting data to the input device (loopin).
+    MPD is configured to send audio to loopout.
+    Use arecord on loopin.
+    arecord gives nonzero data with default config: 8 kHz mono 8 bit
+    I can change to stereo and to other formats incl. 16 bit int
+        32 bit int just zero-pads the 16 bit ints
+        float doesn't work ("can't install hw params")
+    But I can't change the sample rate?
+        Actually, I can change it to 48k.
+        But I can't change it to 44.1k, it receives no data.
+    Had a similar problem before.  Forced sample rate conversion using "plug"...
+    What's interesting is arecord -v shows the loopback device as having sample rate 44100
+        So when I select a non-44100 sample rate, it inserts the libspeex converter.
+        What about 22050?  That and 88200 don't work.
+        Anything that's an integer ratio of 44100 doesn't work? (Or close... 44000 works, but 44050 doesn't)
+        Weird.  Customize buffering somehow?
+        -B option doesn't seem to help.  Same for -M
+    WTF... I can only get samples out if I ask for a sample rate conversion?
+        Interesting, the VU meter runs when I'm at 44.1... so maybe the problem is arecord.
+    Put this on hold for now.  Allow Python code to report amplitude of incoming samples.
+
+2.  Monitoring amplitudes at I/O of runspeakers
+    Initial test shows that I do get data, but it's all zero.
+    Maybe my conversion to double precision was a bad idea.
+    PortAudio supplies data in float32 form.  There is no float64.
+    That's fine, just need to convert to the NUMERIC (double) type on the way in.
+    OK, now I got some nonzero looking output samples.  (Maybe they were there before too?)
+    Now, switch to play_stream_4ch output device.
+    
+Sound!
+Is it any good?
+    The tweeter is shit.
+    Is it worth trying to measure it and optimize the filters?
+        No.
+    But should get volume working.
+        Obvious idea: alsamixer, but that doesn't work.
+    Things to try:
+        1.  DAC2 attenuator.
+            Seems to work.  Will need to brainstorm various reliability concerns.
+            At -20, peak SPL with XLS1500 cranked is about 90 dB on the desk near the speaker.
+            Add -5 dB tweeter pad?  (What was used in original speaker?)
+            -4 dB sounds OK (though I'm wearing earplugs)
+            Noise?  Definitely some, though it could be the amp somehow.
+                -> I think it is the amp, because with atten at -30 it's still about the same.
+            DC28 noise does increase as the amp is cranked, but it's tolerable - need to be close to speaker.
+            Perhaps not the SNR I want though.
+            With -30 dB setting, peak SPL is tolerable at full scale, amp wide open
+                Scary to think about what would happen if that failed.
+                
+            Is there any way to verify that the attenuator is engaged to the desired level?
+            
+        2.  AK4490 internal volume control
+            Doesn't seem to work.  Maybe something is wrong with the SPI?
+            Doesn't seem to work for either slot 0 or 1.
+            (Had a similar problem where I couldn't invert phase.)
+        
+        3.  Polling for file and scaling in play_stream_4ch script.
+            Probably want to use this most often, as fine changes may be requested.
+            Good frameworks/libraries for remote control?
+            http://electronut.in/talking-to-a-raspberry-pi-from-your-phone-using-bottle-python/
+                Uses Bottle.  Single-file function.
+            Another idea: JqueryUI slider
+            -> Implemented.  Took a while to figure out, but it runs.
+            I ended up using sqlite so there would be no missing file during an update.
+            
+
+Gain structure notes
+    XPA-5 has gain of 40 dB, so 1 V RMS drives it to clipping.
+    
+
+Notes on reliability:
+    Ctrl-C on Python runspeakers: stops gracefully, no pop
+    Startup: from zero to music instantly
+    Was able to get the USB device stuck after perhaps Ctrl-C at a bad time?
+        See if I can get ZTEX software to reset the thing.
+        FWLoader works, I guess.  Had to reset the FPGA and the EZ-USB controller.
+            (run once with -rf and once with -ru)
+    Note that running setup_clock creates a big transient.  (But it's limited by the attenuator?)
+    There was a sudden stop when I went to measure the speaker level - why?
+        Nothing seemed broken afterwards - restarted runspeakers
+    Switching clocks seems to generate a pop, even when attenuators are enabled.
+        Not sure I understand why?
+        That's on the to do list for the future.
+        For now, clock is selected at system startup. Not during operation.  (Power off amplifiers)
+        There may be a bug in da_platform.sv: not all slots are reset?
+            But regardless, when you do reset a slot, hwcon gets set to 0.
+            So that might explain why we can't use attenuator during the clock change.
+
+Todo:
+    Measure FR of active crossover (so I can construct equivalent filters)
+        It would be nice to do this without removing the cover - in order words, need to get loopback script working on Rpi.
+        (Shouldn't be too hard - verify with ADC8 and one of the DAC2s)
+        
+    
+    
+    Figure out what was up with the left channel
+        No signal, still, slot 0 left.  Open it up.
+        It works fine.  The problem was a bad connection when I smushed up the cables by closing the chassis.
+        Cover back on, no problem.  But watch for dropouts in the future.
+        
+    
+    Develop safety plan
+        1. Wear earplugs.
+        Main question: How to detect signal level before turning on the amplifier?
+            
+        
+    Install in main system
+        
+Let's go ahead with crossover char.
+First, software update...
+    Loopback script hangs on RPi.  (Except when data is all zeros since SPI messed up?)
+    Not enough BW for 8 ch ?  No I doubt it.  Might hint at another problem.
+    Seemed to work with chunk size 1<<8 (not 1<<9)
+    Not reliably.  Turned off async mode for now.
+    Also, SPI is broken (ADC operates at wrong samplerate)
+    Seems to work once after reset then hang after first write on second run?
+    It's stuck in USB write.  Does that mean buffers are full, or that we didn't read all available samples?
+    Skipping start flag at beginning (which causes dropouts) doesn't help
+    If I run loopback in a loop, it doesn't break until the program finishes and I start it again
+    Any asymmetry?
+        Reading leftover ADC samples?
+        FIFO status doesn't seem to update when we do this.
+            (Even when retrieving after the fact.)
+        There are very many leftover samples - maybe it times out?
+        Can get it to claim it read all leftover samples (many... 100k+?)
+            ADC operating at 2x sample rate might cause this.
+        Need to read leftovers in chunks?
+    This is so strange.  Now I have to look at the result when running from PC.
+        Yep, same problem.  Bisect.
+        Fix seems to be: constructing DAPlatformBackend with reset=True
+        Huh?
+        Oh well, it works.
+        
+    Now trying to figure out why the spectrums aren't clean (but they were, sometimes, when I wasn't resetting.)
+        Waveform: big spikes at beginning (and then once in the middle)?
+        Try a blocker?  Doesn't help to block slots until after first write.
+        Attenuator taking effect late?  Maybe.  Added 1/2 sec sleep and it's somewhat better, still not right.
+        Waveform shows: random spikes
+        Chunk size reduction didn't help
+        Async vs sync - no difference
+        Both channels spike at the same time, so it's a digital issue most likely
+        Zoom in?
+        Spikes appear short, only a few samples, so not really dropouts
+        Any periodicity?
+            1700, 3600
+            1600, 1950, 2650
+            
+
+
+
+XLR to SE adapters?
+    With female XLR:
+        Pins 1, 3 connected to RCA shield
+        Pin 2 connected to RCA center
+    With male XLR:
+        Pins 1, 3 connected to RCA shielf
+        Pin 2 connected to RCA center
+    So those won't be very useful at least connected to outputs of DACs.
+        Even though DAC2 would clearly be able to tolerate it since the attenuator is designed to have its output shorted.
+    But hell, why not?  Sure saves time over having to re-wire for RCA.
+    
+
+12/18/2017
+-----------
+Lots of distractions at home, but back to debugging loopback on Rpi.
+Waveform: Lots of little spikes.
+    Spike magnitude is close to full scale even with DAC attenuator at -20.  So, probably ADC related.
+    Getting zeros a lot of the time too?
+    Chunk size of 512 and display=True: fewer spikes but still a lot
+    Decreased sleep in EZUSB backend read_and_write() to 1 ms - got a clean test
+        Still sometimes get zeros, but glitches might be gone?
+        Makes sense that on RPi, asking to sleep 10 ms might be too much
+        when 512 chunk size = 11.6 ms
+    -> seems we're good for now.  Try THD/SNDR sweep.
+    Without display=True, get zeros?
+    Added a yield to the main loop.  Still bad results on sweep.
+    Maybe the difference is 0.5 vs 1.0 sec?
+        At 1.0 sec, single tone FFT is ugly but first few samples look OK.
+        Spikes are appearing in the second half of the waveform. (Software getting backed up?)
+        Try without display?
+        Same thing, more or less.
+        Change chunk size?  1024 -> clean but no THD/N extracted?  No, seems THD+N was extracted.
+        OK so just use this for sweep?
+        Got a decent loopback meas.  SNDR around 80 with 20 dB atten.  THD around -100 but funky at low freqs.  (Why?)
+        Check 40 Hz single tone: looks like a lot of higher order harmonics.
+            Increase drive to 0 dBFS?
+            About the same.  Worse in one channel than the other.
+            -10 dBFS?  About the same.
+            Looks like 60 Hz stuff and not HD?
+            Try a non harmonically related frequency like 43.
+            Mixing?  Same set of products are there.
+            EMI?  But this is a differential measurement...
+            400 Hz tone shows: these products are always there (EMI/supply).  Should figure out what caused them, but it's not a nonlinearity.
+        Other problem: Data coming back on wrong ADC channels?
+        -> Seemed to go away.  Put an assertion to make sure we don't fetch an invalid number of samples, which could cause that problem,.
+        
+    How about single ended testing, now that I have ribbons... (6 weeks shipping on a boat from China to Los Angeles)
+        After restarting, getting spikes again?  Signal is there, though...
+        I think this is just software garbage.  Over time, it seems to be getting better.
+        Found some sample counting bugs but they don't seem to affect spikes.
+        
+    Obvious question: do spikes happen when testing from PC?
+        No.  Works great.  I'm going to use this to characterize the crossover.
+        Any differences in code?
+            None that look relevant.
+        Rrr.
+
+SE performance notes:
+    SNDR is only 65 dB with 20 dB attenuation.  Reasonably clean spectrum, just more noise and 60 Hz stuff.
+    With 0 dB, we get 69 dB.  There's just a lot more noise in SE mode.  And most of it appears to be DAC.
+        (Note: crappy cables, not paying attention to EMI, etc.)
+    HD2 is around -81 dB, no other harmonics visible (but high noise floor).
+
+Alright, let's try that crossover.
+    (First, woofer output)
+    I can get a clean tone through it...
+    With volume knob all the way up.  Let's run sweeps.
+    Notes from looking at sweeps:
+        Woofer channels are off by about 0.2 dB from each other.
+        Bass EQ is slightly different freq (38 vs 40 Hz) but same depth of 2.6 dB
+        Treble EQs look different between the two channels.
+        a) Midband cut - 1.3 kHz, similar Q but one is deeper (limited frequency resolution?)
+        b) Treble boost - peaks at 16 vs 18 kHz, 18k peak is higher
+    OK, now to try and reproduce these results with speakers lib:
+        Did a bunch of manual fitting, seems pretty close.
+        Generally split the difference between L/R channels where they were different. (xover/xover_err.pdf)
+        Couldn't do bass EQ with short filters - that is a project for later
+        Tweeter HP ended up being 5th order to match final rolloff (and phase?)
+        Concerns about tweeter EQ accuracy.  Can always adjust by ear.
+    Distortion/noise...
+        HD2 - around -80 for LP, -72 for HP
+        HD3 - around -100 for LP but creeps up at lowest freqs (-70 at 20 Hz, -90 at 45 Hz); roughly -90 for HP
+        High order HD - varies from -80 to -100 for LP, -80 to -90 for HP
+        SNDR - 65 for LP; HP degrades with rolloff, about 45 dB at 1k
+    So definitely an opportunity for improvement.
+        
+What's next?
+    Test with test speaker/XLS
+        OK
+    Test in system
+        DC, AC levels measured at amp outputs look OK.
+        Right woofer silent. Other channels working.
+            Try to fix this first...
+            Fine,
+        L/R out of phase.
+            Both LP and HP.  What a coincidence.
+            Easy enough to fix by swapping speaker wires.
+        Lots of hum/buzz.
+            Seems to vary per channel (but definitely louder in the tweeter due to sensitivity)
+            Didn't get this with the XLS1500?
+            Why?
+                No earth?  AGND is isolated from earth in source, and amp has a 2-prong connection.
+                Hypex app note: "correct shielding practice requires that pin 1 be connected to the chassis and nowhere else"
+                This suggests ground loop currents are being dumped into AGND in the source and subject to CM/DM conversion somewhere.
+                Easy enough to try changing the pin 1 connection on the XLRs.
+            Try changing the attenuator setting, see if that makes any difference.
+        Peak SPL not as high as I expected.
+            Need to do the task below...
+        Sound quality: hard to tell
+            Nothing jumped out at me.
+            Dynamics seemed OK - haven't tried rocking out.
+            Bass bump definitely there, oh well.
+            Treble, maybe a little more air/sizzle due to EQ?
+            Maybe a little more depth apparent on Jack Johnson?
+            Needs more listening once the buzz is fixed.
+
+XLR pin 1 mod
+    Where to attach shield on chassis?
+        Could use AC inlet earth connection point - long wire
+        But the right thing is to use the standoff pads on the DAC2 board - they aren't connected to AGND.
+        Also, don't have proper screw lugs.  Going to solder directly for now.
+            
+    Look at amplitudes, evaluate attenuator settings
+    
+12/20/2017
+----------
+Testing XLR pin 1 mod
+    Lots of buzz.  XLS amp is not happy.
+    Why?
+    Probably because I totally got the XLR pinout wrong.  Correct pinout is:
+        1 = Shield
+        2 = Signal P
+        3 = Signal N
+    What I did was
+        1 = Signal N
+        2 = Signal P
+        3 = Shield
+    So, in initial setup, amp was seeing difference between signal P and shield, i.e. the single-ended output.
+    And in the current setup, amp was seeing difference between signal P and shield, i.e. the single-ended output relative to chassis ground.
+    Rrrr....
+        Crazy washer hack probably wasn't necessary.
+        What is necessary is redoing the XLR connectors.
+        (Didn't detect with loopback test since ADC has the same wrong pinout)
+
+Testing with XLS amp:
+    Left channel good.  (Some hum when first plugged in?)
+    Right channel - tweeter good, woofer has hum.  Hard to tell if it's significant.
+    Maybe it gets better with warm up?
+    Will just have to test with the main system.
+
+12/22/2017
+----------
+Continued hum/buzz debugging: XLS amp
+    With chassis lid off, no buzz.
+    Try putting it back on.  Maybe I accidentally shorted one signal to chassis.
+    -> Confirmed.  Right woofer pin 1--2 are shorted, none of the others are.
+    Now should be fixed.
+
+Testing in main system
+    Some audible hiss near speakers.
+    Right tweeter also has a little buzz.  Not sure where it's from (amp?).  Not objectionable.
+    More gain, but still some on the table.  Max looks like about 90 dB avg.  Need to play with input_scale option on filters.
+        What SPL would I expect with 0 dBFS = 8 V RMS into woofers?  
+        Say, 2 V -> 87 dB at 1 m from one speaker.  (After baffle step) 81 dB at 2 m; 84 dB from 2 speakers; 96 dB at 8 V.
+    Run a few hours of music to get an idea of the sound.
+        First impression is it's lacking some warmth relative to the analog crossover.
+        Top octave might be tipped up a bit (adjust EQ?)
+        Nothing objectionable yet.
+
+12/23/2017
+----------
+More testing
+    Sound is fine.  Will resolve hum before doing more eval.
+    But the hum is confusing.
+        XLS1500 had no hum (and acceptable hiss)
+        XPA-5 has hum. Seems to vary on its own over time.
+    Found lots of online discussions related to hum problems with XPA amps.
+    
+    Proposed explanation:
+        Due to its home audio oriented design, XPA-5 has no Earth connection.  (*May* be useful for avoiding hum problems with RCAs.)
+        Thus a large CM voltage develops between the XPA-5 internal ground and the source ground (AGND).  Say, 1 V RMS.
+        The XPA-5 doesn't have infinite CMRR (say, 100 dB), so this gets through - 10 uV amplified to 320 uV.
+            Assuming 100 dB, 1 m, 2.83 V tweeter sensitivity, 320 uV is 20 dB at 1 m.
+            I think I have more than that... but the numbers could be different.
+    Proposed experiment:
+        Tie AGND (at the power supply) to earth.  Earth is then at least tied to XPA-5 neutral, somewhere.
+    Other proposed experiment:
+        Use XLS1500 for tweeter amp.
+        (And long term switch to different amplifiers.)
+        -> Works, tweeters have no buzz.
+            Gain adj: XPA-5 is 32 dB, XLS1500 is 30--31 dB -> not that far off.  Adjust by ear.
+        Woofers still buzzing, but not as sensitive.  (Can experiment with different XPA-5 channels for minimizing buzz.  Left channel is worse right now.)
+
+Some listening
+    Note: moved woofer channels around on XPA-5 to get somewhat better hum.
+    Treble sounds a bit cloudy/gritty.  Not as clean or relaxed as the XPA-5.  But still not bad.
+    Probably won't get to do a serious eval until I have a new amplifier.  (To use for treble; use XLS1500 for woofers?)
+    Arggh.
+    Seems a little dry/gritty in the treble.  Reduced HF peaking and overall level slightly.  but I think I need a 
+    
+Amplifier options besides designing my own
+    Modulus-86 - bare boards $69/ch, which is ridiculous for a chip amp (but it does appear to be thought out)
+        Note: Mark Johnson made a somewhat thoughtful PSU board called RingNot?
+        Available, supported, not sure about subjective performance but that's not what it's about.
+    "The Wire" LPUHP - not sure if it's still available - probably not
+    Think about it.
+
+Results of thoughts
+    1) Try AGND/chassis jumper, just see what it does.
+       It will be a learning experience.
+       And if XPA-5 can be used in short term that will improve things subjectively.
+       Where to connect at PSU?
+        Transformer CT is the obvious place.  But that's not as clean as PSU out.
+        Whatever, start there.
+       Maybe reduces hum slightly but not enough?
+        Ch3 is lowest hum.  ~1 mV.
+        Ch5 is next lowest. ~4 mV.
+    2) Build a Modulus 86.
+       The amp PCBs are exorbitant but don't make up the majority of project cost.
+       Probably want to use a RingNot[?] PSU board though.
+       Work out chassis/parts details later.
+       Also a learning experience to see what a "specs only" approach to amp design brings.
+       
+Overall plan:
+    Chill out and listen to current system with XLS1500 for tweeters.
+    Plan out a quick/easy Modulus-86 build.
+    
+Amp Build planning
+    By the book.
+    Transformer: 200 VA 22 V x2
+    One recommended chassis is https://www.modushop.biz/site/index.php?route=product/product&path=204_205&product_id=725
+        Cost is EUR 120 shipped.
+        But check that it's big enough.  Might be a bit tight.
+    Transformer:
+        Example build has http://www.antekinc.com/as-2222-200va-22v-transformer/
+        RingNot specifies this exact transformer (tested with, presumably)
+        This one is reasonably priced at $32, but out of stock.  Check back before finding substitute...
+    This chassis would look similar to Samoyed and is full width (360mm inside vs. 250).  Cost is EUR 149 shipped. 
+        https://www.modushop.biz/site/index.php?route=product/product&product_id=193
+    -> Will start separate notes for this as it's out of context of DA platform.
+    
+
+12/28/2017
+----------
+With main chassis nominally working in main system, and waiting for amp upgrade, it's time to focus on open sourcing.
+
+Todo:
+- Identify all license encumbered RTL file
+- Rewrite all those and debug design after these changes
+- Clean up hierarchy
+- Add some basic documentation including licenses
+- Push to Github
+
+So what files have license problems?
+    verilog/contrib/fifo_sync.sv:    Copyright 2014 MIT
+    verilog/contrib/fifo_async.sv:    Copyright 2014 MIT
+    verilog/contrib/fifo_async2.sv:    Copyright 2014 MIT
+    verilog/contrib/delay.sv:    Copyright 2014 MIT
+    verilog/contrib/mig_adapter.sv:    Copyright 2015 MIT
+
+Plan:
+    Making new SV async FIFO module that will be used everywhere
+    Making new SV delay
+    Rewrite mig_adapter - simpler/more elegant would be nice
+
+Most modules have been converted to SV.  Sim compiles but doesn't do anything.
+
+
+12/29/2017
+----------
+Agenda: simulation debug and MIG adapter redesign
+
+After some debugging it looks like we're ready to do the MIG adapter.
+
+
+2/8/2018
+--------
+After long hiatus including amp build, some listening notes in differential mode.
+
+Smooth.  Very clean on high dynamic range recordings.  Low noise floor.
+Rock music can be in your face at high volumes.  But it's probably supposed to be that way.
+
+Hard to separate my impressions about the source from the amps, which have also been changing.
+
+
+
 
 
 

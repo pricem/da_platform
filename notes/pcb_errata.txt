@@ -94,8 +94,10 @@ Clock test board
         (Of course, I can use indiv. wires to PSU to rectify this)
 
 All
-    (Clock source and modules) ADM7154 max input is 5.5 V.  Need to prereg down to 5 V instead of hooking directly to D7VU.
+    FIXED (Clock source and modules) ADM7154 max input is 5.5 V.  Need to prereg down to 5 V instead of hooking directly to D7VU.
     (Clock source and modules) LF50 prereg had 10u 1206 ceramic cap on output.  Must be changed to electrolytic with higher ESR to avoid oscillation.
+    (Modules) Pin 1 of XLR should not be connected to AGND.  
+        It should be connected to one of the standoff mounting pads for easy connection to the chassis.
 
 Regulators
     FIXED Small transistor footprint in Jung regs. is narrower than BC807 - check package (the BC817 is fine)
@@ -107,6 +109,7 @@ Regulators
 
 Carrier
     Hole for JST connector locating pin is on wrong side of footprint (currently left of notch, needs to be right)
+    Should attempt to route BCK for each module to clock capable input pins
 
 Isolator
     Zener diodes in Jung regs - pads are spaced too far apart for diodes MMSZ5226BS-FDICT-ND (SOD-323)
