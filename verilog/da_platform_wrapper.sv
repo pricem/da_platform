@@ -65,8 +65,8 @@ wire [3:0] usb_status;
 wire ifclk;
 wire fxclk;
 
-wire uiclk;
-wire ui_clk_sync_rst;
+logic uiclk;
+logic ui_clk_sync_rst;
 
 always_comb begin
     clk_mem = uiclk;
@@ -125,26 +125,15 @@ ezusb_io #(
     .status(usb_status)	
 );
 
-//  MIG interfaces
-wire [27:0] app_addr;
-wire [2:0] app_cmd;
-wire app_en;
-wire app_wdf_wren;
-wire app_rdy;
-wire app_wdf_rdy;
-wire app_wdf_end;
-wire app_rd_data_valid;
-wire app_rd_data_end;
-wire [127:0] app_wdf_data;
-wire [15:0] app_wdf_mask;
-wire [127:0] app_rd_data;
+//  MIG interface - now AXI
+AXI4_Std mem_axi(uiclk);
 
 wire clk200_in;
 wire clk200;
 wire clk400_in;
 wire clk400;
 
-wire init_calib_complete;
+logic init_calib_complete;
 
 //  Clock generation
 BUFG fxclk_buf (
@@ -189,95 +178,130 @@ dram_fifo_pll_inst (
 );
 
 //  Memory adapter (MIG)
-MIGAdapter #(
-    .addr_width(28),
-    .data_width(128),
-    .interface_width(32),
-    .DDR3_BURST_LENGTH(8),
-    .nCK_PER_CLK(4)
-) mig_adapter(
+MIGAdapter mig_adapter(
     .clk(clk_mem),
     .reset,
     .ext_mem_cmd(mem_cmd.in),
     .ext_mem_write(mem_write.in),
     .ext_mem_read(mem_read.out),
-    .mig_clk(uiclk),
-    .mig_reset(ui_clk_sync_rst),
     .mig_init_done(init_calib_complete),
-    .mig_af_rdy(app_rdy),
-    .mig_af_wr_en(app_en),
-    .mig_af_addr(app_addr),
-    .mig_af_cmd(app_cmd),
-    .mig_wdf_rdy(app_wdf_rdy),
-    .mig_wdf_wr_en(app_wdf_wren),
-    .mig_wdf_data(app_wdf_data),
-    .mig_wdf_last(app_wdf_end),
-    .mig_wdf_mask(app_wdf_mask),
-    .mig_read_data_valid(app_rd_data_valid),
-    .mig_read_data_last(app_rd_data_end),
-    .mig_read_data(app_rd_data)
+    .axi(mem_axi.master)
 );
 
 //  MIG instantiation
 //  In simulation mode, use MIG model instead.
 `ifdef USE_MIG_MODEL
 
+mem_model_axi sim_mem(
+    .aclk(uiclk),
+    .aresetn(ui_clk_sync_rst),
+    .axi(mem_axi.slave)
+);
 
-//  Sim: reset latch, since UI clk doesn't start up until after reset is done
-logic mig_model_reset;
+//  Model clock generation and startup of MIG
 initial begin
-    mig_model_reset = 1;
-    #1000 mig_model_reset = 0;
+    uiclk = 0;
+    ui_clk_sync_rst = 0;
+    init_calib_complete = 0;
+    
+    #100 ui_clk_sync_rst = 1;
+    #1000 init_calib_complete = 1;
 end
 
-//  MIG model
-mig_ddr3_model #(
-    .BANK_WIDTH(3),
-    .COL_WIDTH(10),
-    .ROW_WIDTH(15),
-    .BURST_LEN(1),	                //	not the same as the memory's actual burst length... just set to get right number of cycles when reading
-    .RST_ACT_LOW(0),      // 1: active low, 0: active high
-    .CLKIN_PERIOD(5000),    // in psec
-	.nCK_PER_CLK(4),
-	.RANKS(1),
-	.ADDR_WIDTH(28),
-	.CK_WIDTH(1),
-	.PAYLOAD_WIDTH(16 /* 128 */),
-	.BURST_TYPE("SEQ"),
-	.TRCD(13750),
-    .TRFC(300000),
-    .TRP(13750),
-    .TWTR(7500),
-    .init_use_file(0)
-) mig_model (
-    .sys_clk_p(clk200),
-    .sys_rst(mig_model_reset),
-    .ddr3_reset_n(ddr3_reset_n),
-    //  .app_addr({1'b0, app_addr, 3'b000}),
-    .app_addr(app_addr),
-    .app_cmd(app_cmd),
-    .app_en(app_en),
-    .app_wdf_data(app_wdf_data),
-    .app_wdf_end(app_wdf_end),
-    .app_wdf_mask(app_wdf_mask),
-    .app_wdf_wren(app_wdf_wren),
-    .app_rd_data(app_rd_data),
-    .app_rd_data_end(app_rd_data_end),
-    .app_rd_data_valid(app_rd_data_valid),
-    .app_rdy(app_rdy),
-    .app_wdf_rdy(app_wdf_rdy),
-    .app_sr_req(1'b0),
-    .app_sr_active(),
-    .app_ref_req(1'b0),
-    .app_ref_ack(),
-    .app_zq_req(1'b0),
-    .app_zq_ack(),
-    .ui_clk(uiclk),
-    .ui_clk_sync_rst(ui_clk_sync_rst),
-    .init_calib_complete(init_calib_complete)
-);
+always #2.5 uiclk <= !uiclk;
+
 `else
 //  Actual MIG
+
+/*
+//  AXI interconnect (for clock domain crossing) may not be needed - feed uiclk to da_platform.clk_mem
+
+AXI4_Std mig_axi(uiclk);
+
+axi_interconnect_0 axi (
+    .INTERCONNECT_ACLK(),
+    .INTERCONNECT_ARESETN(),
+    .S00_AXI_ARESET_OUT_N(),
+    .S00_AXI_ACLK(),
+    .S00_AXI_AWID(),
+    .S00_AXI_AWADDR(),
+    .S00_AXI_AWLEN(),
+    .S00_AXI_AWSIZE(),
+    .S00_AXI_AWBURST(),
+    .S00_AXI_AWLOCK(),
+    .S00_AXI_AWCACHE(),
+    .S00_AXI_AWPROT(),
+    .S00_AXI_AWQOS(),
+    .S00_AXI_AWVALID(),
+    .S00_AXI_AWREADY(),
+    .S00_AXI_WDATA(),
+    .S00_AXI_WSTRB(),
+    .S00_AXI_WLAST(),
+    .S00_AXI_WVALID(),
+    .S00_AXI_WREADY(),
+    .S00_AXI_BID(),
+    .S00_AXI_BRESP(),
+    .S00_AXI_BVALID(),
+    .S00_AXI_BREADY(),
+    .S00_AXI_ARID(),
+    .S00_AXI_ARADDR(),
+    .S00_AXI_ARLEN(),
+    .S00_AXI_ARSIZE(),
+    .S00_AXI_ARBURST(),
+    .S00_AXI_ARLOCK(),
+    .S00_AXI_ARCACHE(),
+    .S00_AXI_ARPROT(),
+    .S00_AXI_ARQOS(),
+    .S00_AXI_ARVALID(),
+    .S00_AXI_ARREADY(),
+    .S00_AXI_RID(),
+    .S00_AXI_RDATA(),
+    .S00_AXI_RRESP(),
+    .S00_AXI_RLAST(),
+    .S00_AXI_RVALID(),
+    .S00_AXI_RREADY(),
+    .M00_AXI_ARESET_OUT_N(),
+    .M00_AXI_ACLK(),
+    .M00_AXI_AWID(),
+    .M00_AXI_AWADDR(),
+    .M00_AXI_AWLEN(),
+    .M00_AXI_AWSIZE(),
+    .M00_AXI_AWBURST(),
+    .M00_AXI_AWLOCK(),
+    .M00_AXI_AWCACHE(),
+    .M00_AXI_AWPROT(),
+    .M00_AXI_AWQOS(),
+    .M00_AXI_AWVALID(),
+    .M00_AXI_AWREADY(),
+    .M00_AXI_WDATA(),
+    .M00_AXI_WSTRB(),
+    .M00_AXI_WLAST(),
+    .M00_AXI_WVALID(),
+    .M00_AXI_WREADY(),
+    .M00_AXI_BID(),
+    .M00_AXI_BRESP(),
+    .M00_AXI_BVALID(),
+    .M00_AXI_BREADY(),
+    .M00_AXI_ARID(),
+    .M00_AXI_ARADDR(),
+    .M00_AXI_ARLEN(),
+    .M00_AXI_ARSIZE(),
+    .M00_AXI_ARBURST(),
+    .M00_AXI_ARLOCK(),
+    .M00_AXI_ARCACHE(),
+    .M00_AXI_ARPROT(),
+    .M00_AXI_ARQOS(),
+    .M00_AXI_ARVALID(),
+    .M00_AXI_ARREADY(),
+    .M00_AXI_RID(),
+    .M00_AXI_RDATA(),
+    .M00_AXI_RRESP(),
+    .M00_AXI_RLAST(),
+    .M00_AXI_RVALID(),
+    .M00_AXI_RREADY()
+);
+*/
+
 mig_7series_0 mem0 (
     .ddr3_dq(ddr3_dq),
     .ddr3_dqs_n(ddr3_dqs_n),
@@ -293,24 +317,50 @@ mig_7series_0 mem0 (
     .ddr3_cke(ddr3_cke[0]),
     .ddr3_dm(ddr3_dm),
     .ddr3_odt(ddr3_odt[0]),
-    //  .app_addr({1'b0, app_addr, 3'b000}),
-    .app_addr(app_addr),
-    .app_cmd(app_cmd),
-    .app_en(app_en),
-    .app_rdy(app_rdy),
-    .app_wdf_rdy(app_wdf_rdy), 
-    .app_wdf_data(app_wdf_data),
-    .app_wdf_mask(app_wdf_mask),
-    .app_wdf_end(app_wdf_wren),
-    .app_wdf_wren(app_wdf_wren),
-    .app_rd_data(app_rd_data),
-    .app_rd_data_end(app_rd_data_end),
-    .app_rd_data_valid(app_rd_data_valid),
-    .app_sr_req(1'b0), 
-    .app_sr_active(),
-    .app_ref_req(1'b0),
-    .app_ref_ack(),
-    .app_zq_req(1'b0),
+    
+    .aresetn(ui_clk_sync_rst),
+
+    .s_axi_awid(mem_axi.awid),
+    .s_axi_awaddr(mem_axi.awaddr),
+    .s_axi_awlen(mem_axi.awlen),
+    .s_axi_awsize(mem_axi.awsize),
+    .s_axi_awburst(mem_axi.awburst),
+    .s_axi_awlock(mem_axi.awlock),
+    .s_axi_awcache(mem_axi.awcache),
+    .s_axi_awprot(mem_axi.awprot),
+    .s_axi_awqos(mem_axi.awqos),
+    .s_axi_awvalid(mem_axi.awvalid),
+    .s_axi_awready(mem_axi.awready),
+    .s_axi_wdata(mem_axi.wdata),
+    .s_axi_wstrb(mem_axi.wstrb),
+    .s_axi_wlast(mem_axi.wlast),
+    .s_axi_wvalid(mem_axi.wvalid),
+    .s_axi_wready(mem_axi.wready),
+    .s_axi_bready(mem_axi.bready),
+    .s_axi_bid(mem_axi.bid),
+    .s_axi_bresp(mem_axi.bresp),
+    .s_axi_bvalid(mem_axi.bvalid),
+    .s_axi_arid(mem_axi.arid),
+    .s_axi_araddr(mem_axi.araddr),
+    .s_axi_arlen(mem_axi.arlen),
+    .s_axi_arsize(mem_axi.arsize),
+    .s_axi_arburst(mem_axi.arburst),
+    .s_axi_arlock(mem_axi.arlock),
+    .s_axi_arcache(mem_axi.arcache),
+    .s_axi_arprot(mem_axi.arprot),
+    .s_axi_arqos(mem_axi.arqos),
+    .s_axi_arvalid(mem_axi.arvalid),
+    .s_axi_arready(mem_axi.arready),
+    .s_axi_rready(mem_axi.rready),
+    .s_axi_rid(mem_axi.rid),
+    .s_axi_rdata(mem_axi.rdata),
+    .s_axi_rresp(mem_axi.rresp),
+    .s_axi_rlast(mem_axi.rlast),
+    .s_axi_rvalid(mem_axi.rvalid),
+
+    .app_sr_req(1'b0),  //  reserved - tie low
+    .app_ref_req(1'b0), //  request a refresh; we don't do this, just let the MIG handle it
+    .app_zq_req(1'b0),  //  request ZQ calibration; we don't do this, just let the MIG handle it
     .app_zq_ack(),
     .ui_clk(uiclk),
     .ui_clk_sync_rst(ui_clk_sync_rst),

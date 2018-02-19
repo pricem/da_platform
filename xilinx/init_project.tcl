@@ -44,7 +44,7 @@ set files [list \
  "[file normalize "../verilog/interfaces.sv"]"\
  "[file normalize "../verilog/mig_adapter.sv"]"\
  "[file normalize "../verilog/da_platform_wrapper.sv"]"\
- "[file normalize "ip/mig_a.prj"]"\
+ "[file normalize "ip/mig_b.prj"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -52,7 +52,7 @@ add_files -norecurse -fileset $obj $files
 set_property -name "file_type" -value "SystemVerilog" -objects [get_files -of_objects [get_filesets sources_1] [list "*.sv"]]
 set_property -name "file_type" -value "Verilog Header" -objects [get_files -of_objects [get_filesets sources_1] [list "*.vh"]]
 
-set file "ip/mig_a.prj"
+set file "ip/mig_b.prj"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "scoped_to_cells" -value "mig_7series_0" -objects $file_obj
@@ -127,7 +127,7 @@ set files [list \
  "[file normalize "../verilog/contrib/ezusb_io.v"]"\
  "[file normalize "../verilog/fifo_async.sv"]"\
  "[file normalize "../verilog/fifo_sync.sv"]"\
- "[file normalize "../verilog/contrib/mig_ddr3_model.v"]"\
+ "[file normalize "../verilog/mem_model_axi.sv"]"\
  "[file normalize "../verilog/serializer.sv"]"\
  "[file normalize "../verilog/commands.vh"]"\
  "[file normalize "../verilog/slot_controller.sv"]"\
