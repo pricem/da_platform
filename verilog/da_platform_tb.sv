@@ -291,55 +291,51 @@ initial begin
     receive_counter = 0;
 end
 
-//  Fun stuff
-logic [7:0] spi_receive_data;
-logic [15:0] test_receive_length;
-initial begin
-    @(negedge reset);
-    
-    @(posedge clk_host);
-    
-    //  Wait 10 us for config information (dir/chan) to be serialized by isolator and received
-    //  and for SS chip selects to be all deasserted (clock startup; ser/des) 
-    #10000 ;
-    
-    /*
-    //  Test clock select
-    //  send_cmd_data[0] = 8'h0D;
-    //  send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
-    
-    //  #50000 ;
-    
-    //  Try some SPI setup stuff.  First, 16 bit transactions (8-bit addr/data).
-    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
-    //  spi_write(8'h00, 0, 0, 8'h47, 8'hA3);
-    //  spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
-    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
-    
-    //  Stop early
-    //  #50000 $finish;
-    
-    //  Now, 24 bit transactions, 16 bit addr + 8 bit data.
-    spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
-    spi_write(8'h01, 1, 0, 16'h0829, 8'hA3);
-    spi_read(8'h01, 1, 0, 16'h0819, spi_receive_data);
-    spi_read(8'h01, 1, 0, 16'h0829, spi_receive_data);
-    */
+/*  Some quick unit tests   */
 
+task test_spi(input int slot);
+    logic [15:0] spi_receive_data;
+
+    //  8 bit data/address
+    spi_write(slot, 0, 0, 8'h47, 8'hA3);
+    spi_read(slot, 0, 0, 8'h47, spi_receive_data);
+    assert(spi_receive_data[7:0] == 8'hA3) else $error("8-bit SPI readback (8-bit addr) on slot %0d failed.", slot);
     
-    /*
-    //  Set ACON
+    //  16 bit address, 8 bit data
+    spi_write(slot, 1, 0, 16'h0829, 8'hF6);
+    spi_read(slot, 1, 0, 16'h0829, spi_receive_data);
+    assert(spi_receive_data[7:0] == 8'hF6) else $error("8-bit SPI readback (16-bit addr) on slot %0d failed.", slot);
+    
+endtask
+
+task test_clock_select;
+    send_cmd_data[0] = 0;
+    send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
+    #10000 assert(iso.clksel == 1'b0) else $error("Clock select didn't work.");
+    
+    send_cmd_data[0] = 1;
+    send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
+    #10000 assert(iso.clksel == 1'b1) else $error("Clock select didn't work.");
+endtask
+
+task test_acon(input int slot);
     send_cmd_data[0] = SLOT_SET_ACON;
     send_cmd_data[1] = 8'h64;
     send_cmd(8'h00, CMD_FIFO_WRITE, 2);
-    #1000 ;
-    send_cmd_data[0] = SLOT_SET_ACON;
-    send_cmd_data[1] = 8'h51;
-    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
-    
-    //  Reset slots
-    send_cmd(8'hFF, RESET_SLOTS, 0);
-    */
+endtask
+
+task test_dac(input int slot);
+    //  Supply some samples to the desired slot and use the I2S receiver to compare them.
+endtask
+
+task test_adc(input int slot);
+    //  Send some samples from an I2S source and make sure we can read them.
+endtask
+
+task test_loopback(input int slot_dac, input int slot_adc);
+    //  Configure the isolator model to connect I2S lines from one slot to another,
+    //  and make sure we read back the same samples from the ADC slot that we wrote
+    //  to the DAC slot.
     
     //  Put a blocker on everyone
     send_cmd_data[0] = 4'b0000;
@@ -350,20 +346,6 @@ initial begin
     send_cmd_data[1] = 0;
     send_cmd(SLOT_ADC, CMD_FIFO_WRITE, 2);
     
-    /*
-    //  Short audio test
-    for (int i = 0; i < 10; i++) send_cmd_data[i] = (2 * i) + ((2 * i + 1) << 8);
-    send_cmd(8'h01, AUD_FIFO_WRITE, 10);
-    
-    //  Disable recording after 100 us / approx 4 samples (wait for timeout, we should get the data back)
-    #100000 ;
-    send_cmd_data[0] = SLOT_STOP_RECORDING;
-    send_cmd_data[1] = 0;
-    transaction(8'h00, CMD_FIFO_WRITE, 2, 2000, test_receive_length);    //  TBD: How many words to receive?  Depends on timing.
-    
-    //  Test reporting of FIFO status
-    send_cmd_simple(8'h00, FIFO_READ_STATUS);
-    */
     //  Long audio loop: test that we can stall
     for (int i = 0; i < 256; i++) begin
         send_cmd_data[2 * i] = i / 256;
@@ -388,7 +370,98 @@ initial begin
 
     //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
     #50000 send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
+endtask
 
+task test_fifo_status;
+    //  Test reporting of FIFO status
+    send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
+endtask
+
+task test_slot_reset;
+
+    //  a) Pulse reset
+    send_cmd(8'hFF, RESET_SLOTS, 0);
+    
+    //  b) Enter reset and don't leave until we tell it to
+    
+endtask
+
+//  Fun stuff
+
+logic [15:0] test_receive_length;
+initial begin
+    @(negedge reset);
+    
+    @(posedge clk_host);
+    
+    //  Wait 10 us for config information (dir/chan) to be serialized by isolator and received
+    //  and for SS chip selects to be all deasserted (clock startup; ser/des) 
+    #10000 ;
+    
+    //  Run sequence of unit tests
+    test_clock_select;
+    $finish;
+    
+    test_slot_reset;
+    test_acon(0);
+    test_fifo_status;
+    test_spi(0);
+    test_dac(0);
+    test_adc(0);
+    test_loopback(0, 1);
+    
+    /*
+    //  Test clock select
+    //  send_cmd_data[0] = 8'h0D;
+    //  send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
+    
+    //  #50000 ;
+    
+    //  Try some SPI setup stuff.  First, 16 bit transactions (8-bit addr/data).
+    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    //  spi_write(8'h00, 0, 0, 8'h47, 8'hA3);
+    //  spi_read(8'h00, 0, 0, 8'h99, spi_receive_data);
+    //  spi_read(8'h00, 0, 0, 8'hA9, spi_receive_data);
+    
+    //  Stop early
+    //  #50000 $finish;
+    
+    //  Now, 24 bit transactions, 16 bit addr + 8 bit data.
+
+    */
+
+    
+    /*
+    //  Set ACON
+    send_cmd_data[0] = SLOT_SET_ACON;
+    send_cmd_data[1] = 8'h64;
+    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+    #1000 ;
+    send_cmd_data[0] = SLOT_SET_ACON;
+    send_cmd_data[1] = 8'h51;
+    send_cmd(8'h00, CMD_FIFO_WRITE, 2);
+    
+    //  Reset slots
+    send_cmd(8'hFF, RESET_SLOTS, 0);
+    */
+    
+    
+    
+    /*
+    //  Short audio test
+    for (int i = 0; i < 10; i++) send_cmd_data[i] = (2 * i) + ((2 * i + 1) << 8);
+    send_cmd(8'h01, AUD_FIFO_WRITE, 10);
+    
+    //  Disable recording after 100 us / approx 4 samples (wait for timeout, we should get the data back)
+    #100000 ;
+    send_cmd_data[0] = SLOT_STOP_RECORDING;
+    send_cmd_data[1] = 0;
+    transaction(8'h00, CMD_FIFO_WRITE, 2, 2000, test_receive_length);    //  TBD: How many words to receive?  Depends on timing.
+    
+    
+    
+    */
+    
     //  Temporary
     //  #1000 $finish;
 end
@@ -411,7 +484,7 @@ initial begin
     clk_mem = 0;
     clk_host = 0;
     
-    #100 reset = 0;
+    #1000 reset = 0;
 end
 /*
 `ifndef verilator
