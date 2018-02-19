@@ -896,6 +896,7 @@ always @(posedge clk_core) begin
                     clk_inhibit <= (iso.clksel ^ host_in_core.data[0]);
                     reset_slots <= (iso.clksel ^ host_in_core.data[0]);
                     iso.clksel <= host_in_core.data[0];
+                    word_counter <= 0;
                     state <= STATE_IDLE;
                 end
 
