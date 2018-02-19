@@ -119,9 +119,25 @@ set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_obj
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[6]}]] -filter {REF_PIN_NAME == O}]]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[12]}]] -filter {REF_PIN_NAME == O}]]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[18]}]] -filter {REF_PIN_NAME == O}]]
+#   11/19/2017: synthesized net names changed?
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[0].ctl/slot_data_IOBUF[0]_inst/O]]]]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[1].ctl/slot_data_IOBUF[0]_inst/O]]]]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[2].ctl/slot_data_IOBUF[0]_inst/O]]]]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[3].ctl/slot_data_IOBUF[0]_inst/O]]]]
 
 set_property IOSTANDARD LVCMOS33 [get_ports iso*]
-set_property DRIVE 4 [get_ports {iso\.slotdata[*]}]
+
+set_property -dict {DRIVE 8 SLEW SLOW} [get_ports {iso\.slotdata[*]}]
+set_property -dict {DRIVE 4 SLEW SLOW} [get_ports {iso\.hwcon}]
+set_property -dict {DRIVE 12 SLEW SLOW} [get_ports {iso\.reset_n}]
+set_property -dict {DRIVE 12 SLEW SLOW} [get_ports {iso\.clksel}]
+set_property -dict {DRIVE 4 SLEW SLOW} [get_ports {iso\.srclk2}]
+set_property -dict {DRIVE 4 SLEW SLOW} [get_ports {iso\.srclk}]
+
+set_property -dict {DRIVE 8 SLEW FAST} [get_ports {iso\.cs_n}]
+set_property -dict {DRIVE 8 SLEW FAST} [get_ports {iso\.mosi}]
+set_property -dict {DRIVE 8 SLEW FAST} [get_ports {iso\.sclk}]
+
 
 # LED's
 set_property PACKAGE_PIN U9 [get_ports {led_debug[0]}]
