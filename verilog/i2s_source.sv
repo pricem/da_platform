@@ -26,6 +26,7 @@ logic lrck_last;
 logic [23:0] sample_left;
 logic [23:0] sample_right;
 
+logic reset_int;
 logic left_not_right;
 
 FIFOInterface #(.num_bits(48)) samples_local(bck);
@@ -38,12 +39,20 @@ end
 logic [2:0] count_in;
 logic [2:0] count_out;
 fifo_async #(.Nb(48), .M(2)) sample_fifo(
-    .reset,
+    .reset(reset_int),
     .in(samples),
     .in_count(count_in),
     .out(samples_local.out),
     .out_count(count_out)
 );
+
+//  Reset synchronizer - synchronize to BCK so FIFO can properly initialize
+always_ff @(posedge bck or posedge reset) begin
+    if (reset)
+        reset_int <= 1;
+    else
+        reset_int <= 0;
+end
 
 //  BCK/LRCK generator - 256 x Fs
 logic [7:0] mclk_count;
