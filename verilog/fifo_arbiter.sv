@@ -283,7 +283,7 @@ always @(posedge clk_core) begin
             end
             //  Begin a write when there is data waiting
             else if ((in_count[next_port_index] != 0) && !full_flags[next_port_index]) begin
-                port_in_active <= 1;
+
                 //  Count the number of words we are going to write
                 $display("%t %m: port %d in count = %d space remaining = %d", $time, next_port_index, in_count[next_port_index], space_remaining(next_port_index));
                 if (space_remaining(next_port_index) < in_count[next_port_index])
@@ -333,6 +333,7 @@ always @(posedge clk_core) begin
             cur_mem_cmd.read_not_write <= 0;
             mem_cmd_core.valid <= 1;
             last_write_addr[current_port_index] <= (last_write_addr[current_port_index] + write_words_target) & counter_mask;
+            port_in_active <= 1;
             state <= STATE_WRITE_DATA;
         end
         STATE_WRITE_DATA: begin
