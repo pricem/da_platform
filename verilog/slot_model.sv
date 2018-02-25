@@ -88,15 +88,25 @@ initial begin
 end
 
 //  I2S source model, for ADC modes
+wire bck_adc;
+wire lrck_adc;
+wire [3:0] sdata_adc;
+assign slotdata[0] = dir ? 1'bz : bck_adc;
+assign slotdata[1] = dir ? 1'bz : lrck_adc;
+assign slotdata[2] = dir ? 1'bz : sdata_adc[0];
+assign slotdata[3] = dir ? 1'bz : sdata_adc[1];
+assign slotdata[4] = dir ? 1'bz : sdata_adc[2];
+assign slotdata[5] = dir ? 1'bz : sdata_adc[3];
+
 i2s_source adc_model_a(
     .enable(!dir),
     .reset(!reset_n),
     .i2s_master_clk(mclk),
     .sample_clk(sample_clk),
     .samples(samples_in[0]),
-    .bck(slotdata[0]),
-    .lrck(slotdata[1]),
-    .sdata(slotdata[2])
+    .bck(bck_adc),
+    .lrck(lrck_adc),
+    .sdata(sdata_adc[0])
 );
 i2s_source adc_model_b(
     .enable(!dir && chan),
@@ -106,7 +116,7 @@ i2s_source adc_model_b(
     .samples(samples_in[1]),
     .bck(),
     .lrck(),
-    .sdata(slotdata[3])
+    .sdata(sdata_adc[1])
 );
 i2s_source adc_model_c(
     .enable(!dir && chan),
@@ -116,7 +126,7 @@ i2s_source adc_model_c(
     .samples(samples_in[2]),
     .bck(),
     .lrck(),
-    .sdata(slotdata[4])
+    .sdata(sdata_adc[2])
 );
 i2s_source adc_model_d(
     .enable(!dir && chan),
@@ -126,7 +136,7 @@ i2s_source adc_model_d(
     .samples(samples_in[3]),
     .bck(),
     .lrck(),
-    .sdata(slotdata[5])
+    .sdata(sdata_adc[3])
 );
 
 //  I2S receiver model, for DAC modes

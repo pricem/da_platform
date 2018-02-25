@@ -343,8 +343,54 @@ task test_hwcon(input int slot);
     end
 endtask
 
-task test_dac(input int slot);
+task send_slot_cmd_simple(input int slot, input logic [7:0] cmd_id);
+    send_cmd_data[0] = cmd_id;
+    send_cmd_data[1] = 0;
+    send_cmd(slot, CMD_FIFO_WRITE, 2);
+endtask 
+
+task test_dac(input int slot, input int num_samples);
+    int skip_samples;
+    int sample_latency_detected;
+    int num_errors;
+    logic [31:0] samples_received[];
+    logic [31:0] samples_sent[];
+    
+    samples_received = new [num_samples];   //  not really required since using pass by value - see isolator_model.sv
+    samples_sent = new [num_samples];
+    
     //  Supply some samples to the desired slot and use the I2S receiver to compare them.
+    //  We will capture some extra samples first due to latency.  (This is a hack, but
+    //  other solutions for bracketing captures samples are more complex and will be 
+    //  implemented later.)
+    skip_samples = 10;
+    for (int i = 0; i < num_samples; i++) begin
+        samples_sent[i] = $random() & ((1 << 24) - 1);
+        send_cmd_data[2 * i] = samples_sent[i] >> 16;
+        send_cmd_data[2 * i + 1] = samples_sent[i] & ((1 << 16) - 1);
+    end
+    fork
+        send_cmd(slot, AUD_FIFO_WRITE, num_samples * 2);
+        isolator.capture_samples(slot, num_samples + skip_samples, samples_received);
+    join
+
+    sample_latency_detected = -1;
+    for (int i = 0; i < skip_samples; i++) begin
+        if ((sample_latency_detected == -1) && (samples_received[i] != 0))
+            sample_latency_detected = i;
+    end
+    num_errors = 0;
+    for (int i = 0; i < num_samples; i++) begin
+        assert(samples_received[i + sample_latency_detected] === samples_sent[i]) 
+        else begin
+            num_errors++;
+            fail_test($sformatf("DAC output capture sample %0d val %h didn't match supplied value %h", i, samples_received[i + sample_latency_detected], samples_sent[i]));
+        end
+    end
+    $display("%t: test_dac (slot %0d): detected latency of %0d samples, %0d/%0d failures", $time, slot, sample_latency_detected, num_errors, num_samples);
+    
+    samples_received.delete;
+    samples_sent.delete;
 endtask
 
 task test_adc(input int slot);
@@ -394,6 +440,13 @@ endtask
 task test_fifo_status;
     //  Test reporting of FIFO status
     send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
+    
+    #5000;
+    assert(receive_counter == 38) else fail_test("FIFO status command returned %0d bytes, expected 38");
+
+    //  TODO - come back once we know DAC, ADC, etc are working.
+    fail_test("FIFO status test not yet implemented");
+
 endtask
 
 task test_slot_reset;
@@ -439,21 +492,22 @@ initial begin
     #10000 ;
 
     //  Run sequence of unit tests
+
     test_clock_select;
     test_slot_reset;
     for (int i = 0; i < num_slots; i++)
         test_hwcon(i);
     for (int i = 0; i < num_slots; i++)
-        test_spi(0);
+        test_spi(i);
+    for (int i = 0; i < num_slots; i++)
+        test_dac(i, 16);
 
     $display("Counted %0d test failures", num_test_errors);
     $finish;
-    
-    test_fifo_status;
-    
-    test_dac(0);
+
     test_adc(0);
     test_loopback(0, 1);
+    test_fifo_status;
 end
 
 //  Clocks

@@ -84,12 +84,45 @@ initial begin
     end
 end
 
+//  Source/capture configuration
+SlotMode slot_modes[4];
+initial begin
+    for (int i = 0; i < 4; i++) slot_modes[i] = DAC2;
+end
+
+logic [31:0] capture_buffers[4][];
+int capture_counters[4];
+int capture_target_count[4];
+logic capture_enabled[4];
+
+logic [31:0] source_buffers[4][];
+int source_counters[4];
+int source_target_count[4];
+logic source_enabled[4];
+
+initial begin
+    for (int i = 0; i < 4; i++) begin
+        capture_counters[i] = 0;
+        capture_target_count[i] = 0;
+        capture_enabled[i] = 0;
+        
+        source_counters[i] = 0;
+        source_target_count[i] = 0;
+        source_enabled[i] = 0;
+    end
+end
+
 //  Indices for generate loop:
 //  g: destination slot
 //  h: source slot
 //  k: interface index within slot
 generate for (genvar g = 0; g < 4; g++) for (genvar h = 0; h < 4; h++) for (genvar k = 0; k < 4; k++) begin: loopback
     always_comb begin
+        //  By default, let them "float".
+        samples_slot_in[g * 4 + k].valid = 0;
+        samples_slot_in[g * 4 + k].data = 0;
+        samples_slot_out[h * 4 + k].ready = 1;
+    
         //  Is the output of slot g configured to loop back to slot h?
         if (loopback_matrix[h][g] && ((k == 0) || loopback_chan[g])) begin
             //  If so, connect the FIFO interfaces to each other.
@@ -97,12 +130,55 @@ generate for (genvar g = 0; g < 4; g++) for (genvar h = 0; h < 4; h++) for (genv
             samples_slot_in[g * 4 + k].data = samples_slot_out[h * 4 + k].data;
             samples_slot_out[h * 4 + k].ready = samples_slot_in[g * 4 + k].ready;
         end
-        else begin
-            //  Otherwise, let them "float".
-            samples_slot_in[g * 4 + k].valid = 0;
-            samples_slot_in[g * 4 + k].data = 0;
-            samples_slot_out[h * 4 + k].ready = 1;
+
+        if (source_enabled[g]) begin
+            //  Source is enabled
+            samples_slot_in[g * 4 + k].valid = (source_counters[g] < source_target_count[g]);
+            samples_slot_in[g * 4 + k].data = source_buffers[g][source_counters[g]];
         end
+    end
+end
+endgenerate
+
+generate for (genvar g = 0; g < 4; g++) for (genvar k = 0; k < 4; k++) begin: source_capture
+    always_ff @(posedge sample_clk) begin
+
+        if (source_enabled[g]) begin
+            case (slot_modes[g])
+            ADC2: begin
+                $fatal(0, "%t %m: ADC2 ext stimulus not implemented", $time);
+            end
+            ADC8: begin
+                $fatal(0, "%t %m: ADC8 ext stimulus not implemented", $time);
+            end
+            default: $fatal(0, "%t %m: ext stimulus cannot source samples to a DAC", $time);
+            endcase
+        end
+        if (capture_enabled[g]) begin
+            case (slot_modes[g])
+            DAC2: if (k == 0) begin
+                if (samples_slot_out[g * 4].ready && samples_slot_out[g * 4].valid) begin
+                    capture_buffers[g][capture_counters[g]] = samples_slot_out[g * 4].data[47:24];
+                    capture_buffers[g][capture_counters[g] + 1] = samples_slot_out[g * 4].data[23:0];
+                    capture_counters[g] += 2;
+                end
+            end
+            DAC8: begin
+                if (samples_slot_out[g * 4 + k].ready && samples_slot_out[g * 4 + k].valid) begin
+                    capture_buffers[g][capture_counters[g] + k * 2] = samples_slot_out[g * 4 + k].data[47:24];
+                    capture_buffers[g][capture_counters[g] + k * 2 + 1] = samples_slot_out[g * 4 + k].data[23:0];
+                    if (k == 3) capture_counters[g] += 8;
+                end
+            end
+            default: $fatal(0, "%t %m: ext stimulus cannot capture samples from an ADC", $time);
+            endcase
+            //  Auto-stop once we reach the target.
+            if (source_counters[g] >= source_target_count[g])
+                source_enabled[g] = 0;
+            if (capture_counters[g] >= capture_target_count[g])
+                capture_enabled[g] = 0;
+        end
+
     end
 end
 endgenerate
@@ -195,6 +271,17 @@ slot_model slot3(
 
 /*  Control tasks/functions */
 
+task set_slot_mode(input int slot, input SlotMode mode);
+    slot_modes[slot] = mode;
+    case (slot)
+    0: slot0.set_mode(int'(mode));
+    1: slot1.set_mode(int'(mode));
+    2: slot2.set_mode(int'(mode));
+    3: slot3.set_mode(int'(mode));
+    default: $fatal(0, "%t %m: requested module mode change for nonexistent slot %0d", $time, slot);
+    endcase
+endtask
+
 task set_spi_mode(input int slot, input int address_bits, input int data_bits);
     case (slot)
     0: slot0.spi.set_mode(address_bits, data_bits);
@@ -224,6 +311,33 @@ task disable_loopback(input int src, input int dest);
     loopback_matrix[src][dest] = 0;
 endtask
 
+task source_samples(input int slot, input int num_samples, input logic [31:0] samples[]);
+    source_enabled[slot] = 1;
+    source_buffers[slot] = new[num_samples];
+    for (int i = 0; i < num_samples; i++)
+        source_buffers[slot][i] = samples[i];
+    source_target_count[slot] = num_samples;
+    source_counters[slot] = 0;
+    source_buffers[slot].delete;
+endtask
+
+//  I wanted to use a pass by reference for the output samples.
+//  But Vivado doesn't seem to handle that properly, so I'm going to pass by value
+//  and allocate the output array here.
+task automatic capture_samples(input int slot, input int num_samples, output logic [31:0] samples[]);
+    capture_counters[slot] = 0;
+    capture_buffers[slot] = new[num_samples];
+    samples = new[num_samples];
+    capture_target_count[slot] = num_samples;
+    capture_enabled[slot] = 1;
+    while (capture_enabled[slot]) 
+        @(posedge sample_clk);
+    for (int i = 0; i < num_samples; i++) begin
+        //  $display("Capture buffer slot %0d index %0d = %h", slot, i, capture_buffers[slot][i]);
+        samples[i] = capture_buffers[slot][i];
+    end
+    capture_buffers[slot].delete;
+endtask
 
 endmodule
 
