@@ -47,6 +47,8 @@ always_comb begin
     ext_mem_read.valid = (active && cur_cmd.read_not_write) && axi.rvalid;
     ext_mem_read.data = axi.rdata;
     
+    axi.wlast = axi.wvalid && (words_transferred == words_requested - 1);
+    
     //  Tie off unused AXI signals
     axi.awid = 0;
     axi.awsize = 0;
@@ -72,8 +74,6 @@ always_ff @(posedge clk) begin
         axi.awaddr <= 0;
         axi.awlen <= 0;
     
-        axi.wlast <= 0;
-    
         axi.bready <= 0;
     
         axi.araddr <= 0;
@@ -87,7 +87,6 @@ always_ff @(posedge clk) begin
     else begin
         //  For now, ignore write channel responses, and just hope everything works.
         axi.bready <= 1;
-        axi.wlast <= 0;
 
         if (axi.arready) axi.arvalid <= 0;
         if (axi.awready) axi.awvalid <= 0;
@@ -132,8 +131,6 @@ always_ff @(posedge clk) begin
                 end
                 if (axi.awready && axi.awvalid)
                     words_requested <= words_requested + axi.awlen + 1;
-
-                axi.wlast <= (words_transferred == words_requested - 1);
 
                 //  A write is finished once we record the requested number of data words.
                 if (ext_mem_write.ready && ext_mem_write.valid) begin
