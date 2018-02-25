@@ -24,7 +24,9 @@ logic [M:0] rd_addr_bin;
 //	Memory array
 logic [Nb-1:0] data[N-1:0];
 
-assign count = wr_addr_bin - rd_addr_bin;
+//  2/22/2018: Compensate for pending output word when computing count.
+//  (This wouldn't be necessary if data was assigned combinationally.)
+assign count = wr_addr_bin - rd_addr_bin + (!out.ready && out.valid);
 
 //	Full and empty signals
 wire rd_empty = (rd_addr_bin == wr_addr_bin);
