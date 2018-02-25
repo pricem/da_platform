@@ -85,7 +85,7 @@ initial begin
 end
 
 //  Source/capture configuration
-SlotMode slot_modes[4];
+int slot_modes[4];
 initial begin
     for (int i = 0; i < 4; i++) slot_modes[i] = DAC2;
 end
@@ -271,13 +271,13 @@ slot_model slot3(
 
 /*  Control tasks/functions */
 
-task set_slot_mode(input int slot, input SlotMode mode);
+task set_slot_mode(input int slot, input int mode);
     slot_modes[slot] = mode;
     case (slot)
-    0: slot0.set_mode(int'(mode));
-    1: slot1.set_mode(int'(mode));
-    2: slot2.set_mode(int'(mode));
-    3: slot3.set_mode(int'(mode));
+    0: slot0.set_mode(mode);
+    1: slot1.set_mode(mode);
+    2: slot2.set_mode(mode);
+    3: slot3.set_mode(mode);
     default: $fatal(0, "%t %m: requested module mode change for nonexistent slot %0d", $time, slot);
     endcase
 endtask

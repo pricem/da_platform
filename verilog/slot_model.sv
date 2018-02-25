@@ -31,8 +31,8 @@ module slot_model #(
     FIFOInterface.out samples_out[4]
 );
 
-task set_mode(input SlotMode slot_mode);
-    case (slot_mode)
+task set_mode(input int slot_mode);
+    case (SlotMode'(slot_mode))
     DAC2: begin
         dir = 1;
         chan = 0;
