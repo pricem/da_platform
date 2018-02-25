@@ -285,7 +285,7 @@ always @(posedge clk_core) begin
             else if ((in_count[next_port_index] != 0) && !full_flags[next_port_index]) begin
 
                 //  Count the number of words we are going to write
-                $display("%t %m: port %d in count = %d space remaining = %d", $time, next_port_index, in_count[next_port_index], space_remaining(next_port_index));
+                //  $display("%t %m: port %d in count = %d space remaining = %d", $time, next_port_index, in_count[next_port_index], space_remaining(next_port_index));
                 if (space_remaining(next_port_index) < in_count[next_port_index])
                     write_words_target <= space_remaining(next_port_index);
                 else
