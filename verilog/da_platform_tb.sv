@@ -1,6 +1,10 @@
 
 /*
-    Testbench for DA platform being ported to new interfaces
+    Testbench for DA platform
+    
+    Uses behavioral models of USB host interface (via FX2) and DDR3 memory (AXI slave)
+    and checks basic features such as SPI masters and audio I/O.  Limited coverage.
+    
     Michael Price, 8/3/2016
 */
 
@@ -206,6 +210,7 @@ always @(posedge tb_host_clk) begin
 end
 
 task send_cmd_simple(input logic [7:0] destination, input logic [7:0] command, input logic [23:0] data_length);
+    //  No checksum, just raw data.
     host_in.write(destination);
     host_in.write(command);
     for (int i = 0; i < data_length; i++)
@@ -240,6 +245,15 @@ task transaction(input logic [7:0] destination, input logic [7:0] command, input
     receive_counter = 0;
     send_cmd(destination, command, data_length);
     for (int i = 0; i < wait_cycles; i++) @(posedge clk_host);
+    receive_length = receive_counter;
+endtask
+
+task transaction_simple(input logic [7:0] destination, input logic [7:0] command, input logic [23:0] data_length, input logic [15:0] wait_cycles, output logic [9:0] receive_length, input int target_count = -1);
+    receive_counter = 0;
+    send_cmd_simple(destination, command, data_length);
+    for (int i = 0; i < wait_cycles; i++) 
+        if ((target_count == -1) || (receive_counter < target_count)) 
+            @(posedge clk_host);
     receive_length = receive_counter;
 endtask
 
@@ -393,8 +407,51 @@ task test_dac(input int slot, input int num_samples);
     samples_sent.delete;
 endtask
 
-task test_adc(input int slot);
+task test_adc(input int slot, input int num_samples);
     //  Send some samples from an I2S source and make sure we can read them.
+    int skip_samples;
+    int sample_latency_detected;
+    int num_errors;
+    logic [31:0] samples_received[];
+    logic [31:0] samples_sent[];
+    logic [9:0] receive_length;
+    
+    skip_samples = 10;
+    samples_received = new [num_samples + skip_samples];
+    samples_sent = new [num_samples];
+
+    for (int i = 0; i < num_samples; i++) begin
+        samples_sent[i] = $random() & ((1 << 24) - 1);
+    end
+    send_slot_cmd_simple(slot, SLOT_START_RECORDING);
+    fork
+        isolator.source_samples(slot, num_samples, samples_sent);
+        begin
+            send_cmd_data[0] = (num_samples + skip_samples) >> 16;
+            send_cmd_data[1] = (num_samples + skip_samples) & ((1 << 16) - 1);
+            transaction_simple(slot, AUD_FIFO_READ, 2, 10000, receive_length, (num_samples + skip_samples) * 2 + 6);
+            send_slot_cmd_simple(slot, SLOT_STOP_RECORDING);
+        end
+    join
+    sample_latency_detected = -1;
+    for (int i = 0; i < (receive_length - 6) / 2; i++) begin
+        samples_received[i] = (receive_data[i * 2 + 5] << 16) + receive_data[i * 2 + 4];
+        if ((sample_latency_detected == -1) && (samples_received[i] != 0))
+            sample_latency_detected = i;
+    end
+
+    num_errors = 0;
+    for (int i = 0; i < num_samples; i++) begin
+        assert(samples_received[i + sample_latency_detected] === samples_sent[i]) 
+        else begin
+            num_errors++;
+            fail_test($sformatf("ADC output capture sample %0d val %h didn't match supplied value %h", i, samples_received[i + sample_latency_detected], samples_sent[i]));
+        end
+    end
+    $display("%t: test_adc (slot %0d): detected latency of %0d samples, %0d/%0d failures", $time, slot, sample_latency_detected, num_errors, num_samples);
+    
+    samples_received.delete;
+    samples_sent.delete;
 endtask
 
 task test_loopback(input int slot_dac, input int slot_adc);
@@ -492,20 +549,25 @@ initial begin
     #10000 ;
 
     //  Run sequence of unit tests
-
+    
     test_clock_select;
     test_slot_reset;
     for (int i = 0; i < num_slots; i++)
         test_hwcon(i);
     for (int i = 0; i < num_slots; i++)
         test_spi(i);
-    for (int i = 0; i < num_slots; i++)
+    for (int i = 0; i < num_slots; i++) begin
+        isolator.set_slot_mode(i, DAC2);
         test_dac(i, 16);
+    end
+    for (int i = 0; i < num_slots; i++) begin
+        isolator.set_slot_mode(i, ADC2);
+        test_adc(i, 16);
+    end
 
     $display("Counted %0d test failures", num_test_errors);
     $finish;
 
-    test_adc(0);
     test_loopback(0, 1);
     test_fifo_status;
 end

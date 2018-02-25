@@ -134,7 +134,9 @@ generate for (genvar g = 0; g < 4; g++) for (genvar h = 0; h < 4; h++) for (genv
         if (source_enabled[g]) begin
             //  Source is enabled
             samples_slot_in[g * 4 + k].valid = (source_counters[g] < source_target_count[g]);
-            samples_slot_in[g * 4 + k].data = source_buffers[g][source_counters[g]];
+            //  Note: data assignment split instead of using {} operator due to Vivado simulator bug
+            samples_slot_in[g * 4 + k].data[47:24] = source_buffers[g][source_counters[g] + k * 2];
+            samples_slot_in[g * 4 + k].data[23:0] = source_buffers[g][source_counters[g] + k * 2 + 1];
         end
     end
 end
@@ -142,17 +144,21 @@ endgenerate
 
 generate for (genvar g = 0; g < 4; g++) for (genvar k = 0; k < 4; k++) begin: source_capture
     always_ff @(posedge sample_clk) begin
-
         if (source_enabled[g]) begin
             case (slot_modes[g])
-            ADC2: begin
-                $fatal(0, "%t %m: ADC2 ext stimulus not implemented", $time);
+            ADC2: if (k == 0) begin
+                if (samples_slot_in[g * 4 + k].ready && samples_slot_in[g * 4 + k].valid)
+                    source_counters[g] += 2;
             end
-            ADC8: begin
-                $fatal(0, "%t %m: ADC8 ext stimulus not implemented", $time);
+            ADC8: if (k == 0) begin
+                if (samples_slot_in[g * 4 + k].ready && samples_slot_in[g * 4 + k].valid)
+                    source_counters[g] += 8;
             end
             default: $fatal(0, "%t %m: ext stimulus cannot source samples to a DAC", $time);
             endcase
+            //  Auto-stop once we reach the target. 
+            if (source_counters[g] >= source_target_count[g])
+                source_enabled[g] = 0;
         end
         if (capture_enabled[g]) begin
             case (slot_modes[g])
@@ -173,8 +179,6 @@ generate for (genvar g = 0; g < 4; g++) for (genvar k = 0; k < 4; k++) begin: so
             default: $fatal(0, "%t %m: ext stimulus cannot capture samples from an ADC", $time);
             endcase
             //  Auto-stop once we reach the target.
-            if (source_counters[g] >= source_target_count[g])
-                source_enabled[g] = 0;
             if (capture_counters[g] >= capture_target_count[g])
                 capture_enabled[g] = 0;
         end
@@ -314,10 +318,14 @@ endtask
 task source_samples(input int slot, input int num_samples, input logic [31:0] samples[]);
     source_enabled[slot] = 1;
     source_buffers[slot] = new[num_samples];
-    for (int i = 0; i < num_samples; i++)
+    for (int i = 0; i < num_samples; i++) begin
+        //  $display("Source buffer slot %0d index %0d = %h", slot, i, source_buffers[slot][i]);
         source_buffers[slot][i] = samples[i];
+    end
     source_target_count[slot] = num_samples;
     source_counters[slot] = 0;
+    while (source_enabled[slot])
+        @(posedge sample_clk);
     source_buffers[slot].delete;
 endtask
 
