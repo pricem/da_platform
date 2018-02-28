@@ -336,7 +336,7 @@ always_ff @(posedge adc_pbck) begin
     
     //  Write the received samples to the FIFO - up to 8 channels per LRCK cycle
     //  Note that there is no flow control here.  The FIFO better have space.
-    if (recording_enabled_synclr_last) begin
+    if (recording_enabled_synclr_last && !dir_sync_adc) begin
         if ((adc_fifo_write_count < audio_num_channels_adc) && audio_tx.ready) begin
             audio_tx.valid <= 1;
             adc_fifo_write_count <= adc_fifo_write_count + 1;
