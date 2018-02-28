@@ -112,35 +112,48 @@ initial begin
     end
 end
 
-//  Indices for generate loop:
-//  g: destination slot
-//  h: source slot
-//  k: interface index within slot
-generate for (genvar g = 0; g < 4; g++) for (genvar h = 0; h < 4; h++) for (genvar k = 0; k < 4; k++) begin: loopback
-    always_comb begin
-        //  By default, let them "float".
-        samples_slot_in[g * 4 + k].valid = 0;
-        samples_slot_in[g * 4 + k].data = 0;
-        samples_slot_out[h * 4 + k].ready = 1;
-    
-        //  Is the output of slot g configured to loop back to slot h?
-        if (loopback_matrix[h][g] && ((k == 0) || loopback_chan[g])) begin
-            //  If so, connect the FIFO interfaces to each other.
-            samples_slot_in[g * 4 + k].valid = samples_slot_out[h * 4 + k].valid;
-            samples_slot_in[g * 4 + k].data = samples_slot_out[h * 4 + k].data;
-            samples_slot_out[h * 4 + k].ready = samples_slot_in[g * 4 + k].ready;
-        end
+logic samples_slot_in_valid[16];
+logic [47:0] samples_slot_in_data[16];
+logic samples_slot_in_ready[16];
+logic samples_slot_out_valid[16];
+logic [47:0] samples_slot_out_data[16];
+logic samples_slot_out_ready[16];
 
-        if (source_enabled[g]) begin
-            //  Source is enabled
-            samples_slot_in[g * 4 + k].valid = (source_counters[g] < source_target_count[g]);
-            //  Note: data assignment split instead of using {} operator due to Vivado simulator bug
-            samples_slot_in[g * 4 + k].data[47:24] = source_buffers[g][source_counters[g] + k * 2];
-            samples_slot_in[g * 4 + k].data[23:0] = source_buffers[g][source_counters[g] + k * 2 + 1];
-        end
-    end
+generate for (genvar g = 0; g < 16; g++) begin: fifo_assigns
+    assign samples_slot_in[g].valid = samples_slot_in_valid[g];
+    assign samples_slot_in[g].data = samples_slot_in_data[g];
+    assign samples_slot_out[g].ready = samples_slot_out_ready[g];
+    assign samples_slot_in_ready[g] = samples_slot_in[g].ready;
+    assign samples_slot_out_valid[g] = samples_slot_out[g].valid;
+    assign samples_slot_out_data[g] = samples_slot_out[g].data;
 end
 endgenerate
+
+always_comb begin
+    for (int i = 0; i < 16; i++) begin
+        //  By default, let them "float".
+        samples_slot_in_valid[i] = 0;
+        samples_slot_in_data[i] = 0;
+        samples_slot_out_ready[i] = 1;
+    end
+    for (int g = 0; g < 4; g++) for (int h = 0; h < 4; h++) for (int k = 0; k < 4; k++) begin
+        //  Is the output of slot h configured to loop back to slot g?
+        if (loopback_matrix[h][g] && ((k == 0) || loopback_chan[g])) begin
+            //  If so, connect the FIFO interfaces to each other.
+            samples_slot_in_valid[g * 4 + k] = samples_slot_out_valid[h * 4 + k];
+            samples_slot_in_data[g * 4 + k] = samples_slot_out_data[h * 4 + k];
+            samples_slot_out_ready[h * 4 + k] = samples_slot_in_ready[g * 4 + k];
+        end
+        else if (source_enabled[g]) begin
+            //  Source is enabled
+            samples_slot_in_valid[g * 4 + k] = (source_counters[g] < source_target_count[g]);
+            //  Note: data assignment split instead of using {} operator due to Vivado simulator bug
+            samples_slot_in_data[g * 4 + k][47:24] = source_buffers[g][source_counters[g] + k * 2];
+            samples_slot_in_data[g * 4 + k][23:0] = source_buffers[g][source_counters[g] + k * 2 + 1];
+        end
+    
+    end
+end
 
 generate for (genvar g = 0; g < 4; g++) for (genvar k = 0; k < 4; k++) begin: source_capture
     always_ff @(posedge sample_clk) begin

@@ -373,6 +373,8 @@ task test_dac(input int slot, input int num_samples);
     samples_received = new [num_samples];   //  not really required since using pass by value - see isolator_model.sv
     samples_sent = new [num_samples];
     
+    isolator.set_slot_mode(slot, DAC2);
+    
     //  Supply some samples to the desired slot and use the I2S receiver to compare them.
     //  We will capture some extra samples first due to latency.  (This is a hack, but
     //  other solutions for bracketing captures samples are more complex and will be 
@@ -420,6 +422,8 @@ task test_adc(input int slot, input int num_samples);
     samples_received = new [num_samples + skip_samples];
     samples_sent = new [num_samples];
 
+    isolator.set_slot_mode(slot, ADC2);
+
     for (int i = 0; i < num_samples; i++) begin
         samples_sent[i] = $random() & ((1 << 24) - 1);
     end
@@ -454,44 +458,71 @@ task test_adc(input int slot, input int num_samples);
     samples_sent.delete;
 endtask
 
-task test_loopback(input int slot_dac, input int slot_adc);
+task test_loopback(input int slot_dac, input int slot_adc, input int num_samples);
     //  Configure the isolator model to connect I2S lines from one slot to another,
     //  and make sure we read back the same samples from the ADC slot that we wrote
     //  to the DAC slot.
+    int skip_samples;
+    int sample_latency_detected;
+    int num_errors;
+    logic [9:0] receive_length;
+    logic [31:0] samples_received[];
+    logic [31:0] samples_sent[];
+    
+    skip_samples = 16;
+    samples_received = new [num_samples + skip_samples];
+    samples_sent = new [num_samples];
     
     //  Put a blocker on everyone
     send_cmd_data[0] = 4'b0000;
     send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
     
-    //  Enable recording on slot 1 - ADC
+    //  Configure board level model for loopback
+    isolator.set_slot_mode(slot_dac, DAC2);
+    isolator.set_slot_mode(slot_adc, ADC2);
+    isolator.enable_loopback(slot_dac, slot_adc, 0);
+    
+    //  Enable recording on ADC slot
     send_cmd_data[0] = SLOT_START_RECORDING;
     send_cmd_data[1] = 0;
     send_cmd(slot_adc, CMD_FIFO_WRITE, 2);
     
-    //  Long audio loop: test that we can stall
-    for (int i = 0; i < 256; i++) begin
-        send_cmd_data[2 * i] = i / 256;
-        send_cmd_data[2 * i + 1] = i % 256;
+    //  Send audio samples to DAC slot
+    for (int i = 0; i < num_samples; i++) begin
+        samples_sent[i] = $random() & ((1 << 24) - 1);
+        send_cmd_data[2 * i] = samples_sent[i] >> 16;
+        send_cmd_data[2 * i + 1] = samples_sent[i] & ((1 << 16) - 1);
     end
-    send_cmd(slot_dac, AUD_FIFO_WRITE, 512);
+    send_cmd(slot_dac, AUD_FIFO_WRITE, num_samples * 2);
 
     //  Now unblock ADC and DAC simultaneously
-    send_cmd_data[0] = 4'b0011;
+    send_cmd_data[0] = (1 << slot_adc) + (1 << slot_dac);
     send_cmd_simple(8'hFF, UPDATE_BLOCKING, 1);
 
-    for (int i = 0; i < 4; i++) begin
-        #750000     //  1/1/2017: Test audio FIFO read
-        send_cmd_data[0] = 0;
-        send_cmd_data[1] = 64;
-        send_cmd_simple(slot_adc, AUD_FIFO_READ, 2);
+    //  Read from ADC
+    send_cmd_data[0] = (num_samples + skip_samples) >> 16;
+    send_cmd_data[1] = (num_samples + skip_samples) & ((1 << 16) - 1);
+    transaction_simple(slot_adc, AUD_FIFO_READ, 2, 10000, receive_length, (num_samples + skip_samples) * 2 + 6);
+    send_slot_cmd_simple(slot_adc, SLOT_STOP_RECORDING);
+
+    //  Check results
+    sample_latency_detected = -1;
+    for (int i = 0; i < (receive_length - 6) / 2; i++) begin
+        samples_received[i] = (receive_data[i * 2 + 5] << 16) + receive_data[i * 2 + 4];
+        if ((sample_latency_detected == -1) && (samples_received[i] != 0))
+            sample_latency_detected = i;
     end
 
-    send_cmd_data[0] = SLOT_STOP_RECORDING;
-    send_cmd_data[1] = 0;
-    send_cmd(slot_adc, CMD_FIFO_WRITE, 2);
-
-    //  Flush idea to try: wait a fit for all samples to come in, read status, then read remaining samples
-    #50000 send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
+    num_errors = 0;
+    for (int i = 0; i < num_samples; i++) begin
+        assert(samples_received[i + sample_latency_detected] === samples_sent[i]) 
+        else begin
+            num_errors++;
+            fail_test($sformatf("Loopback capture sample %0d val %h didn't match supplied value %h", i, samples_received[i + sample_latency_detected], samples_sent[i]));
+        end
+    end
+    $display("%t: test_loopback (slot %0d->%0d): detected latency of %0d samples, %0d/%0d failures", $time, slot_dac, slot_adc, sample_latency_detected, num_errors, num_samples);
+    isolator.disable_loopback(slot_dac, slot_adc);
 endtask
 
 task test_fifo_status;
@@ -549,26 +580,18 @@ initial begin
     #10000 ;
 
     //  Run sequence of unit tests
-    
     test_clock_select;
     test_slot_reset;
-    for (int i = 0; i < num_slots; i++)
+    for (int i = 0; i < num_slots; i++) begin
         test_hwcon(i);
-    for (int i = 0; i < num_slots; i++)
         test_spi(i);
-    for (int i = 0; i < num_slots; i++) begin
-        isolator.set_slot_mode(i, DAC2);
         test_dac(i, 16);
-    end
-    for (int i = 0; i < num_slots; i++) begin
-        isolator.set_slot_mode(i, ADC2);
         test_adc(i, 16);
+        test_loopback(i, (i + 1) % 4, 16);
     end
-
     $display("Counted %0d test failures", num_test_errors);
     $finish;
 
-    test_loopback(0, 1);
     test_fifo_status;
 end
 
