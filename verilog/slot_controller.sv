@@ -111,10 +111,6 @@ end
 
 logic pdata_active = pdata_left_active || pdata_right_active;
 
-//  Convenience: figure out how many channels we're supposed to have
-logic [3:0] audio_num_channels;
-assign audio_num_channels = chan ? 8 : 2;
-
 //  2 channel DAC mode
 logic dac_pbck;
 logic dac_plrck;
@@ -164,6 +160,19 @@ end
 delay #(.num_cycles(2)) pe_delay(.clk(slot_clk), .reset(reset), .in(playback_enabled && fifo_en), .out(playback_enabled_sync));
 delay #(.num_cycles(2)) re_delay(.clk(adc_pbck), .reset(fifo_reset), .in(recording_enabled && fifo_en), .out(recording_enabled_sync));
 
+//  Synchronizers for dir/chan for ADC and DAC logic
+wire dir_sync_adc;
+wire chan_sync_adc;
+wire dir_sync_dac;
+wire chan_sync_dac;
+delay #(.num_cycles(2)) dir_delay_adc(.clk(adc_pbck), .reset(reset), .in(dir), .out(dir_sync_adc));
+delay #(.num_cycles(2)) chan_delay_adc(.clk(adc_pbck), .reset(reset), .in(chan), .out(chan_sync_adc));
+delay #(.num_cycles(2)) dir_delay_dac(.clk(slot_clk), .reset(reset), .in(dir), .out(dir_sync_dac));
+delay #(.num_cycles(2)) chan_delay_dac(.clk(slot_clk), .reset(reset), .in(chan), .out(chan_sync_dac));
+
+//  Convenience: figure out how many channels we're supposed to have
+wire [3:0] audio_num_channels_adc = chan_sync_adc ? 8 : 2;
+wire [3:0] audio_num_channels_dac = chan_sync_dac ? 8 : 2;
 
 //  SPI controller
 
@@ -207,7 +216,7 @@ spi_master spi(
 (* keep = "true" *) logic [4:0] audio_rx_fifo_rd_count;
 
 FIFOInterface #(.num_bits(32)) audio_rx(slot_clk);
-always_comb audio_rx.ready = (((audio_clk_counter == 0) && (audio_rx_fifo_rd_count >= audio_num_channels)) || (audio_samples_requested > 0));
+always_comb audio_rx.ready = (((audio_clk_counter == 0) && (audio_rx_fifo_rd_count >= audio_num_channels_dac)) || (audio_samples_requested > 0));
 
 logic audio_rx_rd_ready_last;
 delay arfrr_delay(
@@ -275,7 +284,7 @@ always_ff @(posedge adc_pbck) begin
     if (fifo_reset) begin
         recording_enabled_synclr <= 0;
         recording_enabled_synclr_last <= 0;
-        adc_fifo_write_count <= audio_num_channels;
+        adc_fifo_write_count <= audio_num_channels_adc;
     end
     if (fifo_reset || audio_tx.ready) audio_tx.valid <= 0;
     
@@ -328,7 +337,7 @@ always_ff @(posedge adc_pbck) begin
     //  Write the received samples to the FIFO - up to 8 channels per LRCK cycle
     //  Note that there is no flow control here.  The FIFO better have space.
     if (recording_enabled_synclr_last) begin
-        if ((adc_fifo_write_count < audio_num_channels) && audio_tx.ready) begin
+        if ((adc_fifo_write_count < audio_num_channels_adc) && audio_tx.ready) begin
             audio_tx.valid <= 1;
             adc_fifo_write_count <= adc_fifo_write_count + 1;
             if (adc_fifo_write_count[0])
@@ -377,7 +386,7 @@ always_ff @(posedge slot_clk) begin
             audio_clk_counter <= audio_clk_counter + 1;
 
         //  2 channel mode
-        if (dir /* && !chan */) begin
+        if (dir_sync_dac /* && !chan */) begin
             
             //  Digital filtering in DSD1792
             //  Audio serial port
@@ -399,7 +408,7 @@ always_ff @(posedge slot_clk) begin
             */
             //  I2S format
             for (int i = 0; i < 4; i++) begin
-                if (playback_enabled_synclr && (i < audio_num_channels / 2)) begin
+                if (playback_enabled_synclr && (i < audio_num_channels_dac / 2)) begin
                     if (audio_clk_counter < audio_clk_ratio / 2)
                         dac_pdata[i] <= audio_samples_active[i * 2] >> (24 - audio_clk_counter / 4);
                     else
@@ -419,7 +428,7 @@ always_ff @(posedge slot_clk) begin
         end
         
         if (audio_clk_counter == 0) begin
-            for (int i = 0; i < audio_num_channels; i++) begin
+            for (int i = 0; i < audio_num_channels_dac; i++) begin
                 audio_samples_active[i] <= audio_samples_next[i];
                 audio_samples_next[i] <= 0;
             end
@@ -427,7 +436,7 @@ always_ff @(posedge slot_clk) begin
         
         //  Request samples in chunks of 6 bytes (24 bits left/right)
         if (audio_rx.ready) begin
-            if (audio_samples_requested >= audio_num_channels - 1)
+            if (audio_samples_requested >= audio_num_channels_dac - 1)
                 audio_samples_requested <= 0;
             else
                 audio_samples_requested <= audio_samples_requested + 1;
@@ -435,7 +444,7 @@ always_ff @(posedge slot_clk) begin
         
         if (audio_rx.valid && audio_rx_rd_ready_last) begin
             audio_samples_next[audio_samples_received] <= audio_rx.data;
-            if (audio_samples_received >= audio_num_channels - 1)
+            if (audio_samples_received >= audio_num_channels_dac - 1)
                 audio_samples_received <= 0;
             else
                 audio_samples_received <= audio_samples_received + 1;
