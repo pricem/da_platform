@@ -525,16 +525,25 @@ task test_loopback(input int slot_dac, input int slot_adc, input int num_samples
     isolator.disable_loopback(slot_dac, slot_adc);
 endtask
 
-task test_fifo_status;
-    //  Test reporting of FIFO status
+task test_fifo_status(input logic [15:0] words_written, input logic [15:0] words_read);
+    //  Test reporting of FIFO status.  Very simplistic.
+    //  Expects a certain number of words that apply to all channels, one for the
+    //  write (DAC) direction and one for the read (ADC) direction.  
+    receive_counter = 0;
     send_cmd_simple(8'hFF, FIFO_READ_STATUS, 0);
     
     #5000;
-    assert(receive_counter == 38) else fail_test("FIFO status command returned %0d bytes, expected 38");
+    assert(receive_counter == 38) else fail_test($sformatf("FIFO status command returned %0d bytes, expected 38", receive_counter));
 
-    //  TODO - come back once we know DAC, ADC, etc are working.
-    fail_test("FIFO status test not yet implemented");
-
+    assert(receive_data[0] == 16'h00FF) else fail_test("FIFO status command returned unexpected header");
+    assert(receive_data[1] == FIFO_REPORT_STATUS) else fail_test("FIFO status command returned unexpected header");
+    
+    for (int i = 0; i < 8; i++) begin
+        assert(receive_data[4 + i * 2] == words_written[15:8]) else fail_test("FIFO status incorrect");
+        assert(receive_data[4 + i * 2 + 1] == words_written[7:0]) else fail_test("FIFO status incorrect");
+        assert(receive_data[20 + i * 2] == words_read[15:8]) else fail_test("FIFO status incorrect");
+        assert(receive_data[20 + i * 2 + 1] == words_read[7:0]) else fail_test("FIFO status incorrect");
+    end
 endtask
 
 task test_slot_reset;
@@ -589,10 +598,10 @@ initial begin
         test_adc(i, 16);
         test_loopback(i, (i + 1) % 4, 16);
     end
+    test_fifo_status(32, 58);
     $display("Counted %0d test failures", num_test_errors);
     $finish;
 
-    test_fifo_status;
 end
 
 //  Clocks
