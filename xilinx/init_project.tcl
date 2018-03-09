@@ -163,7 +163,7 @@ set_property -name "nl.sdf_anno" -value "0" -objects $obj
 set_property -name "source_set" -value "" -objects $obj
 set_property -name "top" -value "da_platform_tb" -objects $obj
 set_property -name "verilog_define" -value "USE_WRAPPER USE_MIG_MODEL" -objects $obj
-set_property -name "xsim.simulate.runtime" -value "50us" -objects $obj
+set_property -name "xsim.simulate.runtime" -value "3000us" -objects $obj
 
 # Create 'serdes_tb' fileset (if not found)
 if {[string equal [get_filesets -quiet serdes_tb] ""]} {
