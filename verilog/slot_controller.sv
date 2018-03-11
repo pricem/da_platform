@@ -83,34 +83,6 @@ always_ff @(posedge reset or posedge sclk) begin
     end
 end
 
-//  256xFS master clock and I2S output format are the default. Should be configurable though.
-//  TODO: Add configurable output justification, support RJ/LJ in addition to I2S.
-logic pdata_left_active;     //  "LEFT" = "even" numbered channels 0, 2, 4, 6
-logic pdata_right_active;    //  "RIGHT" = "odd" numbered channels 1, 3, 5, 7
-
-always_comb begin
-    case (audio_clk_ratio)
-    256: begin
-        pdata_left_active = (audio_clk_counter > 4) && (audio_clk_counter <= 100);
-        pdata_right_active = (audio_clk_counter > 132) && (audio_clk_counter <= 228);
-    end
-    512: begin
-        pdata_left_active = (audio_clk_counter > 8) && (audio_clk_counter <= 200);
-        pdata_right_active = (audio_clk_counter > 264) && (audio_clk_counter <= 456);
-    end
-    128: begin
-        pdata_left_active = (audio_clk_counter > 2) && (audio_clk_counter <= 50);
-        pdata_right_active = (audio_clk_counter > 66) && (audio_clk_counter <= 114);
-    end
-    default: begin
-        pdata_left_active = 0;
-        pdata_right_active = 0;
-    end
-    endcase
-end
-
-logic pdata_active = pdata_left_active || pdata_right_active;
-
 //  2 channel DAC mode
 logic dac_pbck;
 logic dac_plrck;
@@ -123,7 +95,6 @@ logic dac_dbck = 0;
 logic dac_dsdr = 0;
 logic dac_dsdl = 0;
 
-//  logic pdata_mod = pdata || !pdata_active;
 always_comb begin
     //  Version 2 isolator standardizes which pins are BCK/LRCK/DATA
     //  Side effect: DSD will have to use existing names
@@ -428,7 +399,7 @@ always_ff @(posedge slot_clk) begin
         end
         
         if (audio_clk_counter == 0) begin
-            for (int i = 0; i < audio_num_channels_dac; i++) begin
+            for (int i = 0; i < 8; i++) if (i < audio_num_channels_dac) begin
                 audio_samples_active[i] <= audio_samples_next[i];
                 audio_samples_next[i] <= 0;
             end
