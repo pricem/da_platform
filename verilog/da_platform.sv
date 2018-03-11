@@ -213,9 +213,7 @@ assign hwcon_parallel[7:4] = 4'b0000;
       the generate loop for per-slot logic).
  */
 
-FIFOInterface #(.num_bits(32)) aud_slots_in_write[num_slots] (clk_core);
 FIFOInterface #(.num_bits(32)) aud_slots_in_read[num_slots] (clk_core);
-
 FIFOInterface #(.num_bits(32)) aud_slots_out_write[num_slots] (clk_core);
 
 (* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_in[num_slots] (clk_core);
@@ -236,10 +234,6 @@ logic [31:0] arb_out_data[num_slots * 2];
 
 generate for (g = 0; g < num_slots; g++) always_comb begin
     //  Audio in (DAC) has arbitrator I/O ports from 0 to num_slots - 1
-    aud_slots_in_write[g].ready = arb_in_ready[g];
-    arb_in_enable[g] = aud_slots_in_write[g].valid;
-    arb_in_data[g] = aud_slots_in_write[g].data;
-
     arb_out_ready[g] = aud_slots_in_read[g].ready;
     aud_slots_in_read[g].valid = arb_out_enable[g];
     aud_slots_in_read[g].data = arb_out_data[g];
@@ -359,12 +353,12 @@ generate for (g = 0; g < num_slots; g++) begin: slots
     //  but assignment to master interfaces has to be done with assign.
     always_comb begin
         if (slot_index == g) begin
-            aud_slots_in_write[g].valid = aud_in_write.valid;
-            aud_slots_in_write[g].data = aud_in_write.data;
+            arb_in_enable[g] = aud_in_write.valid;
+            arb_in_data[g] = aud_in_write.data;
         end
         else begin
-            aud_slots_in_write[g].valid = 0;
-            aud_slots_in_write[g].data = 0;
+            arb_in_enable[g] = 0;
+            arb_in_data[g] = 0;
         end
     end
     
