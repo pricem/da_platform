@@ -482,6 +482,9 @@ task test_loopback(input int slot_dac, input int slot_adc, input int num_samples
     isolator.set_slot_mode(slot_adc, ADC2);
     isolator.enable_loopback(slot_dac, slot_adc, 0);
     
+    //  Wait a bit for bus to change direction
+    #20000;
+    
     //  Enable recording on ADC slot
     send_cmd_data[0] = SLOT_START_RECORDING;
     send_cmd_data[1] = 0;
