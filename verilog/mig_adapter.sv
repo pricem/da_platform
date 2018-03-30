@@ -51,17 +51,18 @@ always_comb begin
     
     //  Tie off unused AXI signals
     axi.awid = 0;
-    axi.awsize = 0;
+    axi.awsize = 2;
     axi.awburst = INCR;
     axi.awlock = 0;
     axi.awcache = 3;
     axi.awprot = 0;
     axi.awqos = 0;
     
-    axi.wstrb = 0;
+    //  wstrb seems to indicate which words/bits are valid?
+    axi.wstrb = (axi.wvalid ? '1 : '0);
     
     axi.arid = 0;
-    axi.arsize = 0;
+    axi.arsize = 2;
     axi.arburst = INCR;
     axi.arlock = 0;
     axi.arcache = 3;
@@ -73,6 +74,8 @@ always_ff @(posedge clk) begin
     if (reset) begin
         axi.awaddr <= 0;
         axi.awlen <= 0;
+        axi.arvalid <= 0;
+        axi.awvalid <= 0;
     
         axi.bready <= 0;
     
