@@ -181,7 +181,7 @@ dram_fifo_pll_inst (
 //  Memory adapter (MIG)
 MIGAdapter mig_adapter(
     .clk(clk_mem),
-    .reset,
+    .reset(ui_clk_sync_rst),
     .ext_mem_cmd(mem_cmd.in),
     .ext_mem_write(mem_write.in),
     .ext_mem_read(mem_read.out),
@@ -230,7 +230,7 @@ mig_7series_0 mem0 (
     .ddr3_dm(ddr3_dm),
     .ddr3_odt(ddr3_odt[0]),
     
-    .aresetn(ui_clk_sync_rst),
+    .aresetn(!ui_clk_sync_rst),
 
     .s_axi_awid(mem_axi.awid),
     .s_axi_awaddr(mem_axi.awaddr),
