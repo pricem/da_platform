@@ -195,17 +195,17 @@ MIGAdapter mig_adapter(
 
 mem_model_axi sim_mem(
     .aclk(uiclk),
-    .aresetn(ui_clk_sync_rst),
+    .aresetn(!ui_clk_sync_rst),
     .axi(mem_axi.slave)
 );
 
 //  Model clock generation and startup of MIG
 initial begin
     uiclk = 0;
-    ui_clk_sync_rst = 0;
+    ui_clk_sync_rst = 1;
     init_calib_complete = 0;
     
-    #100 ui_clk_sync_rst = 1;
+    #100 ui_clk_sync_rst = 0;
     #1000 init_calib_complete = 1;
 end
 
