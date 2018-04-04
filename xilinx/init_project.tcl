@@ -86,14 +86,6 @@ if {[string equal [get_filesets -quiet constrs_1] ""]} {
 set obj [get_filesets constrs_1]
 
 # Add/Import constrs file and set constrs file properties
-set file "[file normalize "constraints/usb_fpga_2_13a_mem.xdc"]"
-set file_added [add_files -norecurse -fileset $obj $file]
-set file "constraints/usb_fpga_2_13a_mem.xdc"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
-set_property -name "file_type" -value "XDC" -objects $file_obj
-
-# Add/Import constrs file and set constrs file properties
 set file "[file normalize "constraints/da_platform.xdc"]"
 set file_added [add_files -norecurse -fileset $obj $file]
 set file "constraints/da_platform.xdc"
