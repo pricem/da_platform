@@ -25,11 +25,11 @@ reg [15:0] request_addr_contents;
 reg request_data_bytes;
 reg [15:0] request_data_contents;
 
-parameter STATE_IDLE = 4'h0;
-parameter STATE_SEND_ADDR = 4'h1;
-parameter STATE_SEND_DATA = 4'h2;
-parameter STATE_READ_DATA = 4'h3;
-parameter STATE_RESPOND = 4'h4;
+localparam STATE_IDLE = 4'h0;
+localparam STATE_SEND_ADDR = 4'h1;
+localparam STATE_SEND_DATA = 4'h2;
+localparam STATE_READ_DATA = 4'h3;
+localparam STATE_RESPOND = 4'h4;
 
 reg [5:0] bit_counter;
 reg [5:0] num_ss_cycles;

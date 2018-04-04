@@ -216,8 +216,8 @@ assign hwcon_parallel[7:4] = 4'b0000;
 FIFOInterface #(.num_bits(32)) aud_slots_in_read[num_slots] (clk_core);
 FIFOInterface #(.num_bits(32)) aud_slots_out_write[num_slots] (clk_core);
 
-(* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_in[num_slots] (clk_core);
-(* keep = "true" *) FIFOInterface #(.num_bits(host_width)) ctl_slots_out[num_slots] (clk_core);
+(* keep = "true" *) FIFOInterface #(.num_bits(8)) ctl_slots_in[num_slots] (clk_core);
+(* keep = "true" *) FIFOInterface #(.num_bits(8)) ctl_slots_out[num_slots] (clk_core);
 
 //  RAM-based arbiter for audio FIFOs
 //  (in both directions; that's why num_ports = num_slots * 2
@@ -280,7 +280,7 @@ FIFOInterface #(.num_bits(32)) aud_in_read (clk_core);
 FIFOInterface #(.num_bits(32)) aud_out_write (clk_core);
 FIFOInterface #(.num_bits(32)) aud_out_read (clk_core);
 
-FIFOInterface #(.num_bits(host_width)) ctl_in (clk_core);
+FIFOInterface #(.num_bits(8)) ctl_in (clk_core);
 //  FIFOInterface #(.num_bits(host_width)) ctl_out (clk_core);
 
 //  Extra flow control for host input FIFO
@@ -317,8 +317,6 @@ logic ctl_slots_out_waiting[num_slots];
 logic [host_width - 1 : 0] ctl_slots_out_data[num_slots];
 generate for (g = 0; g < num_slots; g++) begin: ctl_slot_map
     always_comb begin
-        ctl_slots_out[g].data[15:8] = 0;    //  since slot controller ctl output is currently 8 bits wide
-    
         ctl_slots_in_ready[g] = ctl_slots_in[g].ready;
         ctl_slots_out[g].ready = ctl_slots_out_ready[g];
         ctl_slots_out_enable[g] = ctl_slots_out[g].valid;
@@ -827,7 +825,7 @@ always @(posedge clk_core) begin
                         end
                         else if (current_cmd == CMD_FIFO_WRITE) begin
                             ctl_in.valid <= 1;
-                            ctl_in.data <= host_in_core.data;
+                            ctl_in.data <= host_in_core.data[7:0];
                         end
                         /*
                         else begin  // if (current_cmd == AUD_FIFO_READ)
