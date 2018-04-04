@@ -244,7 +244,6 @@ set real_mig_sim_files [list \
     "[file normalize "./ip/mig_7series_0/user_design/rtl/mig_7series_0_mig_sim.v"]" \
     "[file normalize "./ip/mig_7series_0/user_design/rtl/ip_top/mig_7series_v4_0_mem_intfc.v"]" \
     "[file normalize "./ip/mig_7series_0/user_design/rtl/ip_top/mig_7series_v4_0_memc_ui_top_axi.v"]" \
-    "[file normalize "./ip/mig_7series_0/user_design/rtl/ip_top/mig_7series_v4_0_memc_ui_top_std.v"]" \
     "[file normalize "./ip/mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_ecc_dec_fix.v"]" \
     "[file normalize "./ip/mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_ecc_merge_enc.v"]" \
     "[file normalize "./ip/mig_7series_0/user_design/rtl/ecc/mig_7series_v4_0_fi_xor.v"]" \
