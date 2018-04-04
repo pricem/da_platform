@@ -69,7 +69,7 @@ end
 //  SCLK generation, along with a reset synchronized to it
 reg sclk_en;
 reg sclk_en_latched;
-wire sclk_ungated;
+(* keep = "true" *) wire sclk_ungated;
 wire sclk_last;
 reg reset_sclk;
 
@@ -87,7 +87,7 @@ always @(posedge clk_core) begin
 end
 
 //  SRCLK/SRCLK2 generation - for serializers
-logic srclk_sync;
+(* keep = "true" *) logic srclk_sync;
 logic srclk2_sync;
 logic srclk2_fpga_launch;
 logic srclk2_fpga_capture;

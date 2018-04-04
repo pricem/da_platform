@@ -1,11 +1,10 @@
-# fxclk_in
+# fxclk_in - nominal period is 20.833 (48 MHz)
 create_clock -period 20.833 -name fxclk_in [get_ports fxclk_in]
 set_property PACKAGE_PIN P15 [get_ports fxclk_in]
 set_property IOSTANDARD LVCMOS33 [get_ports fxclk_in]
 
-# IFCLK
+# IFCLK - nominal period is 20.833 (48 MHz)
 create_clock -period 20.833 -name ifclk_in [get_ports ifclk_in]
-#create_clock -name ifclk_in -period 33.333 [get_ports ifclk_in]
 set_property PACKAGE_PIN P17 [get_ports ifclk_in]
 set_property IOSTANDARD LVCMOS33 [get_ports ifclk_in]
 
@@ -59,10 +58,12 @@ set_property PACKAGE_PIN U16 [get_ports fx2_slwr]
 
 set_property IOSTANDARD LVCMOS33 [get_ports fx2_*]
 set_property DRIVE 4 [get_ports {fx2_fd[*]}]
-set_input_delay -clock ifclk_in -min 0.000 [get_ports {fx2_flag* {fx2_fd[*]}}]
-set_input_delay -clock ifclk_in -max 14.000 [get_ports {fx2_flag* {fx2_fd[*]}}]
-set_output_delay -clock ifclk_in -min 0.000 [get_ports {fx2_slrd fx2_slwr}]
-set_output_delay -clock ifclk_in -max 14.000 [get_ports {fx2_slrd fx2_slwr}]
+set fx2_ports_in [get_ports {fx2_flag* {fx2_fd[*]}}]
+set_input_delay -clock ifclk_in -min 0 $fx2_ports_in
+set_input_delay -clock ifclk_in -max 12 $fx2_ports_in
+set fx2_ports_out [get_ports {fx2_slrd fx2_slwr fx2_sloe fx2_fifoaddr0 fx2_fifoaddr1 fx2_pktend {fx2_fd[*]}}]
+set_output_delay -clock ifclk_in -min 0 $fx2_ports_out
+set_output_delay -clock ifclk_in -max 12 $fx2_ports_out
 
 # Isolator interface
 
@@ -114,16 +115,53 @@ create_clock -period 40 -name clk0 [get_ports {iso\.mclk}]
 set_false_path -from [get_clocks clk0] -to [get_clocks ifclk_out]
 set_false_path -to [get_clocks clk0] -from [get_clocks ifclk_out]
 
+#   Explicitly name the internally generated clocks
+#   The period of 166.664 is 8x that of the 48 MHz fxclk/ifclk, so Vivado knows they're synchronous
+create_clock -period 166.664 -name sclk [get_nets main/sclk_ungated]
+
+#   Set I/O delays for remaining signals
+set_input_delay -clock sclk -min 0 [get_ports [list {iso\.dirchan} {iso\.hwflag} {iso\.miso}]]
+set_input_delay -clock sclk -max 70 [get_ports [list {iso\.dirchan} {iso\.hwflag} {iso\.miso}]]
+set_output_delay -clock sclk -min 0 [get_ports [list {iso\.hwcon} {iso\.cs_n} {iso\.mosi}]]
+set_output_delay -clock sclk -min 70 [get_ports [list {iso\.hwcon} {iso\.cs_n} {iso\.mosi}]]
+
+set_output_delay -clock ifclk_out -min 0 [get_ports [list {iso\.clksel} {iso\.reset_n}]]
+set_output_delay -clock ifclk_out -max 10 [get_ports [list {iso\.clksel} {iso\.reset_n}]]
+
+#   Set contraints for BCK inputs which can be up to... 12.2 MHz for 192 kHz?
+create_clock -period 80 -name slot0_bck [get_ports {iso\.slotdata[0]}]
+set slot0_data_pins [get_ports [list {iso\.slotdata[1]} {iso\.slotdata[2]} {iso\.slotdata[3]} {iso\.slotdata[4]} {iso\.slotdata[5]}]]
+set_input_delay -clock slot0_bck -min 0 $slot0_data_pins
+set_input_delay -clock slot0_bck -max 40 $slot0_data_pins
+set_output_delay -clock slot0_bck -min 0 $slot0_data_pins
+set_output_delay -clock slot0_bck -max 25 $slot0_data_pins
+
+create_clock -period 80 -name slot1_bck [get_ports {iso\.slotdata[6]}]
+set slot1_data_pins [get_ports [list {iso\.slotdata[7]} {iso\.slotdata[8]} {iso\.slotdata[9]} {iso\.slotdata[10]} {iso\.slotdata[11]}]]
+set_input_delay -clock slot1_bck -min 0 $slot1_data_pins
+set_input_delay -clock slot1_bck -max 40 $slot1_data_pins
+set_output_delay -clock slot1_bck -min 0 $slot1_data_pins
+set_output_delay -clock slot1_bck -max 25 $slot1_data_pins
+
+create_clock -period 80 -name slot2_bck [get_ports {iso\.slotdata[12]}]
+set slot2_data_pins [get_ports [list {iso\.slotdata[13]} {iso\.slotdata[14]} {iso\.slotdata[15]} {iso\.slotdata[16]} {iso\.slotdata[17]}]]
+set_input_delay -clock slot2_bck -min 0 $slot2_data_pins
+set_input_delay -clock slot2_bck -max 40 $slot2_data_pins
+set_output_delay -clock slot2_bck -min 0 $slot2_data_pins
+set_output_delay -clock slot2_bck -max 25 $slot2_data_pins
+
+create_clock -period 80 -name slot3_bck [get_ports {iso\.slotdata[18]}]
+set slot3_data_pins [get_ports [list {iso\.slotdata[19]} {iso\.slotdata[20]} {iso\.slotdata[21]} {iso\.slotdata[22]} {iso\.slotdata[23]}]]
+set_input_delay -clock slot3_bck -min 0 $slot3_data_pins
+set_input_delay -clock slot3_bck -max 40 $slot3_data_pins
+set_output_delay -clock slot3_bck -min 0 $slot3_data_pins
+set_output_delay -clock slot3_bck -max 25 $slot3_data_pins
+
 #   Vivado needs to be chill about BCK pins and clock routing.
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[0]}]] -filter {REF_PIN_NAME == O}]]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[6]}]] -filter {REF_PIN_NAME == O}]]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[12]}]] -filter {REF_PIN_NAME == O}]]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets {iso\.slotdata[18]}]] -filter {REF_PIN_NAME == O}]]
-#   11/19/2017: synthesized net names changed?
-#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[0].ctl/slot_data_IOBUF[0]_inst/O]]]]
-#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[1].ctl/slot_data_IOBUF[0]_inst/O]]]]
-#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[2].ctl/slot_data_IOBUF[0]_inst/O]]]]
-#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_nets main/slots[3].ctl/slot_data_IOBUF[0]_inst/O]]]]
 
 set_property IOSTANDARD LVCMOS33 [get_ports iso*]
 
@@ -138,7 +176,6 @@ set_property -dict {DRIVE 8 SLEW FAST} [get_ports {iso\.cs_n}]
 set_property -dict {DRIVE 8 SLEW FAST} [get_ports {iso\.mosi}]
 set_property -dict {DRIVE 8 SLEW FAST} [get_ports {iso\.sclk}]
 
-
 # LED's
 set_property PACKAGE_PIN U9 [get_ports {led_debug[0]}]
 set_property PACKAGE_PIN V9 [get_ports {led_debug[1]}]
@@ -147,11 +184,8 @@ set_property PACKAGE_PIN V7 [get_ports {led_debug[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {led_debug[*]}]
 set_property DRIVE 12 [get_ports {led_debug[*]}]
 
-
 # TIG's
-set_false_path -from [get_clocks *ifclk_out] -to [get_clocks *clk200_in]
-set_false_path -from [get_clocks *ifclk_out] -to [get_clocks]
-set_false_path -from [get_clocks *clk_pll_i] -to [get_clocks *ifclk_out]
+set_clock_groups -group {ifclk_in ifclk_out srclk_sync sclk} -group clk_pll_i -group {clk0 slot0_bck slot1_bck slot2_bck slot3_bck} -asynchronous
 
 # bitstream settings
 set_property BITSTREAM.CONFIG.CONFIGRATE 66 [current_design]
