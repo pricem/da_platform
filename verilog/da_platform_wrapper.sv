@@ -7,7 +7,7 @@
 module da_platform_wrapper #(
     host_width = 16,
     mem_width = 32,
-    sclk_ratio = 8,
+    sclk_ratio = 16,
     num_slots = 4
 ) (
     //  ZTEX global inputs

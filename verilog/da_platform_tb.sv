@@ -263,7 +263,7 @@ task spi_read(input logic [7:0] destination, input logic addr_size, input logic 
     send_cmd_data[1] = {6'h00, addr_size, data_size};
     send_cmd_data[2] = addr[15:8];
     send_cmd_data[3] = addr[7:0];
-    transaction(destination, CMD_FIFO_WRITE, 4, 1500, receive_length);
+    transaction(destination, CMD_FIFO_WRITE, 4, 3000, receive_length);
     
     data = (receive_data[7][7:0] << 8) + receive_data[8][7:0];
     $display("%t spi_read(addr %h): receive length = %d, data = %h", $time, addr, receive_length, data);
@@ -353,7 +353,7 @@ task test_hwcon(input int slot);
         send_cmd_data[1] = hwcon_val;
         send_cmd(slot, CMD_FIFO_WRITE, 2);
         
-        #30000 assert (isolator.get_hwcon_parallel(slot) === hwcon_val) else fail_test($sformatf("Setting HWCON for slot %0d didn't work", slot));
+        #60000 assert (isolator.get_hwcon_parallel(slot) === hwcon_val) else fail_test($sformatf("Setting HWCON for slot %0d didn't work", slot));
     end
 endtask
 
