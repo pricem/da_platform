@@ -305,12 +305,18 @@ always @(posedge clk_core) begin
             state <= STATE_READ_CMD;
         end
         STATE_READ_CMD: begin
-            //  Submit command for read
-            cur_mem_cmd.length <= read_words_target;
-            cur_mem_cmd.address <= last_read_addr[current_port_index] + (current_port_index << region_log_depth);
-            cur_mem_cmd.read_not_write <= 1;
-            mem_cmd_core.valid <= 1;
-            state <= STATE_READ_DATA;
+            //  Submit command for read, if we need nonzero amount of data
+            if (read_words_target > 0) begin
+                cur_mem_cmd.length <= read_words_target;
+                cur_mem_cmd.address <= last_read_addr[current_port_index] + (current_port_index << region_log_depth);
+                cur_mem_cmd.read_not_write <= 1;
+                mem_cmd_core.valid <= 1;
+                state <= STATE_READ_DATA;
+            end
+            else begin
+                port_out_active <= 0;
+                state <= STATE_WAITING;
+            end
         end
         STATE_READ_DATA: begin
             //  Watch data go by and stop when we have target number of words

@@ -102,7 +102,12 @@ always_ff @(posedge clk) begin
         end
 
         if (active) begin
-            if (cur_cmd.read_not_write) begin
+            if (cur_cmd.length == 0) begin
+                //  Skip 0-length transfers
+                $display("%t %m: warning: zero-length transfer requested", $time);
+                active <= 0;
+            end
+            else if (cur_cmd.read_not_write) begin
                 //  Request more AXI reads as necessary
                 if (axi.arready && !axi.arvalid && (words_requested < cur_cmd.length)) begin
                     axi.araddr <= PHYS_ADDR_OFFSET + ((cur_cmd.address + words_requested) << 2);
