@@ -112,10 +112,10 @@ always_comb begin
     srclk2_fpga_capture = !(sclk_ungated && srclk2_fpga_capture_en);
 end
 
-always_ff @(posedge sclk_ungated) begin
-    srclk_sync <= !(cycle_count % 8 == 7);
-    srclk2_sync <= !(cycle_count % 64 == 63);
-end
+//  srclk2_sync is generated from negative edge so it is stable when srclk_sync changes.
+//  This is intended to avoid hold violations in per-slot hwcon serializers.
+always_ff @(negedge sclk_ungated) srclk2_sync <= !(cycle_count % 64 == 63);
+always_ff @(posedge sclk_ungated) srclk_sync <= !(cycle_count % 8 == 7);
 
 reg [3:0] clk_inhibit;
 reg [3:0] reset_slots;
