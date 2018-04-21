@@ -6300,6 +6300,106 @@ Hard to separate my impressions about the source from the amps, which have also 
 
 
 
+4/4/2018
+--------
+
+More general listening impressions:
+    Clean but sometimes a little sterile on the top end.
+    Definitely need a better woofer amp, XLS1500 is showing its weaknesses now that I've gotten to listen to it for a while.  Missing some richness and dynamics.
+    All in all, needs further experimentation (incl. SE vs. diff, filter adjustments) after amp situation is remedied.
+    Also, never measured top end response of DAC2 with different caps (slot 1), maybe there's something wrong there.
+
+Have done a lot of code rewriting and simulation work.  Almost ready for open source.
+Also cleaned up synthesis warnings and timing violations.
+Now time for testing the new bitstream - obviously, doesn't work, need to debug with ILA.
+
+First notes:
+    Hang when running loopback test.
+    Recording is enabled, data is coming into ADC
+    Within slot controller, adc_fifo_write_count = 8 (normal)
+    audio_tx_fifo_{wr,rd}_count = 0x10.  Which means audio_tx_fifo is full.
+    Who reads audio_tx_fifo?
+    Main state is 1    --handle input, why?
+    When I stop execution before adc.audio_read_write, ILA shows what looks like normal operation.  
+        FIFO status is 8M words writtein, 64 read.
+        I can see the write count increment at what looks like the right rate.
+        I can read 16 words 5 times before things go awry.
+        The first time I read, the FIFO status shows read counter going up to 80.  Then it stays there.
+        So at least I'm probably getting valid data?  The question is why does reading 16 words screw it over?
+        I can also read 32 words, or 256, or 1k.  But after the first read it's screwed.
+    Fair enough, let's try isolating this in simulation.
+        See it in the arbiter.  port_out_sel is ready but not valid on 2nd batch.  (1st batch looks fine.)
+        Looks like it goes back to mem cmd / MIG adapter: requested 0 words.
+        FIFO to the top level is full (64)
+    -> Fix applied to prevent FIFO arbiter from requesting 0 word transfers.
+        Now I can run loopback script and get data...
+    OK, now hook up some XLRs and try really looping back.
+    Doh, it's RCA only for the ADC.  Try DAC8 to ADC8 as sanity check?
+        Reasonable looking noise, but no signal.
+        Multimeter confirms 0 V from DAC8.
+        ILA on I2S lines?  Nah, multimeter.  Seems they're getting something.  0.8 V DC.
+        Check register map / HW interface pins.
+        Reset?  (pin 48) High (inactive) at module interface, couldn't probe directly.
+        Supplies are good-1.8/3.3/5
+        DC level of the outputs is 0.  Disabled internally?
+        HWCON voltage is 2.47 which will definitely screw things up, because HWCON connects directly to SPI mux.
+        HWCON vs slot is 3.3 (8), 2.47 (6), 2.47 (6), 1.64 (4).
+        OK, HWCON is broken.  The same voltages are there when I write 0 to all HWCON registers.
+        -> Examine this on ILA first.  Sim looks fine.
+            Already had serialized HWCON on ILA.  Looks consistent with HW.  Need to find out why command didn't get through.
+            8 word message - OK
+            Checksums don't match?  Hard to tell...
+            Slot 3 gets current_cmd = 0x80, which is right.
+        What do you know, monitoring with ILA causing it to work.
+        What about SPI? 
+            SCLK divider ratio was set to 8.  Changed to 16 to reduce from 6 MHz to 3 MHz.
+            (AKxxxx datasheet says 5 MHz max.)
+        I2S lines look OK in ILA, nonzero data.
+        
+4/12/2018
+----------
+After computer hiatus, time for more debug.
+
+Symptoms: (slot 2-3 8 ch loopback test)
+    Can read plausible data from ADC, but no actual signal from DAC, it appears.
+    Multimeter confirms 0 volts at outputs.
+    On DAC8v2 board, R7/R8 are the first 2 channel outputs.
+        But their DC is at 0 V?
+        Something is disabled in the DAC.
+        HWCON still messed up at the moment.  What?
+        -> Debug again.  And look at warning messages?
+        After setting HWCONs to all 0, get 3.3 on slots 0-2 and 1.65 on slot 3
+        
+Possibly a hold issue related to CS/HWCON serializers.
+    At top level:
+        Parallel clk: srclk_sync
+        Serial clk: sclk_ungated
+        -> Should be fine
+    At slot level:
+        Parallel clk: srclk2_sync ( = !(cycle_count % 64 == 63) )
+        Serial clk: srclk_sync ( = !(cycle_count % 8 == 7) )
+        Both of these are registers clocked on the rising edge of sclk_ungated
+        The serializer checks clk_par (srclk2_sync) at the negative edge of clk_ser (srclk_sync), so clk_par should be stable before clk_ser falls
+            IOW, srclk_sync should be delayed slightly after srclk2_sync
+            
+Implemented a fix which is to trigger srclk2_sync on negedge of sclk so it happens a bit earlier than srclk_sync - avoid hold violations
+    Now we have audio of some kind... Not clean though.
+    Must be way too slow.  Periods of valid audio with zeros in between.
+    Maybe this is just the same software limitation I've seen before.
+        -> Need a faster driver of course.
+    Playing a tone through the 2-ch DAC, amplitude looked good.
+    Playing music through FIR crossover (2-way), amplitudes look good.
+        -> Proceed to testing with speakers.
+
+
+4/21/2018
+---------
+From testing, there were relatively frequent audio glitches and the host Python script was very busy.
+    Cause: stalling during audio write
+    Fix: adjustment to FIFO arbiter state machine
+    
+Now, an earlier problem with the filters getting stuck seems to be resolved.  Everything ran smoothly overnight.
+But frequency response is messed up (filters? wiring connections?).
 
 
 
