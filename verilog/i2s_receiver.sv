@@ -1,11 +1,19 @@
 /*
-    I2S receiver model - simulation only.
-    Detects audio samples present on I2S bus and sends them out via FIFO. 
-    Prints notifications when audio samples are received in I2S format. 
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    i2s_receiver: I2S receiver model - simulation only.
+    Detects audio samples present on I2S bus and sends them out via FIFO.
+    Prints notifications when audio samples are received in I2S format.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps
-
 
 module i2s_receiver(
     input logic enable,

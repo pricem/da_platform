@@ -1,11 +1,17 @@
-/*	
-    fifo_async - Asynchronous FIFO
+/*
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
 
+    fifo_async: Asynchronous FIFO.  
     Based on Cliff Cummings' design described in:
     "Simulation and Synthesis Techniques for Asynchronous FIFO Design"
     http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO1.pdf
-    
-    Adapted to SV interfaces by Michael Price 12/28/2017
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps

@@ -1,12 +1,22 @@
+/*
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    spi_slave: Simple simulation model of SPI slave.
+    - read/write registers
+    - first bit received is used for read/write
+    - next 7 bits (assuming 8-bit mode) used for address
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+*/
+
 `timescale 1ns / 1ps
 
 module spi_slave(clk, reset, sck, ss, mosi, miso);
-
-//  Simple simulation model - read/write registers
-//  - first bit received is used for read/write
-//  - next 7 bits (assuming 8-bit mode) used for address
-
-//  Mimics DSD1792A - other SPI slaves may have different behavior
 
 parameter int max_addr_bits = 16;
 parameter int max_data_bits = 16;

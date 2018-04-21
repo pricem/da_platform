@@ -1,8 +1,16 @@
 /*
-    FIFO arbiter - uses external DDR SDRAM to implement a vector of byte-wide FIFOs
-    SV port (8/3/2016)
-    Async FIFOs are included here since this is the endpoint of the memory related interfaces.
-    For now, fixed 32 bit sample width.  (Internally, FIFOs are serialized to match memory interface width.)
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    fifo_arbiter: Uses a single fast memory (i.e. external DDR SDRAM) to
+    implement a vector of virtual FIFOs, one in each direction for each
+    module.  Each FIFO is currently 32 bits wide.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps
@@ -41,13 +49,13 @@ module fifo_arbiter #(
 
 `include "structures.sv"
 
-localparam   STATE_WAITING = 4'h0;
-localparam   STATE_READ_INIT = 4'h1;
-localparam   STATE_READ_CMD = 4'h2;
-localparam	STATE_READ_DATA = 4'h3;
-localparam	STATE_WRITE_INIT = 4'h4;
-localparam	STATE_WRITE_CMD = 4'h5;
-localparam   STATE_WRITE_DATA = 4'h6;
+localparam STATE_WAITING    = 4'h0;
+localparam STATE_READ_INIT  = 4'h1;
+localparam STATE_READ_CMD   = 4'h2;
+localparam STATE_READ_DATA  = 4'h3;
+localparam STATE_WRITE_INIT = 4'h4;
+localparam STATE_WRITE_CMD  = 4'h5;
+localparam STATE_WRITE_DATA = 4'h6;
 
 //  How many words (samples) are allocated to FIFO storage for each port?
 //  ZTEX module 2.13 has 256 MB of memory; with 8 ports, that's 32 MB (8M samples) per port.

@@ -1,8 +1,19 @@
-`timescale 1ns / 1ps
-
 /*
-    Adapts generic interfaces of da_platform to the physical interfaces (DDR3 memory, FX2 USB interface) on ZTEX FPGA module 2.13.
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    da_platform_wrapper: Top level HDL module for synthesis.
+    Adapts generic interfaces of da_platform to the physical interfaces
+    (DDR3 memory, FX2 USB interface) on ZTEX FPGA module 2.13.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
+
+`timescale 1ns / 1ps
 
 module da_platform_wrapper #(
     host_width = 16,

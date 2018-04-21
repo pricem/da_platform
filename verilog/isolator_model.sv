@@ -1,8 +1,18 @@
-`timescale 1ns / 1ps
-
 /*
-    This models the hardware on the isolator board, including some set of installed slots.
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    isolator_model: This models the hardware on the isolator board,
+    including a dynamically changeable set of installed modules.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
+
+`timescale 1ns / 1ps
 
 `include "structures.sv"
 

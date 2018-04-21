@@ -1,6 +1,17 @@
 /*
-    Include file for commands
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
 
+    This file defines the commands used by the host interface.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+*/
+
+/*
     Command format:
     - Byte 0 = slot target index
       If this matches GLOBAL_TARGET_INDEX (0xFF) then the command does not pertain to a slot.

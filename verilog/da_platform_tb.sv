@@ -1,11 +1,17 @@
-
 /*
-    Testbench for DA platform
-    
-    Uses behavioral models of USB host interface (via FX2) and DDR3 memory (AXI slave)
-    and checks basic features such as SPI masters and audio I/O.  Limited coverage.
-    
-    Michael Price, 8/3/2016
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    da_platform_tb: Basic tests for DA platform.
+    Uses behavioral models of USB host interface (via FX2) and DDR3 memory
+    (AXI slave) and checks basic features such as SPI masters and audio I/O.
+    Limited coverage.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps

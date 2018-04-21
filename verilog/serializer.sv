@@ -1,3 +1,17 @@
+/*
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    serializer: 8:1 serializer.  Can model the 74165 used on the isolator PCB
+    or be used within the FPGA.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+*/
+
 `timescale 1ns / 1ps
 
 module serializer #(
@@ -9,8 +23,6 @@ module serializer #(
     input clk_par,
     (* keep = "true" *) input [7:0] data_par
 );
-
-//  Models the 74165 used on the isolator PCB
 
 //  2/27/2017: change data launch to negative edge of clk_ser
 

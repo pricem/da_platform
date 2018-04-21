@@ -1,7 +1,15 @@
 /*
-    MIG Adapter module
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
 
-    Redesigned for DA Platform project (AXI4 MIG) by Michael Price 12/28/2017
+    mig_adapter: Converts from generic FIFO interfaces (command/data) to
+    the AXI4 interface used by the Xilinx MIG.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps

@@ -1,10 +1,21 @@
-`timescale 1ns / 1ps
-
 /*
-    Simulation-only model of the FX2 microcontroller running the ZTEX default firmware.
-    Note: PKTEND ignored, all data is immediately "committed"
-        -> doesn't model details of USB protocol, which is packetized
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    fx2_model: Simulation-only model of the FX2 microcontroller running the 
+    ZTEX default firmware.
+    Notes: 
+    - PKTEND ignored, all data is immediately "committed".
+    - Doesn't model details of USB protocol, which is packetized.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
+
+`timescale 1ns / 1ps
 
 module fx2_model #(
     OUTEP = 2,

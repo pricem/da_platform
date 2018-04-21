@@ -1,14 +1,17 @@
-
 /*
-    Skeleton for DA platform being ported to new interfaces
-    Michael Price, 8/3/2016
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
 
-    TODO: 
-    - check isolator reset line; does it need to be MCLK synchronous?
-    - add commands to read FIFO counters for a slot
-    - make slot controller honor circular buffer limits; figure out pause/resume/discard functionality, i.e. commands to adjust FIFO counters 
-    - allow 16/24/32 bit data packing (currently it's only 32 bit)
-    - add length/checksum to output packets as well, so the software can parse them (there's a bit of guesswork now...)
+    da_platform: Top level HDL module with generic interfaces.
+    Instantiates a slot_controller for each of 4 modules, as well as a
+    fifo_arbiter to buffer audio samples in both directions.  Please consult 
+    the documentation for a detailed description of the architecture.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps

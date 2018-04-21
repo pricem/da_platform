@@ -1,11 +1,17 @@
 /*
-    Testbench module only
-    Sends audio data in I2S format. 
-    I2S master (reflecting a limitation of the isolator board, which is that each slot data bus has to be all in the same direction).
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    i2s_source: Sends audio data in I2S format. Testbench module only.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps
-
 
 module i2s_source(
     input logic enable,

@@ -1,7 +1,16 @@
 /*
-    Slot module with 30-pin interface for simulation only.
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    slot_model: Slot module with 30-pin interface for simulation only.
     This one is meant to switch at runtime between different modes
     to simplify testbenches.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 */
 
 `timescale 1ns / 1ps

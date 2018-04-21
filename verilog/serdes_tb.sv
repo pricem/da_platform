@@ -1,3 +1,18 @@
+/*
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    serdes_tb: Testbench for the interfaces in the DA platform board
+    that serialize low-bandwidth data in order to use fewer (expensive)
+    isolators.  The board uses 74164 / 74165 / 74574 chips on the other end.
+
+    Warning: Use and distribution of this code is restricted.
+    This HDL file is distributed under the terms of the Solderpad Hardware 
+    License, Version 0.51.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+*/
+
 module serdes_tb;
 
 logic reset;
