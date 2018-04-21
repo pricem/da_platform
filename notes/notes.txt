@@ -6400,6 +6400,17 @@ From testing, there were relatively frequent audio glitches and the host Python 
     
 Now, an earlier problem with the filters getting stuck seems to be resolved.  Everything ran smoothly overnight.
 But frequency response is messed up (filters? wiring connections?).
+    Seems to be a 10 dB attenuator difference.
+    After setting LF DAC attenuation to 20 dB, sound is back to the same it was before.
+    
+Initial code cleanup, licensing and docs framework completed.  Ship it.
+
+Next steps:
+- Write docs (have some disorganized thoughts in writeup.txt)
+- Pull code to RPi and debug
+- Make sure latest HW designs, e.g. PCBs, are in repo
+- Write issues to keep track of to-do instead of this horrendous text file
+
 
 
 
