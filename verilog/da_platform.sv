@@ -133,8 +133,8 @@ deserializer dirchan_des(sclk_ungated, iso.dirchan, iso.srclk, dirchan_parallel)
 deserializer hwflag_des(sclk_ungated, iso.hwflag, iso.srclk, hwflag_parallel);
 
 //  Going from FPGA to modules - hwcon and cs_n
-wire [7:0] hwcon_parallel;
-wire [7:0] cs_n_parallel;
+(* keep = "true" *) wire [7:0] hwcon_parallel;
+(* keep = "true" *) wire [7:0] cs_n_parallel;
 serializer #(.launch_negedge(1)) hwcon_ser(sclk_ungated, iso.hwcon, srclk_sync, hwcon_parallel);
 serializer #(.launch_negedge(1)) cs_n_ser(sclk_ungated, iso.cs_n, srclk_sync, cs_n_parallel);
 

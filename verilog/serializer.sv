@@ -5,9 +5,9 @@ module serializer #(
     parameter logic default_val = 1
 ) (
     input clk_ser, 
-    output logic data_ser, 
+    (* keep = "true" *) output logic data_ser, 
     input clk_par,
-    input [7:0] data_par
+    (* keep = "true" *) input [7:0] data_par
 );
 
 //  Models the 74165 used on the isolator PCB
@@ -29,7 +29,7 @@ end
 else begin: negedge_sensitive
 
     //  New code (negedge) -- for serializers within FPGA, to make timing work at board level
-    logic [7:0] data_int;
+    (* keep = "true" *) logic [7:0] data_int;
 
     wire data_ser_next;
     assign data_ser_next = data_int[7];
