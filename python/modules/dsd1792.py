@@ -32,6 +32,7 @@ class DSD1792Module(ModuleBase):
     }
 
     def spi_summary(self, slot=0):
+        print 'SPI summary for DSD1792'
         reg_base = 16
         vals = [self.spi_read(slot, 0, 0, x) for x in range(16, 24)]
         result_dict = {}

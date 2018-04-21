@@ -62,6 +62,12 @@ class ModuleBase(object):
         self.backend.write(cmd)
         print 'Wrote command for clock select: %s' % cmd
 
+    def stop_sclk(self):
+        self.backend.write(numpy.array([0xFF, DAPlatformBackend.STOP_SCLK], dtype=self.backend.dtype))
+
+    def start_sclk(self):
+        self.backend.write(numpy.array([0xFF, DAPlatformBackend.START_SCLK], dtype=self.backend.dtype))
+
     def reset_slots(self):
         self.backend.write(numpy.array([0xFF, DAPlatformBackend.RESET_SLOTS], dtype=self.backend.dtype))
 
@@ -98,29 +104,40 @@ class ModuleBase(object):
         #print 'Got response for SPI read: %s' % data
         return result
 
-    def start_playback(self, slot):
-        msg = numpy.array([DAPlatformBackend.SLOT_START_PLAYBACK, 0], dtype=self.backend.dtype)
+    def single_byte_msg(self, slot, cmd):
+        msg = numpy.array([cmd, 0], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+
+    def start_playback(self, slot):
+        self.single_byte_msg(slot, DAPlatformBackend.SLOT_START_PLAYBACK)
     
     def stop_playback(self, slot):
-        msg = numpy.array([DAPlatformBackend.SLOT_STOP_PLAYBACK, 0], dtype=self.backend.dtype)
-        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+        self.single_byte_msg(slot, DAPlatformBackend.SLOT_STOP_PLAYBACK)
     
     def start_recording(self, slot):
-        msg = numpy.array([DAPlatformBackend.SLOT_START_RECORDING, 0], dtype=self.backend.dtype)
-        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+        self.single_byte_msg(slot, DAPlatformBackend.SLOT_START_RECORDING)
     
     def stop_recording(self, slot):
-        msg = numpy.array([DAPlatformBackend.SLOT_STOP_RECORDING, 0], dtype=self.backend.dtype)
-        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+        self.single_byte_msg(slot, DAPlatformBackend.SLOT_STOP_RECORDING)
     
+    def stop_clocks(self, slot):
+        self.single_byte_msg(slot, DAPlatformBackend.SLOT_STOP_CLOCKS)
+
+    def start_clocks(self, slot):
+        self.single_byte_msg(slot, DAPlatformBackend.SLOT_START_CLOCKS)
+        
+    def set_format(self, slot, fmt):
+        if fmt == DAPlatformBackend.I2S: self.single_byte_msg(slot, DAPlatformBackend.SLOT_FMT_I2S)
+        elif fmt == DAPlatformBackend.MSB_JUSTIFIED: self.single_byte_msg(slot, DAPlatformBackend.SLOT_FMT_LJ)
+        elif fmt == DAPlatformBackend.LSB_JUSTIFIED: self.single_byte_msg(slot, DAPlatformBackend.SLOT_FMT_RJ)
+        
     def block_slots(self):
         self.backend.write(numpy.array([0xFF, 0x4A, 0x00], dtype=self.backend.dtype))
     
     def unblock_slots(self):
         self.backend.write(numpy.array([0xFF, 0x4A, 0x0F], dtype=self.backend.dtype))
     
-    def set_acon(self, slot, val):
+    def set_hwcon(self, slot, val):
         msg = numpy.array([DAPlatformBackend.SLOT_SET_ACON, val], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
     
@@ -149,6 +166,22 @@ class ModuleBase(object):
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.AUD_FIFO_WRITE, msg))
         #   print 'Wrote %d samples in %.2f ms' % (data.shape[0], get_elapsed_time(start_time) * 1e3)
     
+    def get_available_audio(self, slot, num_samples):
+        if self.backend.receive_state_available(slot, DAPlatformBackend.AUD_FIFO_REPORT):
+            all_data = numpy.concatenate(self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT])
+            data = all_data[:num_samples * 2]
+            other_data = all_data[num_samples * 2:]
+            #   Save leftover samples back into receive state
+            self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT] = [other_data,]
+            
+            #   Convert to integer
+            #data = numpy.fromstring(data.byteswap().tostring(), dtype=numpy.int32).byteswap()
+            data = numpy.fromstring(data.tostring(), dtype=numpy.int32)
+        else:
+            data = numpy.array([], dtype=numpy.int32)
+            
+        return data
+        
     def audio_read(self, slot, num_samples, perform_update=True, timeout=100):
         #   Timeout is in ms
         #   TODO: Make much smarter
@@ -163,7 +196,7 @@ class ModuleBase(object):
             while samples_received < num_samples and time_float < 1e-3 * timeout:
             
                 samples_needed = num_samples - samples_received
-            
+
                 #   Now we have to send a command to the device to get it to send us audio
                 msg = numpy.array([slot, DAPlatformBackend.AUD_FIFO_READ, samples_needed / 65536, samples_needed % 65536], dtype=numpy.uint16)
                 self.backend.write(msg)
@@ -174,21 +207,33 @@ class ModuleBase(object):
                 samples_received = int(words_received / 2)
                 #   print 'Got to %d samples from %d words in %.2f ms' % (samples_received, num_words, (time_float * 1e3))
         
-        if self.backend.receive_state_available(slot, DAPlatformBackend.AUD_FIFO_REPORT):
-            all_data = numpy.concatenate(self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT])
-            data = all_data[:num_samples * 2]
-            other_data = all_data[num_samples * 2:]
-            #   Save leftover samples back into receive state
-            self.backend.receive_state_slots[slot][DAPlatformBackend.AUD_FIFO_REPORT] = [other_data,]
-            
-            #   Convert to integer
-            #data = numpy.fromstring(data.byteswap().tostring(), dtype=numpy.int32).byteswap()
-            data = numpy.fromstring(data.tostring(), dtype=numpy.int32)
-        else:
-            data = numpy.array([], dtype=numpy.int32)
+        return self.get_available_audio(slot, num_samples)
 
-        return data
+    def audio_read_write(self, slot_dac, slot_adc, samples, num_read_samples, timeout=100):
+        #   11/17/2017: Try using async libusb.  Bypass receive state... (dangerous, one slot only)
+        data_out = numpy.fromstring(samples.byteswap().tostring(), dtype=self.backend.dtype).byteswap()
+        msg_out_1 = self.prepare_cmd(slot_dac, DAPlatformBackend.AUD_FIFO_WRITE, data_out)
         
+        if num_read_samples > 0:
+            #   No checksum on audio read cmd?
+            msg_out_2 = numpy.array([slot_adc, DAPlatformBackend.AUD_FIFO_READ, num_read_samples / 65536, num_read_samples % 65536], dtype=numpy.uint16)
+            #cmd_args_out = numpy.array([samples.size / 65536, samples.size % 65536], dtype=numpy.uint16)
+            #msg_out_2 = self.prepare_cmd(slot_adc, DAPlatformBackend.AUD_FIFO_READ, cmd_args_out)
+            msg_out = numpy.concatenate((msg_out_1, msg_out_2))
+            
+            use_async = True    #   Can also put in sync blocking mode with same data
+            if use_async:
+                data_received = self.backend.read_and_write(msg_out, num_read_samples * 2 + 6)
+                self.backend.parse_report(data_received)
+            else:
+                self.backend.write(msg_out)
+                self.backend.update_receive_state(request_size=num_read_samples * 2 + 6, timeout=timeout)
+
+        else:
+            self.backend.write(msg_out_1)
+
+        return self.get_available_audio(slot_adc, num_read_samples)
+    
     def setup(self, *args, **kwargs):
         #   Can be overridden by subclasses
         pass

@@ -28,6 +28,8 @@ class DAPlatformBackend(EZUSBBackend):
     UPDATE_BLOCKING         = 0x4A
     ENTER_RESET             = 0x4B
     LEAVE_RESET             = 0x4C
+    STOP_SCLK               = 0x4D
+    START_SCLK              = 0x4E
     CHECKSUM_ERROR		    = 0x50
     SPI_WRITE_REG			= 0x60
     SPI_READ_REG			= 0x61
@@ -36,9 +38,19 @@ class DAPlatformBackend(EZUSBBackend):
     SLOT_STOP_PLAYBACK      = 0x71
     SLOT_START_RECORDING    = 0x72
     SLOT_STOP_RECORDING     = 0x73
+    SLOT_START_CLOCKS       = 0x74
+    SLOT_STOP_CLOCKS        = 0x75
+    SLOT_FMT_I2S            = 0x76
+    SLOT_FMT_RJ             = 0x77
+    SLOT_FMT_LJ             = 0x78
     SLOT_SET_ACON           = 0x80
 
-    def __init__(self, num_slots=4):
+    #   I2S formats
+    I2S = 0
+    MSB_JUSTIFIED = 1
+    LSB_JUSTIFIED = 2
+
+    def __init__(self, num_slots=4, reset=False):
         super(DAPlatformBackend, self).__init__()
         self.receive_state_global = {}
         self.receive_state_slots = [{} for i in range(num_slots)]
@@ -51,8 +63,9 @@ class DAPlatformBackend(EZUSBBackend):
         self.cur_slot_id = -1
         self.cur_report_id = -1
         
-        self.reset()
-        time.sleep(0.4)
+        if reset:
+            self.reset()
+            time.sleep(0.4)
     
     def receive_state_available(self, slot, key):
         return (len(self.receive_state_slots[slot][key]) > 0)
