@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 
 """
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    ztex_test.py: Assorted testing exercises from throughout the development
+    of the DA platform.
+    
+    Warning: Use and distribution of this code is restricted.
+    This software code is distributed under the terms of the GNU General Public
+    License, version 3.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+"""
+
+"""
 Before running, try one of:
 price@ubuntu:~/projects/cdp/python$ ~/software/ztex/java/FWLoader/FWLoader -f -uf ~/projects/cdp/xilinx/memfifo/memfifo.runs/impl_2_13a/memfifo.bit
 FPGA configuration time: 149 ms

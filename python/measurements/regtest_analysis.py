@@ -1,3 +1,16 @@
+"""
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    regtest_analysis.py: Script for interpreting and plotting voltage
+    regulator measurement results.
+
+    Warning: Use and distribution of this code is restricted.
+    This software code is distributed under the terms of the GNU General Public
+    License, version 3.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+"""
 
 import numpy
 from matplotlib import pyplot

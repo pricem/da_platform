@@ -1,7 +1,16 @@
+#   Open-source digital audio platform
+#   Copyright (C) 2009--2018 Michael Price
+#
 #   init_project.tcl: Script to create Vivado project for DA Platform
 #   Supported Vivado version: 2017.2
 #   Run with:
 #       vivado -mode batch -source init_project.tcl
+#
+#   Warning: Use and distribution of this code is restricted.
+#   This software code is distributed under the terms of the GNU General Public
+#   License, version 3.  Other files in this project may be subject to
+#   different licenses.  Please see the LICENSE file in the top level project
+#   directory for more information.
 
 # Create project
 create_project -force da_platform ./ -part xc7a35tcsg324-1

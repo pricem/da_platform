@@ -1,3 +1,19 @@
+"""
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    base.py: Base class for module support.  Includes most of the functions
+    needed to communicate with modules (audio, SPI, etc.) via the FPGA.
+    When you implement a Python class for a new DAC/ADC module, it should
+    inherit from the ModuleBase class defined here.  This should help avoid
+    reinventing the wheel.
+    
+    Warning: Use and distribution of this code is restricted.
+    This software code is distributed under the terms of the GNU General Public
+    License, version 3.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+"""
 
 import numpy
 from datetime import datetime

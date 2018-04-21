@@ -1,12 +1,22 @@
+"""
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
+
+    generate_tone.py: Simple, 2 channel 16/44 tone generator.
+    Writes samples to stdout (e.g. for play_stream.py).
+
+    Warning: Use and distribution of this code is restricted.
+    This software code is distributed under the terms of the GNU General Public
+    License, version 3.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
+"""
 
 import sys
 import numpy
 import os
 import scipy.io.wavfile
 import time
-
-#   Simple, 2 channel 16/44 tone generator.
-#   Writes samples to stdout.
 
 def gen_tone(freq, ampl_db, T=60.):
     

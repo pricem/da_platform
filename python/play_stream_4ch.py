@@ -1,8 +1,16 @@
-
 """
-12/2/2017
+    Open-source digital audio platform
+    Copyright (C) 2009--2018 Michael Price
 
-4 channel stream playing split over 2 slots containing DAC2s.
+    play_stream_4ch.py: Example script illustrating output of audio from
+    a WAV file to two 2-channel DAC modules simultaneously.  Used in
+    conjunction with "speakers" library for FIR based active crossover.
+
+    Warning: Use and distribution of this code is restricted.
+    This software code is distributed under the terms of the GNU General Public
+    License, version 3.  Other files in this project may be subject to
+    different licenses.  Please see the LICENSE file in the top level project
+    directory for more information.
 """
 
 import sys
