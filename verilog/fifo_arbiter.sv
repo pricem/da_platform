@@ -277,7 +277,7 @@ always @(posedge clk_core) begin
             current_port_index <= next_port_index;
             
             //	Begin a read when the address is mismatched and there is space in the FIFO
-            if (ports_out_buf_ready[next_port_index] && !empty_flags[next_port_index]) begin
+            if ((out_count[next_port_index] < (1 << M_fr)) && ports_out_buf_ready[next_port_index] && !empty_flags[next_port_index]) begin
                 port_out_active <= 1;
                 state <= STATE_READ_INIT;
             end
