@@ -1,10 +1,14 @@
 # "Samoyed" digital audio platform
 
+[Documentation site](http://da-platform.readthedocs.io)
+
 ##  What is it?
 
 This is a set of PCB designs, FPGA firmware, and software for a digital audio interface.  The designs allow for up to 32 channels of audio I/O from four ADC/DAC modules per chassis.  The intent is to provide audio quality suitable for hi-fi systems, and to allow experimentation with ADC/DAC module design, digital filtering, and user interfaces.
 
-More detailed documentation is located in the docs directory.  Work is in progress.  If you have any questions, please contact the author by creating an issue.
+More detailed documentation is located in the docs directory.  This documentation is in Sphinx format and is synchronized to http://da-platform.readthedocs.io.  A PDF version is periodically published to docs/da_platform.pdf.
+
+Work is in progress.  If you have any questions, please contact the author by creating an issue, or commenting on a relevant issue if one already exists.
 
 ##  Use cases
 
