@@ -1,0 +1,9 @@
+History
+-------
+
+This project has been in the works for a while.  It was originally conceived in 2008 as a CD player built around a mini-ITX PC.  In 2009 I designed a set of PCBs and a custom chassis to hold everything.  Some of the design principles were established then: galvanic isolation of all digital signals, 2-channel and 8-channel DACs and ADCs, 4 modules per chassis.  I acquired a Digilent Nexys2 FPGA board for the digital interfaces.  However, my FPGA skills lagged behind my ambitions and the PCBs I had designed weren't very well thought out.  I more-or-less abandoned the project and, for my own stereo system, continued using a CD player and an analog active crossover.  
+
+A few years later, I ended up doing research in digital circuits.  This made the digital design for the FPGA seem much less intimidating.  In 2013, I decided to finish the missing pieces and resurrected the original years-old hardware.  I was able to demonstrate the concept of an FPGA-controlled USB DAC with the DSD1792A.  However, I found many problems with the original PCB designs and my architecture was complex and unwieldy.  Also, the Nexys2 FPGA platform was no longer supported by current tools; in 2015 I switched to a ZTEX board with a modern FPGA.  In 2016, after finishing graduate school, I decided to revise the PCBs and construct a complete chassis.  This became the "baseline" implementation of the project, with plans to add other interchangeable components in the future.  In December 2017 I started using the device as a digital crossover and streaming server in my main stereo system.  I rewrote some of the HDL code that was license-encumbered and published the project on GitHub in April 2018.
+
+Progress has been slow due to work and family commitments, but I intend to continue soliciting community input, making improvements, and for those brave enough to build their own version, supporting the project indefinitely.
+
