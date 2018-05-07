@@ -95,6 +95,12 @@ More detailed information about modules (explaining the design process) will be 
     
   Note that you can use any combination of oscillator, regulator and buffer.  There are SMD footprints which would fit (for example) the NDK NZ2520SD, and DIP footprints that fit (for example) the Tentlabs XO.
   
+.. figure:: photos/DSC_0252.jpg
+    :width: 65%
+    :align: center
+
+    Testing of a clock source board allowing comparison between Crystek CCHD-957 and Tent XO oscillators.
+  
 .. __: https://github.com/pricem/da_platform/raw/master/docs/schematics/clock_v2.pdf
 
 **Backplane**
@@ -129,6 +135,13 @@ More detailed information about modules (explaining the design process) will be 
 
   * Debug/expansion header (0.1" pitch) for prototyping
 
+.. figure:: photos/DSC_0249.jpg
+    :width: 70%
+    :align: center
+
+    Photo of carrier board stack showing ZTEX FPGA board (right) and Raspberry Pi (top) connected with a stacking header.
+
+    
 .. __: https://github.com/pricem/da_platform/raw/master/docs/schematics/carrier_v2.pdf
 
 **PSU**
@@ -141,6 +154,13 @@ More detailed information about modules (explaining the design process) will be 
   * +/- 22 V unregulated outputs for analog sections
   * 10,000 uF decoupling for each rail
   * At least 1 A load is allowed for all supplies simultaneously
+
+.. figure:: photos/DSC_0260.jpg
+    :width: 70%
+    :align: center
+
+    Detail of transformer wiring for PSU.  The rectifier/filter PCB is in the upper right.
+
 
 .. _`Initial version`: https://github.com/pricem/da_platform/raw/master/docs/schematics/psu_v2.pdf
 
