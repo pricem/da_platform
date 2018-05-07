@@ -16,6 +16,7 @@ This page is the starting point for documentation about the project (often refer
    intro
    history
    hw_arch
+   measurements
 
 Indices and tables
 ==================
