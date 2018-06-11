@@ -43,6 +43,13 @@ elif chan_vals[SLOT_DAC]:
 else:
     print 'Detected DSD1792, 2-channel'
     dac = DSD1792Module(backend)
+
+#dac.setup(SLOT_DAC)
+
+#   Default sample rate to 44.1k
+for slot in [0, 1]:
+    dac.set_sample_rate(slot, 44100)
+
 #"""
 #  AK4490 - max attenuation to minimize impact of clock/reset 
 for slot in [0, 1]:
@@ -50,8 +57,7 @@ for slot in [0, 1]:
 time.sleep(0.1)
 #"""
 
-#dac.setup(SLOT_DAC)
-dac.select_clock(1)
+
 
 #  Don't undo the attenuation.  It's up to play_stream to do that.
 #dac.spi_summary()

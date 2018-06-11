@@ -55,6 +55,7 @@ class DAPlatformBackend(EZUSBBackend):
     SLOT_FMT_I2S            = 0x76
     SLOT_FMT_RJ             = 0x77
     SLOT_FMT_LJ             = 0x78
+    SLOT_SET_CLK_RATIO      = 0x79
     SLOT_SET_ACON           = 0x80
 
     #   I2S formats

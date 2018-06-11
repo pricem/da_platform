@@ -141,7 +141,31 @@ class ModuleBase(object):
 
     def start_clocks(self, slot):
         self.single_byte_msg(slot, DAPlatformBackend.SLOT_START_CLOCKS)
-        
+
+    def set_sample_rate(self, slot, rate):
+        #   TODO: Add options for other sample rates, once we know they work.
+        if rate == 44100:
+            self.select_clock(0)
+            clk_ratio = 512
+        elif rate == 48000:
+            self.select_clock(1)
+            clk_ratio = 512
+        elif rate == 96000:
+            self.select_clock(1)
+            clk_ratio = 256
+        elif rate == 192000:
+            self.select_clock(1)
+            clk_ratio = 128
+        else:
+            raise Exception('Sample rate %s is not currently supported' % rate)
+
+        self.set_clock_divider(slot, clk_ratio)
+
+    def set_clock_divider(self, slot, clk_ratio):
+        msg = numpy.array([DAPlatformBackend.SLOT_SET_CLK_RATIO, clk_ratio >> 8, clk_ratio & 0xFF], dtype=self.bac$
+        self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
+        print 'Set clock divider for slot %d to %d' % (slot, clk_ratio)
+
     def set_format(self, slot, fmt):
         if fmt == DAPlatformBackend.I2S: self.single_byte_msg(slot, DAPlatformBackend.SLOT_FMT_I2S)
         elif fmt == DAPlatformBackend.MSB_JUSTIFIED: self.single_byte_msg(slot, DAPlatformBackend.SLOT_FMT_LJ)
