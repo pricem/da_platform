@@ -272,7 +272,7 @@ foreach fset [get_filesets sim*] {
     set_property -name "nl.sdf_anno" -value "0" -objects $fset
     set_property -name "source_set" -value "" -objects $fset
     set_property -name "top" -value "da_platform_tb" -objects $fset
-    set_property -name "xsim.simulate.runtime" -value "3000us" -objects $fset
+    set_property -name "xsim.simulate.runtime" -value "4000us" -objects $fset
 }
 
 set_property -name "verilog_define" -value "USE_WRAPPER USE_MIG_MODEL" -objects [get_fileset sim_fake_mig]

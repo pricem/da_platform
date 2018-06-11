@@ -371,6 +371,7 @@ endtask
 
 task test_dac(input int slot, input int num_samples);
     int skip_samples;
+    int pad_samples;
     int sample_latency_detected;
     int num_errors;
     logic [31:0] samples_received[];
@@ -386,13 +387,15 @@ task test_dac(input int slot, input int num_samples);
     //  other solutions for bracketing captures samples are more complex and will be 
     //  implemented later.)
     skip_samples = 10;
+    pad_samples = 0;
     for (int i = 0; i < num_samples; i++) begin
         samples_sent[i] = $random() & ((1 << 24) - 1);
         send_cmd_data[2 * i] = samples_sent[i] >> 16;
         send_cmd_data[2 * i + 1] = samples_sent[i] & ((1 << 16) - 1);
     end
+    for (int i = 0; i < pad_samples * 2; i++) send_cmd_data[2 * num_samples + i] = 0;
     fork
-        send_cmd(slot, AUD_FIFO_WRITE, num_samples * 2);
+        send_cmd(slot, AUD_FIFO_WRITE, (num_samples + pad_samples) * 2);
         isolator.capture_samples(slot, num_samples + skip_samples, samples_received);
     join
 
@@ -433,7 +436,7 @@ task test_adc(input int slot, input int num_samples);
     for (int i = 0; i < num_samples; i++) begin
         samples_sent[i] = $random() & ((1 << 24) - 1);
     end
-    send_slot_cmd_simple(slot, SLOT_START_RECORDING);
+    #10000 send_slot_cmd_simple(slot, SLOT_START_RECORDING);
     fork
         isolator.source_samples(slot, num_samples, samples_sent);
         begin
@@ -469,6 +472,7 @@ task test_loopback(input int slot_dac, input int slot_adc, input int num_samples
     //  and make sure we read back the same samples from the ADC slot that we wrote
     //  to the DAC slot.
     int skip_samples;
+    int match_sample_index;
     int sample_latency_detected;
     int num_errors;
     logic [9:0] receive_length;
@@ -476,6 +480,7 @@ task test_loopback(input int slot_dac, input int slot_adc, input int num_samples
     logic [31:0] samples_sent[];
     
     skip_samples = 16;
+    match_sample_index = 4;
     samples_received = new [num_samples + skip_samples];
     samples_sent = new [num_samples];
     
@@ -518,16 +523,21 @@ task test_loopback(input int slot_dac, input int slot_adc, input int num_samples
     sample_latency_detected = -1;
     for (int i = 0; i < (receive_length - 6) / 2; i++) begin
         samples_received[i] = (receive_data[i * 2 + 5] << 16) + receive_data[i * 2 + 4];
-        if ((sample_latency_detected == -1) && (samples_received[i] != 0))
-            sample_latency_detected = i;
+        if ((sample_latency_detected == -1) && (samples_received[i] == samples_sent[match_sample_index]))
+            sample_latency_detected = i - match_sample_index;
     end
+
+    $display("Loopback: sent samples are:");
+    for (int i = 0; i < num_samples; i++) $display("  %h", samples_sent[i]);
+    $display("Loopback: received samples are:");
+    for (int i = 0; i < num_samples + skip_samples; i++) $display("  %h", samples_received[i]);
 
     num_errors = 0;
     for (int i = 0; i < num_samples; i++) begin
         assert(samples_received[i + sample_latency_detected] === samples_sent[i]) 
         else begin
             num_errors++;
-            fail_test($sformatf("Loopback capture sample %0d val %h didn't match supplied value %h", i, samples_received[i + sample_latency_detected], samples_sent[i]));
+            fail_test($sformatf("Loopback capture sample %0d val %h didn't match supplied value %0d %h", i + sample_latency_detected, samples_received[i + sample_latency_detected], i, samples_sent[i]));
         end
     end
     $display("%t: test_loopback (slot %0d->%0d): detected latency of %0d samples, %0d/%0d failures", $time, slot_dac, slot_adc, sample_latency_detected, num_errors, num_samples);
@@ -548,6 +558,7 @@ task test_fifo_status(input logic [15:0] words_written, input logic [15:0] words
     assert(receive_data[1] == FIFO_REPORT_STATUS) else fail_test("FIFO status command returned unexpected header");
     
     for (int i = 0; i < 8; i++) begin
+        $display("FIFO status: port %0d expected %0d written, %0d read--received %h%h %h%h", i, words_written, words_read, receive_data[4 + i * 2], receive_data[4 + i * 2 + 1], receive_data[20 + i * 2], receive_data[20 + i * 2 + 1]);
         assert(receive_data[4 + i * 2] == words_written[15:8]) else fail_test("FIFO status incorrect");
         assert(receive_data[4 + i * 2 + 1] == words_written[7:0]) else fail_test("FIFO status incorrect");
         assert(receive_data[20 + i * 2] == words_read[15:8]) else fail_test("FIFO status incorrect");
@@ -585,6 +596,28 @@ task test_slot_reset;
     
 endtask
 
+task set_clock_config(input int slot, input logic clksel, input logic [9:0] clock_ratio);
+    //  Select which clock to use
+    send_cmd_data[0] = clksel;
+    send_cmd_simple(8'hFF, SELECT_CLOCK, 1);
+
+    //  Set clock divide ratio for DAC
+    send_cmd_data[0] = SLOT_SET_CLK_RATIO;
+    send_cmd_data[1] = clock_ratio[9:8];
+    send_cmd_data[2] = clock_ratio[7:0];
+    send_cmd(slot, CMD_FIFO_WRITE, 3);
+    
+    //  Set isolator model to consistent clock ratio
+    isolator.set_clock_divider(slot, clock_ratio);
+endtask
+
+task test_clock_config(input int slot, input logic clksel, input logic [9:0] clock_ratio);
+    set_clock_config(slot, clksel, clock_ratio);
+    
+    //  Check that we can still send samples through a DAC
+    test_dac(slot, 16);
+endtask
+
 //  Fun stuff
 
 logic [15:0] test_receive_length;
@@ -600,6 +633,16 @@ initial begin
     //  Run sequence of unit tests
     test_clock_select;
     test_slot_reset;
+    
+    test_clock_config(0, 0, 512);   //  44.1 kHz
+    test_clock_config(1, 1, 512);   //  48 kHz
+    test_clock_config(2, 1, 256);   //  96 kHz
+    test_clock_config(3, 1, 128);   //  192 kHz
+    
+    //  Remainder of tests run at 192 kHz.  Set the slots' clock dividers accordingly.
+    for (int i = 0; i < num_slots; i++)
+        set_clock_config(i, 1, 128);
+    
     for (int i = 0; i < num_slots; i++) begin
         test_hwcon(i);
         test_spi(i);
@@ -607,7 +650,7 @@ initial begin
         test_adc(i, 16);
         test_loopback(i, (i + 1) % 4, 16);
     end
-    test_fifo_status(32, 58);
+    test_fifo_status(48, 58);
     $display("Counted %0d test failures", num_test_errors);
     $finish;
 

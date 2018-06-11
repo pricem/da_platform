@@ -15,6 +15,8 @@
 
 module i2s_source(
     input logic enable,
+    input logic [9:0] clk_divide_ratio,
+    
     //  Testbench input
     input logic reset,
     input logic sample_clk,
@@ -60,8 +62,8 @@ always_ff @(posedge bck or posedge reset) begin
         reset_int <= 0;
 end
 
-//  BCK/LRCK generator - 256 x Fs
-logic [7:0] mclk_count;
+//  BCK/LRCK generator - adjustable for 128--512 * Fs
+logic [9:0] mclk_count;
 always @(posedge i2s_master_clk) begin
     if (reset) begin
         mclk_count <= 0;
@@ -69,9 +71,12 @@ always @(posedge i2s_master_clk) begin
         lrck <= 0;
     end
     else begin
-        mclk_count <= mclk_count + 1;
-        bck <= mclk_count[1];
-        lrck <= mclk_count[7];
+        if (mclk_count < clk_divide_ratio - 1)
+            mclk_count <= mclk_count + 1;
+        else
+            mclk_count <= 0;
+        bck <= mclk_count / (clk_divide_ratio >> 7);
+        lrck <= (mclk_count >= (clk_divide_ratio >> 1));
     end
 end
 

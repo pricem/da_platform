@@ -5,23 +5,23 @@
    <db_ref_list>
       <db_ref path="da_platform_tb_behav.wdb" id="1">
          <top_modules>
+            <top_module name="\$unit_1 " />
             <top_module name="\$unit_2 " />
-            <top_module name="\$unit_3 " />
             <top_module name="da_platform_tb" />
             <top_module name="glbl" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="2667536800000fs"></ZoomStartTime>
-      <ZoomEndTime time="2678816800001fs"></ZoomEndTime>
-      <Cursor1Time time="2676936800000fs"></Cursor1Time>
+      <ZoomStartTime time="3546529866666fs"></ZoomStartTime>
+      <ZoomEndTime time="3603329866667fs"></ZoomEndTime>
+      <Cursor1Time time="3593863200000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="230"></NameColumnWidth>
-      <ValueColumnWidth column_width="85"></ValueColumnWidth>
+      <ValueColumnWidth column_width="81"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="28" />
+   <WVObjectSize size="34" />
    <wvobject type="logic" fp_name="/da_platform_tb/fx2/in_fifo/clk">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
@@ -178,8 +178,8 @@
             <obj_property name="ObjectShortName">valid</obj_property>
          </wvobject>
          <wvobject type="array" fp_name="/da_platform_tb/dut/main/ctl_in/data">
-            <obj_property name="ElementShortName">data[15:0]</obj_property>
-            <obj_property name="ObjectShortName">data[15:0]</obj_property>
+            <obj_property name="ElementShortName">data[7:0]</obj_property>
+            <obj_property name="ObjectShortName">data[7:0]</obj_property>
          </wvobject>
       </wvobject>
       <wvobject type="group" fp_name="group260">
@@ -562,6 +562,7 @@
    <wvobject type="group" fp_name="group199">
       <obj_property name="label">fifo_arbiter</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject type="array" fp_name="/da_platform_tb/dut/main/arbiter/in_count">
          <obj_property name="ElementShortName">in_count[0:7][6:0]</obj_property>
          <obj_property name="ObjectShortName">in_count[0:7][6:0]</obj_property>
@@ -573,12 +574,10 @@
       <wvobject type="array" fp_name="/da_platform_tb/dut/main/arbiter/write_counters">
          <obj_property name="ElementShortName">write_counters[0:7][31:0]</obj_property>
          <obj_property name="ObjectShortName">write_counters[0:7][31:0]</obj_property>
-         <obj_property name="isExpanded"></obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/da_platform_tb/dut/main/arbiter/read_counters">
          <obj_property name="ElementShortName">read_counters[0:7][31:0]</obj_property>
          <obj_property name="ObjectShortName">read_counters[0:7][31:0]</obj_property>
-         <obj_property name="isExpanded"></obj_property>
       </wvobject>
    </wvobject>
    <wvobject type="group" fp_name="group470">
@@ -616,80 +615,241 @@
          <obj_property name="ElementShortName">recording_enabled</obj_property>
          <obj_property name="ObjectShortName">recording_enabled</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_samples_received">
-         <obj_property name="ElementShortName">audio_samples_received[3:0]</obj_property>
-         <obj_property name="ObjectShortName">audio_samples_received[3:0]</obj_property>
+      <wvobject type="group" fp_name="group213">
+         <obj_property name="label">ADC</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_samples_received">
+            <obj_property name="ElementShortName">audio_samples_received[3:0]</obj_property>
+            <obj_property name="ObjectShortName">audio_samples_received[3:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_samples_requested">
+            <obj_property name="ElementShortName">audio_samples_requested[3:0]</obj_property>
+            <obj_property name="ObjectShortName">audio_samples_requested[3:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_pdata">
+            <obj_property name="ElementShortName">adc_pdata[3:0]</obj_property>
+            <obj_property name="ObjectShortName">adc_pdata[3:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /recording_enabled_synclr">
+            <obj_property name="ElementShortName">recording_enabled_synclr</obj_property>
+            <obj_property name="ObjectShortName">recording_enabled_synclr</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /recording_enabled_synclr_last">
+            <obj_property name="ElementShortName">recording_enabled_synclr_last</obj_property>
+            <obj_property name="ObjectShortName">recording_enabled_synclr_last</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_fifo_write_count">
+            <obj_property name="ElementShortName">adc_fifo_write_count[3:0]</obj_property>
+            <obj_property name="ObjectShortName">adc_fifo_write_count[3:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_sample_left">
+            <obj_property name="ElementShortName">adc_sample_left[3:0][23:0]</obj_property>
+            <obj_property name="ObjectShortName">adc_sample_left[3:0][23:0]</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_sample_right">
+            <obj_property name="ElementShortName">adc_sample_right[3:0][23:0]</obj_property>
+            <obj_property name="ObjectShortName">adc_sample_right[3:0][23:0]</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_pbck">
+            <obj_property name="ElementShortName">adc_pbck</obj_property>
+            <obj_property name="ObjectShortName">adc_pbck</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_plrck">
+            <obj_property name="ElementShortName">adc_plrck</obj_property>
+            <obj_property name="ObjectShortName">adc_plrck</obj_property>
+         </wvobject>
+         <wvobject type="group" fp_name="group506">
+            <obj_property name="label">aud_wr</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /aud_wr/ready">
+               <obj_property name="ElementShortName">ready</obj_property>
+               <obj_property name="ObjectShortName">ready</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /aud_wr/valid">
+               <obj_property name="ElementShortName">valid</obj_property>
+               <obj_property name="ObjectShortName">valid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /aud_wr/data">
+               <obj_property name="ElementShortName">data[31:0]</obj_property>
+               <obj_property name="ObjectShortName">data[31:0]</obj_property>
+            </wvobject>
+         </wvobject>
+         <wvobject type="group" fp_name="group534">
+            <obj_property name="label">audio_tx</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_tx/ready">
+               <obj_property name="ElementShortName">ready</obj_property>
+               <obj_property name="ObjectShortName">ready</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_tx/valid">
+               <obj_property name="ElementShortName">valid</obj_property>
+               <obj_property name="ObjectShortName">valid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_tx/data">
+               <obj_property name="ElementShortName">data[31:0]</obj_property>
+               <obj_property name="ObjectShortName">data[31:0]</obj_property>
+            </wvobject>
+         </wvobject>
       </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_samples_requested">
-         <obj_property name="ElementShortName">audio_samples_requested[3:0]</obj_property>
-         <obj_property name="ObjectShortName">audio_samples_requested[3:0]</obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /byte_counter">
+         <obj_property name="ElementShortName">byte_counter[3:0]</obj_property>
+         <obj_property name="ObjectShortName">byte_counter[3:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_pdata">
-         <obj_property name="ElementShortName">adc_pdata[3:0]</obj_property>
-         <obj_property name="ObjectShortName">adc_pdata[3:0]</obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /current_cmd">
+         <obj_property name="ElementShortName">current_cmd[7:0]</obj_property>
+         <obj_property name="ObjectShortName">current_cmd[7:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /recording_enabled_synclr">
+      <wvobject type="group" fp_name="group225">
+         <obj_property name="label">ctl_rd</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /ctl_rd/in/ready">
+            <obj_property name="ElementShortName">ready</obj_property>
+            <obj_property name="ObjectShortName">ready</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /ctl_rd/in/valid">
+            <obj_property name="ElementShortName">valid</obj_property>
+            <obj_property name="ObjectShortName">valid</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /ctl_rd/in/data">
+            <obj_property name="ElementShortName">data[7:0]</obj_property>
+            <obj_property name="ObjectShortName">data[7:0]</obj_property>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group221">
+         <obj_property name="label">DAC</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_clk_ratio">
+            <obj_property name="ElementShortName">audio_clk_ratio[9:0]</obj_property>
+            <obj_property name="ObjectShortName">audio_clk_ratio[9:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /playback_enabled_synclr">
+            <obj_property name="ElementShortName">playback_enabled_synclr</obj_property>
+            <obj_property name="ObjectShortName">playback_enabled_synclr</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /dac_pbck">
+            <obj_property name="ElementShortName">dac_pbck</obj_property>
+            <obj_property name="ObjectShortName">dac_pbck</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /dac_plrck">
+            <obj_property name="ElementShortName">dac_plrck</obj_property>
+            <obj_property name="ObjectShortName">dac_plrck</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /dac_pdata">
+            <obj_property name="ElementShortName">dac_pdata[3:0]</obj_property>
+            <obj_property name="ObjectShortName">dac_pdata[3:0]</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_clk_counter">
+            <obj_property name="ElementShortName">audio_clk_counter[9:0]</obj_property>
+            <obj_property name="ObjectShortName">audio_clk_counter[9:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_samples_active">
+            <obj_property name="ElementShortName">audio_samples_active[7:0][23:0]</obj_property>
+            <obj_property name="ObjectShortName">audio_samples_active[7:0][23:0]</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+         </wvobject>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group367">
+      <obj_property name="label">slot controller 1</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /recording_enabled_synclr">
          <obj_property name="ElementShortName">recording_enabled_synclr</obj_property>
          <obj_property name="ObjectShortName">recording_enabled_synclr</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /recording_enabled_synclr_last">
-         <obj_property name="ElementShortName">recording_enabled_synclr_last</obj_property>
-         <obj_property name="ObjectShortName">recording_enabled_synclr_last</obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /audio_clk_ratio">
+         <obj_property name="ElementShortName">audio_clk_ratio[9:0]</obj_property>
+         <obj_property name="ObjectShortName">audio_clk_ratio[9:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_fifo_write_count">
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /audio_num_channels_adc">
+         <obj_property name="ElementShortName">audio_num_channels_adc[3:0]</obj_property>
+         <obj_property name="ObjectShortName">audio_num_channels_adc[3:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_cycle_counter">
+         <obj_property name="ElementShortName">adc_cycle_counter[5:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_cycle_counter[5:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_sample_left">
+         <obj_property name="ElementShortName">adc_sample_left[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_left[3:0][23:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_sample_right">
+         <obj_property name="ElementShortName">adc_sample_right[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_right[3:0][23:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_fifo_write_count">
          <obj_property name="ElementShortName">adc_fifo_write_count[3:0]</obj_property>
          <obj_property name="ObjectShortName">adc_fifo_write_count[3:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_sample_left">
-         <obj_property name="ElementShortName">adc_sample_left[3:0][23:0]</obj_property>
-         <obj_property name="ObjectShortName">adc_sample_left[3:0][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_sample_right">
-         <obj_property name="ElementShortName">adc_sample_right[3:0][23:0]</obj_property>
-         <obj_property name="ObjectShortName">adc_sample_right[3:0][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_pbck">
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_pbck">
          <obj_property name="ElementShortName">adc_pbck</obj_property>
          <obj_property name="ObjectShortName">adc_pbck</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /adc_plrck">
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_plrck">
          <obj_property name="ElementShortName">adc_plrck</obj_property>
          <obj_property name="ObjectShortName">adc_plrck</obj_property>
       </wvobject>
-      <wvobject type="group" fp_name="group506">
-         <obj_property name="label">aud_wr</obj_property>
-         <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[1].ctl /adc_pdata">
+         <obj_property name="ElementShortName">adc_pdata[3:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_pdata[3:0]</obj_property>
          <obj_property name="isExpanded"></obj_property>
-         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /aud_wr/ready">
-            <obj_property name="ElementShortName">ready</obj_property>
-            <obj_property name="ObjectShortName">ready</obj_property>
-         </wvobject>
-         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /aud_wr/valid">
-            <obj_property name="ElementShortName">valid</obj_property>
-            <obj_property name="ObjectShortName">valid</obj_property>
-         </wvobject>
-         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /aud_wr/data">
-            <obj_property name="ElementShortName">data[31:0]</obj_property>
-            <obj_property name="ObjectShortName">data[31:0]</obj_property>
-         </wvobject>
       </wvobject>
-      <wvobject type="group" fp_name="group534">
-         <obj_property name="label">audio_tx</obj_property>
-         <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group310">
+      <obj_property name="label">slot controller 2</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_pbck">
+         <obj_property name="ElementShortName">adc_pbck</obj_property>
+         <obj_property name="ObjectShortName">adc_pbck</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_plrck">
+         <obj_property name="ElementShortName">adc_plrck</obj_property>
+         <obj_property name="ObjectShortName">adc_plrck</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_pdata">
+         <obj_property name="ElementShortName">adc_pdata[3:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_pdata[3:0]</obj_property>
          <obj_property name="isExpanded"></obj_property>
-         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_tx/ready">
-            <obj_property name="ElementShortName">ready</obj_property>
-            <obj_property name="ObjectShortName">ready</obj_property>
-         </wvobject>
-         <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_tx/valid">
-            <obj_property name="ElementShortName">valid</obj_property>
-            <obj_property name="ObjectShortName">valid</obj_property>
-         </wvobject>
-         <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[0].ctl /audio_tx/data">
-            <obj_property name="ElementShortName">data[31:0]</obj_property>
-            <obj_property name="ObjectShortName">data[31:0]</obj_property>
-         </wvobject>
       </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_format">
+         <obj_property name="ElementShortName">adc_format[1:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_format[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_sample_left">
+         <obj_property name="ElementShortName">adc_sample_left[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_left[3:0][23:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_sample_right">
+         <obj_property name="ElementShortName">adc_sample_right[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_right[3:0][23:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_sample_left_last">
+         <obj_property name="ElementShortName">adc_sample_left_last[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_left_last[3:0][23:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_sample_right_last">
+         <obj_property name="ElementShortName">adc_sample_right_last[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_right_last[3:0][23:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[2].ctl /adc_fifo_write_count">
+         <obj_property name="ElementShortName">adc_fifo_write_count[3:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_fifo_write_count[3:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/isolator/iso/clksel">
+      <obj_property name="ElementShortName">clksel</obj_property>
+      <obj_property name="ObjectShortName">clksel</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/da_platform_tb/isolator/iso/mclk">
+      <obj_property name="ElementShortName">mclk</obj_property>
+      <obj_property name="ObjectShortName">mclk</obj_property>
    </wvobject>
    <wvobject type="group" fp_name="group274">
       <obj_property name="label">Slot model 1</obj_property>
@@ -723,6 +883,26 @@
          <obj_property name="ElementShortName">sdata_adc[3:0]</obj_property>
          <obj_property name="ObjectShortName">sdata_adc[3:0]</obj_property>
       </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot1/clk_divide_ratio">
+         <obj_property name="ElementShortName">clk_divide_ratio[9:0]</obj_property>
+         <obj_property name="ObjectShortName">clk_divide_ratio[9:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/clk_divide_ratio">
+         <obj_property name="ElementShortName">clk_divide_ratio[9:0]</obj_property>
+         <obj_property name="ObjectShortName">clk_divide_ratio[9:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/mclk_count">
+         <obj_property name="ElementShortName">mclk_count[9:0]</obj_property>
+         <obj_property name="ObjectShortName">mclk_count[9:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/bck">
+         <obj_property name="ElementShortName">bck</obj_property>
+         <obj_property name="ObjectShortName">bck</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/lrck">
+         <obj_property name="ElementShortName">lrck</obj_property>
+         <obj_property name="ObjectShortName">lrck</obj_property>
+      </wvobject>
    </wvobject>
    <wvobject type="group" fp_name="group589">
       <obj_property name="label">Isolator model</obj_property>
@@ -730,7 +910,6 @@
       <wvobject type="array" fp_name="/da_platform_tb/iso/slotdata">
          <obj_property name="ElementShortName">slotdata[23:0]</obj_property>
          <obj_property name="ObjectShortName">slotdata[23:0]</obj_property>
-         <obj_property name="isExpanded"></obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/da_platform_tb/isolator/capture_target_count">
          <obj_property name="ElementShortName">capture_target_count[0:3][31:0]</obj_property>
@@ -768,45 +947,41 @@
          <obj_property name="ElementShortName">loopback_matrix[0:3][3:0]</obj_property>
          <obj_property name="ObjectShortName">loopback_matrix[0:3][3:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/enable">
-         <obj_property name="ElementShortName">enable</obj_property>
-         <obj_property name="ObjectShortName">enable</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/bck">
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot0/dac_model_a/bck">
          <obj_property name="ElementShortName">bck</obj_property>
          <obj_property name="ObjectShortName">bck</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/lrck">
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot0/dac_model_a/lrck">
          <obj_property name="ElementShortName">lrck</obj_property>
          <obj_property name="ObjectShortName">lrck</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/sdata">
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot0/dac_model_a/sdata">
          <obj_property name="ElementShortName">sdata</obj_property>
          <obj_property name="ObjectShortName">sdata</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/left_not_right">
-         <obj_property name="ElementShortName">left_not_right</obj_property>
-         <obj_property name="ObjectShortName">left_not_right</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/reset_int">
-         <obj_property name="ElementShortName">reset_int</obj_property>
-         <obj_property name="ObjectShortName">reset_int</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/sample_left">
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot0/dac_model_a/sample_left">
          <obj_property name="ElementShortName">sample_left[23:0]</obj_property>
          <obj_property name="ObjectShortName">sample_left[23:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot1/adc_model_a/sample_right">
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot0/dac_model_a/sample_right">
          <obj_property name="ElementShortName">sample_right[23:0]</obj_property>
          <obj_property name="ObjectShortName">sample_right[23:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/dir">
-         <obj_property name="ElementShortName">dir</obj_property>
-         <obj_property name="ObjectShortName">dir</obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot2/dac_model_a/sample_left">
+         <obj_property name="ElementShortName">sample_left[23:0]</obj_property>
+         <obj_property name="ObjectShortName">sample_left[23:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot1/chan">
-         <obj_property name="ElementShortName">chan</obj_property>
-         <obj_property name="ObjectShortName">chan</obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot2/dac_model_a/sample_right">
+         <obj_property name="ElementShortName">sample_right[23:0]</obj_property>
+         <obj_property name="ObjectShortName">sample_right[23:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot2/adc_model_a/sample_left">
+         <obj_property name="ElementShortName">sample_left[23:0]</obj_property>
+         <obj_property name="ObjectShortName">sample_left[23:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot2/adc_model_a/sample_right">
+         <obj_property name="ElementShortName">sample_right[23:0]</obj_property>
+         <obj_property name="ObjectShortName">sample_right[23:0]</obj_property>
       </wvobject>
    </wvobject>
    <wvobject type="group" fp_name="group365">
@@ -852,6 +1027,7 @@
    <wvobject type="group" fp_name="group435">
       <obj_property name="label">samples_slot_out[12]</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject type="logic" fp_name="/da_platform_tb/isolator/\samples_slot_out[12] /ready">
          <obj_property name="ElementShortName">ready</obj_property>
          <obj_property name="ObjectShortName">ready</obj_property>
@@ -879,6 +1055,126 @@
       <wvobject type="array" fp_name="/da_platform_tb/isolator/\samples_slot_in[0] /data">
          <obj_property name="ElementShortName">data[47:0]</obj_property>
          <obj_property name="ObjectShortName">data[47:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group377">
+      <obj_property name="label">Slot controller 3</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /dir">
+         <obj_property name="ElementShortName">dir</obj_property>
+         <obj_property name="ObjectShortName">dir</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /chan">
+         <obj_property name="ElementShortName">chan</obj_property>
+         <obj_property name="ObjectShortName">chan</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /dir_sync_adc">
+         <obj_property name="ElementShortName">dir_sync_adc</obj_property>
+         <obj_property name="ObjectShortName">dir_sync_adc</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /chan_sync_adc">
+         <obj_property name="ElementShortName">chan_sync_adc</obj_property>
+         <obj_property name="ObjectShortName">chan_sync_adc</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /recording_enabled_synclr">
+         <obj_property name="ElementShortName">recording_enabled_synclr</obj_property>
+         <obj_property name="ObjectShortName">recording_enabled_synclr</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /audio_clk_ratio">
+         <obj_property name="ElementShortName">audio_clk_ratio[9:0]</obj_property>
+         <obj_property name="ObjectShortName">audio_clk_ratio[9:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /adc_pbck">
+         <obj_property name="ElementShortName">adc_pbck</obj_property>
+         <obj_property name="ObjectShortName">adc_pbck</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /adc_plrck">
+         <obj_property name="ElementShortName">adc_plrck</obj_property>
+         <obj_property name="ObjectShortName">adc_plrck</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /adc_pdata">
+         <obj_property name="ElementShortName">adc_pdata[3:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_pdata[3:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /audio_num_channels_adc">
+         <obj_property name="ElementShortName">audio_num_channels_adc[3:0]</obj_property>
+         <obj_property name="ObjectShortName">audio_num_channels_adc[3:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /adc_sample_left">
+         <obj_property name="ElementShortName">adc_sample_left[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_left[3:0][23:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /adc_sample_right">
+         <obj_property name="ElementShortName">adc_sample_right[3:0][23:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_sample_right[3:0][23:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/\slots[3].ctl /adc_fifo_write_count">
+         <obj_property name="ElementShortName">adc_fifo_write_count[3:0]</obj_property>
+         <obj_property name="ObjectShortName">adc_fifo_write_count[3:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group404">
+      <obj_property name="label">Slot model 3</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/clk_divide_ratio">
+         <obj_property name="ElementShortName">clk_divide_ratio[9:0]</obj_property>
+         <obj_property name="ObjectShortName">clk_divide_ratio[9:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/bck">
+         <obj_property name="ElementShortName">bck</obj_property>
+         <obj_property name="ObjectShortName">bck</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/lrck">
+         <obj_property name="ElementShortName">lrck</obj_property>
+         <obj_property name="ObjectShortName">lrck</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/sdata">
+         <obj_property name="ElementShortName">sdata</obj_property>
+         <obj_property name="ObjectShortName">sdata</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/sample_left">
+         <obj_property name="ElementShortName">sample_left[23:0]</obj_property>
+         <obj_property name="ObjectShortName">sample_left[23:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/sample_right">
+         <obj_property name="ElementShortName">sample_right[23:0]</obj_property>
+         <obj_property name="ObjectShortName">sample_right[23:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/mclk_count">
+         <obj_property name="ElementShortName">mclk_count[9:0]</obj_property>
+         <obj_property name="ObjectShortName">mclk_count[9:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/samples_local/ready">
+         <obj_property name="ElementShortName">ready</obj_property>
+         <obj_property name="ObjectShortName">ready</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/samples_local/valid">
+         <obj_property name="ElementShortName">valid</obj_property>
+         <obj_property name="ObjectShortName">valid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot3/adc_model_a/samples_local/data">
+         <obj_property name="ElementShortName">data[47:0]</obj_property>
+         <obj_property name="ObjectShortName">data[47:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/da_platform_tb/isolator/iso/dirchan">
+         <obj_property name="ElementShortName">dirchan</obj_property>
+         <obj_property name="ObjectShortName">dirchan</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_dir">
+         <obj_property name="ElementShortName">slot_dir[3:0]</obj_property>
+         <obj_property name="ObjectShortName">slot_dir[3:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/isolator/slot_chan">
+         <obj_property name="ElementShortName">slot_chan[3:0]</obj_property>
+         <obj_property name="ObjectShortName">slot_chan[3:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/da_platform_tb/dut/main/dirchan_parallel">
+         <obj_property name="ElementShortName">dirchan_parallel[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dirchan_parallel[7:0]</obj_property>
       </wvobject>
    </wvobject>
 </wave_config>

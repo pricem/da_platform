@@ -40,6 +40,8 @@ module slot_model #(
     FIFOInterface.out samples_out[4]
 );
 
+logic [9:0] clk_divide_ratio;   //  for I2S sources
+
 task set_mode(input int slot_mode);
     case (SlotMode'(slot_mode))
     DAC2: begin
@@ -61,7 +63,12 @@ task set_mode(input int slot_mode);
     endcase
 endtask
 
+task set_clock_divider(input logic [9:0] ratio);
+    clk_divide_ratio = ratio;
+endtask
+
 initial begin
+    clk_divide_ratio = 512;
     set_mode(initial_mode);
 end
 
@@ -109,6 +116,7 @@ assign slotdata[5] = dir ? 1'bz : sdata_adc[3];
 
 i2s_source adc_model_a(
     .enable(!dir),
+    .clk_divide_ratio,
     .reset(!reset_n),
     .i2s_master_clk(mclk),
     .sample_clk(sample_clk),
@@ -119,6 +127,7 @@ i2s_source adc_model_a(
 );
 i2s_source adc_model_b(
     .enable(!dir && chan),
+    .clk_divide_ratio,
     .reset(!reset_n),
     .i2s_master_clk(mclk),
     .sample_clk(sample_clk),
@@ -129,6 +138,7 @@ i2s_source adc_model_b(
 );
 i2s_source adc_model_c(
     .enable(!dir && chan),
+    .clk_divide_ratio,
     .reset(!reset_n),
     .i2s_master_clk(mclk),
     .sample_clk(sample_clk),
@@ -139,6 +149,7 @@ i2s_source adc_model_c(
 );
 i2s_source adc_model_d(
     .enable(!dir && chan),
+    .clk_divide_ratio,
     .reset(!reset_n),
     .i2s_master_clk(mclk),
     .sample_clk(sample_clk),

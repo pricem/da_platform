@@ -329,6 +329,15 @@ function logic [7:0] get_hwcon_parallel(input int slot);
     endcase
 endfunction
 
+task set_clock_divider(input int slot, input int ratio);
+    case (slot)
+    0: slot0.set_clock_divider(ratio);
+    1: slot1.set_clock_divider(ratio);
+    2: slot2.set_clock_divider(ratio);
+    3: slot3.set_clock_divider(ratio);
+    endcase
+endtask
+
 task enable_loopback(input int src, input int dest, input logic chan);
     loopback_matrix[src][dest] = 1;
     loopback_chan[dest] = chan;
