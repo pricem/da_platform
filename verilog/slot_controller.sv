@@ -352,7 +352,6 @@ always_ff @(posedge slot_clk) begin
         end
 
         //  Hardcode settings for now...
-        audio_clk_ratio <= 256;
         audio_sample_res <= 24;
         
         audio_clk_counter <= 0;
@@ -377,8 +376,8 @@ always_ff @(posedge slot_clk) begin
             //  Digital filtering in DSD1792
             //  Audio serial port
             if (clocks_enabled) begin
-                dac_pbck <= audio_clk_counter / 2;
-                dac_plrck <= (audio_clk_counter / 128);
+                dac_pbck <= audio_clk_counter / (audio_clk_ratio >> 7);
+                dac_plrck <= (audio_clk_counter >= (audio_clk_ratio >> 1));
             end
             else begin
                 dac_pbck <= 0;
@@ -396,9 +395,9 @@ always_ff @(posedge slot_clk) begin
             for (int i = 0; i < 4; i++) begin
                 if (playback_enabled_synclr && (i < audio_num_channels_dac / 2)) begin
                     if (audio_clk_counter < audio_clk_ratio / 2)
-                        dac_pdata[i] <= audio_samples_active[i * 2] >> (24 - audio_clk_counter / 4);
+                        dac_pdata[i] <= audio_samples_active[i * 2] >> (24 - audio_clk_counter / (audio_clk_ratio >> 6));
                     else
-                        dac_pdata[i] <= audio_samples_active[i * 2 + 1] >> (24 - (audio_clk_counter - audio_clk_ratio / 2) / 4);
+                        dac_pdata[i] <= audio_samples_active[i * 2 + 1] >> (24 - (audio_clk_counter - (audio_clk_ratio >> 1)) / (audio_clk_ratio >> 6));
                 end
                 else begin
                     dac_pdata[i] <= 0;
@@ -458,6 +457,8 @@ always_ff @(posedge clk_core) begin
         clocks_enabled <= 1;
         playback_enabled <= 1;
         recording_enabled <= 0;
+        
+        audio_clk_ratio <= 256;
         
         spi_response.ready <= 0;
         
@@ -545,6 +546,13 @@ always_ff @(posedge clk_core) begin
             SLOT_FMT_I2S: begin
                 adc_format <= ADC_FORMAT_I2S;
                 byte_counter <= 0;
+            end
+            SLOT_SET_CLK_RATIO: begin
+                case (byte_counter)
+                1: audio_clk_ratio[9:8] <= ctl_rd.data;
+                2: audio_clk_ratio[7:0] <= ctl_rd.data;
+                endcase
+                if (byte_counter == 2) byte_counter <= 0;
             end
             endcase
         end

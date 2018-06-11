@@ -66,6 +66,7 @@ localparam SLOT_STOP_CLOCKS      = 8'h75;
 localparam SLOT_FMT_I2S          = 8'h76;
 localparam SLOT_FMT_RJ           = 8'h77;
 localparam SLOT_FMT_LJ           = 8'h78;
+localparam SLOT_SET_CLK_RATIO    = 8'h79;
 
 localparam SLOT_SET_ACON         = 8'h80;
 
