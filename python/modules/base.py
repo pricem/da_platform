@@ -17,6 +17,7 @@
 
 import numpy
 from datetime import datetime
+import time
 
 from backends.da_platform import DAPlatformBackend
 from utils import get_elapsed_time
@@ -143,23 +144,38 @@ class ModuleBase(object):
         self.single_byte_msg(slot, DAPlatformBackend.SLOT_START_CLOCKS)
 
     def set_sample_rate(self, slot, rate):
-        #   TODO: Add options for other sample rates, once we know they work.
-        if rate == 44100:
+
+        #   Wait for all samples to be played at the current sample rate.
+        #   Doesn't do anything about recording--this is a possible future issue.
+        fifo_flushed = False
+        while not fifo_flushed:
+            status = self.fifo_status()[slot]
+            if status[0] != status[1]:
+                time.sleep(0.05)
+            else:
+                fifo_flushed = True
+
+        #   Select between 22.5792 MHz vs. 24.576 MHz master clock,
+        #   then set the clock divide ratio.
+        #   Currently supports 44.1/88.2/176.4 and 48/96/192 kHz sample rates.
+        rate = int(rate)
+        if rate % 44100 == 0:
             self.select_clock(0)
-            clk_ratio = 512
-        elif rate == 48000:
+            rate_base = 44100
+        elif rate % 48000 == 0:
             self.select_clock(1)
-            clk_ratio = 512
-        elif rate == 96000:
-            self.select_clock(1)
-            clk_ratio = 256
-        elif rate == 192000:
-            self.select_clock(1)
-            clk_ratio = 128
+            rate_base = 48000
         else:
             raise Exception('Sample rate %s is not currently supported' % rate)
 
-        self.set_clock_divider(slot, clk_ratio)
+        if rate / rate_base == 1:
+            self.set_clock_divider(slot, 512)
+        elif rate / rate_base == 2:
+            self.set_clock_divider(slot, 256)
+        elif rate / rate_base == 4:
+            self.set_clock_divider(slot, 128)
+        else:
+            raise Exception('Sample rate %s is not currently supported' % rate)
 
     def set_clock_divider(self, slot, clk_ratio):
         msg = numpy.array([DAPlatformBackend.SLOT_SET_CLK_RATIO, clk_ratio >> 8, clk_ratio & 0xFF], dtype=self.backend.dtype)
