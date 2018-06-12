@@ -133,9 +133,10 @@ class AK4490Module(ModuleBase):
         #   Disable attenuator
         self.set_attenuation(slot, 0)
         
-        #   Set DIF for 24-bit I2S
+        #   Set DIF for 24-bit I2S (first reset to handle any sample rate update)
+        self.spi_write(slot, 0, 0, 0x20, 0x86)
         self.spi_write(slot, 0, 0, 0x20, 0x87)
-        print 'Set up for AK4490: Wrote 0x87 to register 0'
+        print 'Set up for AK4490: Reset and wrote 0x87 to register 0; attenuation at 0 dB'
         
         #   Set traditional sharp rolloff filter (SD = 0)
         #self.spi_write(slot, 0, 0, 0x21, 0x02)  #   0x22 would be the default, 0x02 for traditional filter
