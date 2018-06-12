@@ -18,14 +18,34 @@ import os
 import scipy.io.wavfile
 import time
 
-def gen_tone(freq, ampl_db, T=60.):
+import argparse
+
+parser = argparse.ArgumentParser(description='Plays audio stream')
+parser.add_argument('-f', '--freq', type=float, default=1000.)
+parser.add_argument('-a', '--ampl', type=float, default=-20.)
+parser.add_argument('-l', '--length', type=float, default=10.)
+parser.add_argument('-r', '--rate', type=int, default=44100)
+parser.add_argument('-b', '--bits', type=int, default=16)
+parser.add_argument('-c', '--channels', type=int, default=2)
+args = parser.parse_args()
+
+
+import sys
+sys.stderr.write('%s\n' % args)
+
+def gen_tone(freq_hz, ampl_db, length_sec, fmt_bits, F_s, num_channels):
     
-    num_channels = 2
-    F_s = 44100.
-    N = int(F_s * T)
+    if fmt_bits == 16:
+        dtype = numpy.int16
+    elif fmt_bits == 24 or fmt_bits == 32:
+        dtype = numpy.int32
+    else:
+        raise Exception('Unsupported format: %d bits' % fmt_bits)
+
+    N = int(F_s * length_sec)
     t = numpy.linspace(0, (N - 1) / F_s, N)
-    x = 0.5 * numpy.sin(2 * numpy.pi * freq * t) * (10 ** (ampl_db / 20.0))
-    x_st_int = numpy.expand_dims((x * (1 << 16)).astype(numpy.int16), 1).repeat(num_channels, axis=1)
+    x = 0.5 * numpy.sin(2 * numpy.pi * freq_hz * t) * (10 ** (ampl_db / 20.0))
+    x_st_int = numpy.expand_dims((x * (1 << fmt_bits)).astype(dtype), 1).repeat(num_channels, axis=1)
     
     N = x_st_int.shape[0]
     samples_written = 0
@@ -38,16 +58,5 @@ def gen_tone(freq, ampl_db, T=60.):
         sys.stdout.write(chunk.flatten().tostring())
         samples_written += this_chunk_size
 
-if len(sys.argv) > 1:
-    freq = float(sys.argv[1])
-else:
-    freq = 1000.
-
-if len(sys.argv) > 2:
-    ampl_db = float(sys.argv[2])
-else:
-    ampl_db = -20.
-
-T0 = 60
-gen_tone(freq, ampl_db, T=T0)
+gen_tone(args.freq, args.ampl, args.length, args.bits, args.rate, args.channels)
 
