@@ -37,7 +37,6 @@ parser.add_argument('-f', '--format', default='S16_LE')
 args = parser.parse_args()
 print args
 
-assert args.rate == 44100
 assert args.channels == 4
 
 #   Assumes 4 channels in.  Directs these to 2 DAC2s in the following slots.
@@ -61,7 +60,11 @@ for slot in SLOTS_DAC:
     else:
         print 'Detected AK4490, 2-channel'
         dacs[slot] = AK4490Module(backend)
+
+    #   Set sample rate and then reset/reprogram DAC SPI registers
+    dacs[slot].set_sample_rate(slot, args.rate)
     dacs[slot].setup(slot)
+
     #   TODO: Attenuation
     #dacs[slot].set_hwcon(slot, 0x04)  # 20 dB
     """
@@ -74,7 +77,7 @@ for slot in SLOTS_DAC:
 #   1/27/2018: Set slot 1 DAC to 10 dB attenuation
 #   for use with Modulus-86 amp (20 dB gain vs. 32 dB on XPA-5)
 #   2/4/2018: Changed to full gain on tweeter amp.
-dacs[0].set_attenuation(0, 20)
+dacs[0].set_attenuation(0, 10)
 dacs[1].set_attenuation(1, 0)
 
 #  For now, assumes 44.1 kHz, 2 channels, 16 bit format
@@ -89,8 +92,13 @@ def play_stream(stream, chunk_size=4096):
         bytes_read = len(data)
         if args.format == 'S16_LE' and args.bits == 16:
             data = numpy.fromstring(data, dtype=numpy.int16)
-            #   Convert to double precision
             data = data.astype(float) / (1 << 16)
+        elif args.format == 'S24_LE' and args.bits == 24:
+            data = numpy.fromstring(data, dtype=numpy.int32)
+            data = data.astype(float) / (1 << 24)
+        elif args.format == 'S32_LE' and args.bits == 32:
+            data = numpy.fromstring(data, dtype=numpy.int32)
+            data = data.astype(float) / (1 << 32)
         elif args.format == 'FLOAT_LE' and args.bits == 32:
             data = numpy.fromstring(data, dtype=numpy.float32)
             data = data.astype(float)
