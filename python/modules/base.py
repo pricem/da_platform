@@ -162,7 +162,7 @@ class ModuleBase(object):
         self.set_clock_divider(slot, clk_ratio)
 
     def set_clock_divider(self, slot, clk_ratio):
-        msg = numpy.array([DAPlatformBackend.SLOT_SET_CLK_RATIO, clk_ratio >> 8, clk_ratio & 0xFF], dtype=self.bac$
+        msg = numpy.array([DAPlatformBackend.SLOT_SET_CLK_RATIO, clk_ratio >> 8, clk_ratio & 0xFF], dtype=self.backend.dtype)
         self.backend.write(self.prepare_cmd(slot, DAPlatformBackend.CMD_FIFO_WRITE, msg))
         print 'Set clock divider for slot %d to %d' % (slot, clk_ratio)
 
